@@ -1,0 +1,59 @@
+.screen-capture-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    cursor: crosshair;
+    background-color: rgba(0, 0, 0, 0.3);
+    user-select: none;
+    pointer-events: auto;
+}
+
+.screen-capture-overlay.selecting {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.selection-rectangle {
+    position: absolute;
+    border: 2px solid #1890ff;
+    background-color: rgba(24, 144, 255, 0.1);
+    pointer-events: none;
+    z-index: 2147483648;
+}
+
+.capture-instructions {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 2147483649;
+    pointer-events: none;
+}
+
+.capture-instructions p {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Prevent text selection during capture */
+.screen-capture-overlay * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Ensure the overlay covers the entire viewport */
+.screen-capture-overlay {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+}

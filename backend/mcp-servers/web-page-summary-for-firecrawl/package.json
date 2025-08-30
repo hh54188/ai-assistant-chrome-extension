@@ -1,0 +1,20 @@
+{
+  "name": "web-page-summary-for-firecrawl",
+  "version": "1.0.0",
+  "description": "MCP server for summarizing web pages using Firecrawl and Gemini",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@mendable/firecrawl-js": "^0.1.0",
+    "@google/genai": "^0.2.0"
+  },
+  "keywords": [
+    "mcp",
+    "firecrawl",
+    "web-scraping",
+    "summarization",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT"
+}

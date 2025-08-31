@@ -34,6 +34,9 @@ export const useUIStore = create(
         isScreenshotMode: false,
         screenshotData: null,
         
+        // ==================== Drag and Drop States ====================
+        isDragOver: false,
+        
         // ==================== File Upload States ====================
         // Files are stored per session in chatStore, but UI state for current session is here
         currentSessionFiles: [],
@@ -128,6 +131,11 @@ export const useUIStore = create(
             state.screenshotData = null;
         }),
         
+        // Drag and drop actions
+        setIsDragOver: (isDragOver) => set((state) => {
+            state.isDragOver = isDragOver;
+        }),
+        
         // File actions for current session
         setCurrentSessionFiles: (files) => set((state) => {
             state.currentSessionFiles = files;
@@ -152,6 +160,7 @@ export const useUIStore = create(
             state.selectedModels = [];
             state.isScreenshotMode = false;
             state.screenshotData = null;
+            state.isDragOver = false;
             state.currentSessionFiles = [];
             state.attachmentsOpen = false; // Clear attachment panel state
             // Note: We keep isExpanded and turboMode as they are user preferences
@@ -175,6 +184,7 @@ export const useUIStore = create(
                 hasFiles: state.currentSessionFiles.length > 0,
                 hasSelection: !!state.currentSelection,
                 isAnyModalOpen: state.referenceModalVisible || state.modelSelectionModalVisible,
+                isDragOver: state.isDragOver,
             };
         }
     }))

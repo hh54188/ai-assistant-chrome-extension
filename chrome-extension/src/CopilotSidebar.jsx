@@ -8,6 +8,7 @@ import ReferenceModal from './components/ReferenceModal';
 import ModelSelectionModal from './components/ModelSelectionModal';
 import SettingsModal from './components/SettingsModal';
 import TurboChatList from './components/TurboChatList';
+import DropZoneOverlay from './components/DropZoneOverlay';
 import useConnectionStatus from './hooks/useConnectionStatus';
 // ScreenCapture is now handled by content script
 
@@ -50,6 +51,8 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setIsScreenshotMode,
         setScreenshotData,
         clearScreenshotData,
+        isDragOver,
+        setIsDragOver,
         resetUIState
     } = useUIStore();
     
@@ -375,12 +378,44 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
             } else if (event.data && event.data.type === 'SCREENSHOT_ERROR') {
                 console.error('Screenshot error:', event.data.error);
                 setIsScreenshotMode(false);
+            } else if (event.data && event.data.type === 'DRAG_START') {
+                // Text drag started from content script
+                console.log('🎯 REACT: Drag started with text:', event.data.text);
+                setIsDragOver(true);
+            } else if (event.data && event.data.type === 'DRAG_END') {
+                // Text drag ended
+                console.log('🏁 REACT: Drag ended');
+                setIsDragOver(false);
+            } else if (event.data && event.data.type === 'TEXT_DROPPED') {
+                // Text was dropped on the sidebar
+                console.log('✅ REACT: Text dropped:', event.data.text);
+                console.log('✅ REACT: Event data:', event.data);
+                setIsDragOver(false);
+                
+                if (event.data.text && event.data.text.trim()) {
+                    // Create a selection object with just the text (pure text as requested)
+                    const selection = {
+                        text: event.data.text.trim(),
+                        html: '', // Empty as requested - only keep pure text
+                        url: window.location.href,
+                        title: document.title
+                    };
+                    
+                    console.log("================ dropped selection from content script ==================");
+                    console.log(selection);
+                    console.log("🎯 REACT: Setting currentSelection and opening modal");
+                    setCurrentSelection(selection);
+                    setReferenceModalVisible(true);
+                    console.log("🎯 REACT: Modal should be opening now");
+                } else {
+                    console.log("❌ REACT: No valid text in dropped data");
+                }
             }
         };
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [handleScreenshotCancel, handleScreenshotComplete, setIsScreenshotMode]);
+    }, [handleScreenshotCancel, handleScreenshotComplete, setIsScreenshotMode, setIsDragOver, setCurrentSelection, setReferenceModalVisible]);
 
     const handleCreateNewSession = () => {
         handleNewSession();
@@ -461,6 +496,9 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setCurrentSelection(selection);
         setReferenceModalVisible(true);
     };
+
+    // ==================== Drag and Drop Handlers ====================
+    // Note: Drag and drop is now handled by the content script and communicated via messages
 
     const handleReferenceModalCancel = () => {
         setReferenceModalVisible(false);
@@ -573,13 +611,19 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
 
 
     return (
-        <div className={styles.copilotChat} style={{ 
-            width: isOpen ? (
-                turboMode && turboModeExpanded ? (50 + (selectedModels.length * 35) + (selectedModels.length * 350)) : 
-                isExpanded ? 1024 : 450
-            ) : 0 
-        }}>
+        <div 
+            className={styles.copilotChat} 
+            style={{ 
+                width: isOpen ? (
+                    turboMode && turboModeExpanded ? (50 + (selectedModels.length * 35) + (selectedModels.length * 350)) : 
+                    isExpanded ? 1024 : 450
+                ) : 0
+            }}
+        >
             {contextHolder}
+            
+            {/* Drop Zone Indicator */}
+            <DropZoneOverlay isVisible={isDragOver} />
             <div className={styles.sidebarLayout}>
                 <MenuBar
                     onOpenSettings={handleOpenSettings}
@@ -680,6 +724,23 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     onConfirm={handleSettingsConfirm}
                 />
             )}
+            
+            {/* CSS Animation for bounce effect */}
+            <style>
+                {`
+                    @keyframes bounce {
+                        0%, 20%, 50%, 80%, 100% {
+                            transform: translateY(0);
+                        }
+                        40% {
+                            transform: translateY(-10px);
+                        }
+                        60% {
+                            transform: translateY(-5px);
+                        }
+                    }
+                `}
+            </style>
         </div>
     );
 };

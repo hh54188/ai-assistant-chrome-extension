@@ -124,6 +124,20 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     toggleSidebar();
   }
+  
+  // ESC key to cancel drag operation
+  if (e.key === 'Escape' && isDragging) {
+    console.log('🚫 ESC pressed - cancelling drag operation');
+    // Send drag end message
+    if (sidebarContainer && sidebarContainer.querySelector('iframe')) {
+      const iframe = sidebarContainer.querySelector('iframe');
+      iframe.contentWindow.postMessage({
+        type: 'DRAG_END'
+      }, '*');
+    }
+    isDragging = false;
+    draggedText = '';
+  }
 });
 
 // Function to get user selection
@@ -159,6 +173,188 @@ function getUserSelection() {
   }
   return null;
 }
+
+// ==================== HTML5 Drag and Drop Functionality ====================
+
+// Variables to track drag state
+let draggedText = '';
+let isDragging = false;
+
+// Listen for native HTML5 drag events on the entire document
+document.addEventListener('dragstart', (e) => {
+  console.log('🚀 HTML5 dragstart event detected');
+  
+  // Get the selected text
+  const selection = window.getSelection();
+  if (selection && selection.toString().trim()) {
+    draggedText = selection.toString().trim();
+    console.log('✅ Dragging text:', draggedText);
+    
+    // Set the drag data
+    e.dataTransfer.setData('text/plain', draggedText);
+    e.dataTransfer.effectAllowed = 'copy';
+    
+    // Notify sidebar that drag started
+    isDragging = true;
+    if (sidebarContainer && sidebarContainer.querySelector('iframe')) {
+      const iframe = sidebarContainer.querySelector('iframe');
+      iframe.contentWindow.postMessage({
+        type: 'DRAG_START',
+        text: draggedText
+      }, '*');
+    }
+    
+    console.log('📤 DRAG_START message sent to sidebar');
+  }
+}, true);
+
+document.addEventListener('dragover', (e) => {
+  // Check if we're over the sidebar
+  if (sidebarContainer && isSidebarOpen && isDragging) {
+    const sidebarRect = sidebarContainer.getBoundingClientRect();
+    const isOverSidebar = (
+      e.clientX >= sidebarRect.left &&
+      e.clientX <= sidebarRect.right &&
+      e.clientY >= sidebarRect.top &&
+      e.clientY <= sidebarRect.bottom
+    );
+    
+    if (isOverSidebar) {
+      e.preventDefault(); // Allow drop
+      e.dataTransfer.dropEffect = 'copy';
+      console.log('📍 Dragging over sidebar - drop allowed');
+    }
+  }
+}, true);
+
+document.addEventListener('dragenter', (e) => {
+  // Check if we're entering the sidebar
+  if (sidebarContainer && isSidebarOpen && isDragging) {
+    const sidebarRect = sidebarContainer.getBoundingClientRect();
+    const isOverSidebar = (
+      e.clientX >= sidebarRect.left &&
+      e.clientX <= sidebarRect.right &&
+      e.clientY >= sidebarRect.top &&
+      e.clientY <= sidebarRect.bottom
+    );
+    
+    if (isOverSidebar) {
+      e.preventDefault();
+      console.log('🎯 Entered sidebar area');
+    }
+  }
+}, true);
+
+document.addEventListener('drop', (e) => {
+  console.log('💧 HTML5 drop event detected at:', e.clientX, e.clientY);
+  console.log('isDragging:', isDragging);
+  console.log('draggedText:', draggedText);
+  console.log('sidebarContainer:', !!sidebarContainer);
+  console.log('isSidebarOpen:', isSidebarOpen);
+  
+  // Always prevent default to avoid browser handling
+  e.preventDefault();
+  
+  // Check if we're dropping on the sidebar
+  if (sidebarContainer && isSidebarOpen) {
+    const sidebarRect = sidebarContainer.getBoundingClientRect();
+    const isOverSidebar = (
+      e.clientX >= sidebarRect.left &&
+      e.clientX <= sidebarRect.right &&
+      e.clientY >= sidebarRect.top &&
+      e.clientY <= sidebarRect.bottom
+    );
+    
+    console.log('Sidebar rect:', sidebarRect);
+    console.log('Drop position:', e.clientX, e.clientY);
+    console.log('Is over sidebar:', isOverSidebar);
+    
+    if (isOverSidebar) {
+      // Get the dropped text from multiple sources
+      const dataTransferText = e.dataTransfer.getData('text/plain');
+      const finalText = dataTransferText || draggedText;
+      
+      console.log('DataTransfer text:', dataTransferText);
+      console.log('Stored draggedText:', draggedText);
+      console.log('Final text to use:', finalText);
+      
+      if (finalText && finalText.trim()) {
+        console.log('✅ Text dropped on sidebar:', finalText);
+        
+        // Send drop message to sidebar
+        const iframe = sidebarContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.contentWindow.postMessage({
+            type: 'TEXT_DROPPED',
+            text: finalText.trim()
+          }, '*');
+          console.log('📤 TEXT_DROPPED message sent to sidebar with text:', finalText.trim());
+        } else {
+          console.log('❌ No iframe found in sidebar container');
+        }
+      } else {
+        console.log('❌ No text available to drop');
+      }
+    } else {
+      console.log('❌ Drop not over sidebar area');
+    }
+  } else {
+    console.log('❌ Sidebar not available or not open');
+  }
+}, true);
+
+document.addEventListener('dragend', (e) => {
+  console.log('🏁 HTML5 dragend event detected at:', e.clientX, e.clientY);
+  console.log('isDragging:', isDragging);
+  console.log('draggedText:', draggedText);
+  
+  // Check if drag ended over sidebar and we have text
+  if (isDragging && draggedText && sidebarContainer && isSidebarOpen) {
+    const sidebarRect = sidebarContainer.getBoundingClientRect();
+    const isOverSidebar = (
+      e.clientX >= sidebarRect.left &&
+      e.clientX <= sidebarRect.right &&
+      e.clientY >= sidebarRect.top &&
+      e.clientY <= sidebarRect.bottom
+    );
+    
+    console.log('Dragend - Sidebar rect:', sidebarRect);
+    console.log('Dragend - End position:', e.clientX, e.clientY);
+    console.log('Dragend - Is over sidebar:', isOverSidebar);
+    
+    const iframe = sidebarContainer.querySelector('iframe');
+    if (iframe) {
+      if (isOverSidebar && draggedText.trim()) {
+        // Send both drop and drag end messages
+        console.log('✅ Dragend over sidebar - sending TEXT_DROPPED');
+        iframe.contentWindow.postMessage({
+          type: 'TEXT_DROPPED',
+          text: draggedText.trim()
+        }, '*');
+      }
+      
+      // Always send drag end message
+      iframe.contentWindow.postMessage({
+        type: 'DRAG_END'
+      }, '*');
+      console.log('📤 DRAG_END message sent to sidebar');
+    }
+  } else if (isDragging && sidebarContainer && sidebarContainer.querySelector('iframe')) {
+    // Just send drag end if no drop
+    const iframe = sidebarContainer.querySelector('iframe');
+    iframe.contentWindow.postMessage({
+      type: 'DRAG_END'
+    }, '*');
+    console.log('📤 DRAG_END message sent to sidebar (no drop)');
+  }
+  
+  // Reset drag state
+  isDragging = false;
+  draggedText = '';
+  console.log('🧹 Drag state reset');
+}, true);
+
+// Old drag functions removed - now using HTML5 drag and drop API
 
 // Listen for messages from the sidebar iframe
 window.addEventListener('message', (event) => {

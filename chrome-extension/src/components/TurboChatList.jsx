@@ -53,8 +53,8 @@ const TurboChatList = ({
             <div 
                 className={`${styles.chatListsContainer} ${styles.customScrollbar}`}
                 style={{
-                    overflowX: selectedModels.length > 3 ? 'auto' : 'hidden',
-                    justifyContent: selectedModels.length <= 2 ? 'center' : 'flex-start'
+                    overflowX: 'auto',
+                    justifyContent: 'flex-start'
                 }}
             >
                 {selectedModels.map((model) => (
@@ -63,9 +63,9 @@ const TurboChatList = ({
                             size="small"
                             className={styles.chatCard}
                             style={{
-                                minWidth: '300px',
-                                maxWidth: selectedModels.length <= 2 ? '400px' : '350px',
-                                flex: selectedModels.length <= 2 ? '1 1 0' : '1 1 auto'
+                                minWidth: '350px',
+                                maxWidth: '350px',
+                                flex: '1 1 auto'
                             }}
                             title={
                                 <div className={styles.cardTitle}>

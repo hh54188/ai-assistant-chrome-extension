@@ -575,9 +575,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
     return (
         <div className={styles.copilotChat} style={{ 
             width: isOpen ? (
-                turboMode && turboModeExpanded ? 
-                    // Dynamic width based on number of selected models
-                    Math.max(450, Math.min(1200, 300 + (selectedModels.length * 350))) : 
+                turboMode && turboModeExpanded ? (120 + (selectedModels.length * 350)) : 
                 isExpanded ? 1024 : 450
             ) : 0 
         }}>

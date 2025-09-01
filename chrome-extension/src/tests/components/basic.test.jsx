@@ -309,7 +309,7 @@ describe('CopilotSidebar Integration Tests - Core Functionality', () => {
       expect(screen.getByTestId('menu-bar')).toBeInTheDocument();
       expect(screen.getByTestId('chat-list')).toBeInTheDocument();
       expect(screen.getByTestId('chat-sender')).toBeInTheDocument();
-      expect(screen.getByTestId('message-context')).toBeInTheDocument();
+      // message-context removed - now using custom notification system
     });
 
     it('should show welcome message when no messages exist', () => {

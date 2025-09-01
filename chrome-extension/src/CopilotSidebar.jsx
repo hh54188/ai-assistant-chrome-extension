@@ -1,4 +1,4 @@
-import { message } from 'antd';
+import { notification } from './utils/notifications';
 import React, { useEffect, useCallback } from 'react';
 import ChatHeader from './components/ChatHeader';
 import ChatList from './components/ChatList';
@@ -88,7 +88,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
     const connectionStatus = useConnectionStatus();
 
 
-    const [messageApi, contextHolder] = message.useMessage();
+    // No need for Ant Design message API anymore - using custom notifications
     const { getCurrentSelection } = usePageSelection();
 
     // ==================== Helper Functions ====================
@@ -265,10 +265,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                         clearScreenshotData();
                     }
                     if (errorMessage !== 'Request was cancelled') {
-                        messageApi.open({
-                            type: 'error',
-                            content: errorMessage,
-                        });
+                        notification.error(errorMessage);
                     }
                 },
                 onLoadingChange: (isLoading) => {
@@ -306,10 +303,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     clearScreenshotData();
                 }
                 if (errorMessage !== 'Request was cancelled') {
-                    messageApi.open({
-                        type: 'error',
-                        content: errorMessage,
-                    });
+                    notification.error(errorMessage);
                 }
             },
             onLoadingChange: (isLoading) => {
@@ -575,10 +569,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         clearTurboSessions();
         
         // Show success message
-        messageApi.open({
-            type: 'success',
-            content: `Continuing conversation with ${selectedModel}`,
-        });
+        notification.success(`Continuing conversation with ${selectedModel}`);
     }
 
     const handleModelSelection = (modelValue, checked) => {
@@ -620,8 +611,6 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                 ) : 0
             }}
         >
-            {contextHolder}
-            
             {/* Drop Zone Indicator */}
             <DropZoneOverlay isVisible={isDragOver} />
             <div className={styles.sidebarLayout}>
@@ -662,11 +651,13 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                                 const session = getSessionById(sessionId);
                                 return session ? session.messages : [];
                             }}
+
                         />
                     ) : (
                         <ChatList
                             messages={messages}
                             styles={styles}
+
                         />
                     )}
                     {turboMode && turboModeExpanded ? null : <ChatSender

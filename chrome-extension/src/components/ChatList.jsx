@@ -5,13 +5,14 @@ import {
     ReloadOutlined,
     UserOutlined,
 } from '@ant-design/icons';
-import { Space, Spin, Button, message } from 'antd';
+import { Space, Spin, Button } from 'antd';
 import { Bubble } from '@ant-design/x';
 import React from 'react';
 import ChatWelcome from './ChatWelcome';
 import MyChatWelcome from './MyChatWelcome';
 import markdownit from 'markdown-it';
 import { useStyles } from './ChatList.styles';
+import { notification } from '../utils/notifications';
 const md = markdownit({ html: true, breaks: true, linkify: true });
 
 const renderMarkdown = (content) => {
@@ -19,6 +20,8 @@ const renderMarkdown = (content) => {
         <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
     );
 };
+
+
 
 const AGENT_PLACEHOLDER = '内容生成中，请稍等...';
 const LoadingMessage = () => {
@@ -35,7 +38,6 @@ const ChatList = ({
     styles,
 }) => {
     const { styles: componentStyles } = useStyles();
-    const [messageApi, contextHolder] = message.useMessage();
 
     const handleCopy = async (messageContent) => {
         if (messageContent) {
@@ -48,20 +50,14 @@ const ChatList = ({
                     });
                     
                     if (response && response.success) {
-                        messageApi.open({
-                            type: 'success',
-                            content: 'This message has been copied to the clipboard',
-                        });
+                        notification.success('Message copied to clipboard');
                     } else {
                         throw new Error(response?.error || 'Background script copy failed');
                     }
                 } else {
                     // Fallback for regular web pages
                     await navigator.clipboard.writeText(messageContent);
-                    messageApi.open({
-                        type: 'success',
-                        content: 'This message has been copied to the clipboard',
-                    });
+                    notification.success('Message copied to clipboard');
                 }
             } catch (error) {
                 // Final fallback using document.execCommand (deprecated but still works)
@@ -76,17 +72,10 @@ const ChatList = ({
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    
-                    messageApi.open({
-                        type: 'success',
-                        content: 'This message has been copied to the clipboard',
-                    });
+                    notification.success('Message copied to clipboard');
                 } catch (fallbackError) {
                     console.error('Copy failed:', error, fallbackError);
-                    messageApi.open({
-                        type: 'error',
-                        content: 'Failed to copy, please try again',
-                    });
+                    notification.error('Failed to copy, please try again');
                 }
             }
         }
@@ -94,7 +83,6 @@ const ChatList = ({
 
     return (
         <div className={`${styles.chatList} ${componentStyles.bubbleContentParagraphs}`}>
-            {contextHolder}
             {messages?.length ? (
                 <Bubble.List
                     style={{ height: '100%', paddingInline: 16 }}

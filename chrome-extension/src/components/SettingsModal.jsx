@@ -1,5 +1,6 @@
-import { Button, Input, Switch, message } from 'antd';
+import { Button, Input, Switch } from 'antd';
 import React, { useState, useEffect } from 'react';
+import { notification } from '../utils/notifications';
 
 const SettingsModal = ({
     visible,
@@ -8,7 +9,6 @@ const SettingsModal = ({
 }) => {
     const [frontendOnlyMode, setFrontendOnlyMode] = useState(false);
     const [apiKey, setApiKey] = useState('');
-    const [messageApi, contextHolder] = message.useMessage();
 
     // Load settings from localStorage on component mount
     useEffect(() => {
@@ -26,10 +26,10 @@ const SettingsModal = ({
             localStorage.setItem('frontendOnlyMode', frontendOnlyMode.toString());
             localStorage.setItem('geminiApiKey', apiKey);
             
-            messageApi.success('Settings saved successfully');
+            notification.success('Settings saved successfully');
             onConfirm();
         } catch (error) {
-            messageApi.error('Failed to save settings');
+            notification.error('Failed to save settings');
             console.error('Error saving settings:', error);
         }
     };
@@ -47,7 +47,6 @@ const SettingsModal = ({
 
     return (
         <>
-            {contextHolder}
             <div style={{
                 position: 'absolute',
                 top: 0,

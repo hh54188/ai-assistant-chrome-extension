@@ -37,19 +37,58 @@ const ChatList = ({
     const { styles: componentStyles } = useStyles();
     const [messageApi, contextHolder] = message.useMessage();
 
-    const handleCopy = (messageContent) => {
+    const handleCopy = async (messageContent) => {
         if (messageContent) {
-            navigator.clipboard.writeText(messageContent).then(() => {
-                messageApi.open({
-                    type: 'success',
-                    content: 'This message has been copied to the clipboard',
-                });
-            }).catch(() => {
-                messageApi.open({
-                    type: 'error',
-                    content: 'Failed to copy, please try again',
-                });
-            });
+            try {
+                // First try the Chrome extension background script approach
+                if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+                    const response = await chrome.runtime.sendMessage({
+                        action: 'copyToClipboard',
+                        text: messageContent
+                    });
+                    
+                    if (response && response.success) {
+                        messageApi.open({
+                            type: 'success',
+                            content: 'This message has been copied to the clipboard',
+                        });
+                    } else {
+                        throw new Error(response?.error || 'Background script copy failed');
+                    }
+                } else {
+                    // Fallback for regular web pages
+                    await navigator.clipboard.writeText(messageContent);
+                    messageApi.open({
+                        type: 'success',
+                        content: 'This message has been copied to the clipboard',
+                    });
+                }
+            } catch (error) {
+                // Final fallback using document.execCommand (deprecated but still works)
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = messageContent;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    messageApi.open({
+                        type: 'success',
+                        content: 'This message has been copied to the clipboard',
+                    });
+                } catch (fallbackError) {
+                    console.error('Copy failed:', error, fallbackError);
+                    messageApi.open({
+                        type: 'error',
+                        content: 'Failed to copy, please try again',
+                    });
+                }
+            }
         }
     };
 

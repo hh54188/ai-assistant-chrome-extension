@@ -30,5 +30,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
     });
     return true; // Keep the message channel open for async response
+  } else if (request.action === 'copyToClipboard') {
+    // Handle clipboard operations in the background script
+    // This works because background scripts have full access to Chrome APIs
+    try {
+      navigator.clipboard.writeText(request.text).then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        console.error('Clipboard write failed:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    } catch (error) {
+      console.error('Clipboard operation failed:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+    return true; // Keep the message channel open for async response
   }
 }); 

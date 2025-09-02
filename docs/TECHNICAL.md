@@ -231,19 +231,19 @@ For more detailed information, see the following documentation:
 
 ### Setup & Configuration
 - [Environment Setup Guide](./ENVIRONMENT_SETUP.md) - Comprehensive setup instructions
-- [Backend Environment Setup](./backend/ENVIRONMENT_SETUP.md) - Backend-specific configuration
-- [Chrome Extension Environment](./chrome-extension/ENVIRONMENT.md) - Extension configuration
+- [Backend Environment Setup](../backend/ENVIRONMENT_SETUP.md) - Backend-specific configuration
+- [Chrome Extension Environment](../chrome-extension/ENVIRONMENT.md) - Extension configuration
 
 ### Features & Usage
-- [MCP Integration Guide](./backend/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
-- [Turbo Mode Documentation](./chrome-extension/TURBO_MODE_README.md) - Multi-model comparison feature
-- [Screenshot Capture Guide](./chrome-extension/SCREENSHOT_README.md) - Screen capture functionality
-- [Settings Management](./chrome-extension/SETTINGS_README.md) - Extension settings and preferences
+- [MCP Integration Guide](../backend/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
+- [Turbo Mode Documentation](../chrome-extension/TURBO_MODE_README.md) - Multi-model comparison feature
+- [Screenshot Capture Guide](../chrome-extension/SCREENSHOT_README.md) - Screen capture functionality
+- [Settings Management](../chrome-extension/SETTINGS_README.md) - Extension settings and preferences
 
 ### Development & Testing
-- [Backend README](./backend/README.md) - Backend development guide
-- [Chrome Extension README](./chrome-extension/README.md) - Extension development guide
-- [Chat Sessions](./backend/CHAT_SESSIONS_README.md) - Session management system
+- [Backend README](../backend/README.md) - Backend development guide
+- [Chrome Extension README](../chrome-extension/README.md) - Extension development guide
+- [Chat Sessions](../backend/CHAT_SESSIONS_README.md) - Session management system
 
 ## 🤝 Contributing
 
@@ -264,4 +264,4 @@ For more detailed information, see the following documentation:
 
 ## 📄 License
 
-MIT License - see the [LICENSE](./LICENSE) file for details.
+MIT License - see the [LICENSE](../LICENSE) file for details.

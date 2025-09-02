@@ -99,7 +99,7 @@ VITE_DEBUG_MODE=true
 
 For technical details, development setup, and advanced configuration, see:
 
-**[📖 Technical Documentation](./TECHNICAL.md)** - Complete technical reference
+**[📖 Technical Documentation](./docs/TECHNICAL.md)** - Complete technical reference
 
 ## 📄 License
 

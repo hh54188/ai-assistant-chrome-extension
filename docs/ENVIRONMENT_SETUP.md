@@ -123,9 +123,9 @@ Check the browser console for any environment-related errors.
 
 ### Getting Help
 
-- **Backend issues**: See [backend/ENVIRONMENT_SETUP.md](./backend/ENVIRONMENT_SETUP.md)
-- **Frontend issues**: See [chrome-extension/ENVIRONMENT.md](./chrome-extension/ENVIRONMENT.md)
-- **General issues**: Check the main [README.md](./README.md)
+- **Backend issues**: See [backend/ENVIRONMENT_SETUP.md](../backend/ENVIRONMENT_SETUP.md)
+- **Frontend issues**: See [chrome-extension/ENVIRONMENT.md](../chrome-extension/ENVIRONMENT.md)
+- **General issues**: Check the main [README.md](../README.md)
 
 ## 📚 Additional Resources
 

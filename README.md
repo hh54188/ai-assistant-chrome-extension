@@ -1,13 +1,18 @@
 # 🚀 AI Assistant Chrome Extension
 
-An AI-powered assistant that works directly in your browser. Chat with AI models, capture screenshots, and use advanced features like Turbo Mode for comparing multiple AI responses.
+An AI-powered assistant that works directly in your browser. Chat with AI models, capture screenshots, and use advanced features like Multi-Model Mode for comparing multiple AI responses.
+
+**I built this app because I was frustrated by other apps charging $20 per month for similar features. My Cursor subscription also costs about $20 per month, but with it, I feel I can create a new app with the same functionality every month—each time with a different twist. Why pay so much for something I can build myself?**
+
+> **Note:** I am unable to support OpenAI because I live in Beijing and only have credit cards issued in mainland China, which OpenAI does not accept for subscription payments.  
+> If you're interested, you can add support for OpenAI yourself—I've already implemented part of the code, but it's currently commented out.
 
 ## 🌟 Features
 
 ### 🤖 AI Chat
 Chat with Google Gemini AI models. Get real-time responses and save your conversations.
 
-### ⚡ Turbo Mode
+### ⚡ Multi-Model Mode
 Compare responses from multiple AI models side-by-side. Choose the best one to continue your conversation.
 
 ### 🔧 Tools

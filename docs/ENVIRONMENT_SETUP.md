@@ -123,8 +123,8 @@ Check the browser console for any environment-related errors.
 
 ### Getting Help
 
-- **Backend issues**: See [BACKEND_ENVIRONMENT_SETUP.md](./BACKEND_ENVIRONMENT_SETUP.md)
-- **Frontend issues**: See [CHROME_EXTENSION_ENVIRONMENT.md](./CHROME_EXTENSION_ENVIRONMENT.md)
+- **Backend issues**: See [BACKEND_ENVIRONMENT_SETUP.md](./backend/BACKEND_ENVIRONMENT_SETUP.md)
+- **Frontend issues**: See [CHROME_EXTENSION_ENVIRONMENT.md](./extension/CHROME_EXTENSION_ENVIRONMENT.md)
 - **General issues**: Check the main [README.md](../README.md)
 
 ## 📚 Additional Resources

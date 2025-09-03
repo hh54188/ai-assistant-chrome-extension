@@ -231,33 +231,34 @@ This section provides a comprehensive index of all documentation files in the pr
 
 ### 🚀 Setup & Configuration
 - [Environment Setup Guide](./ENVIRONMENT_SETUP.md) - Comprehensive setup instructions
-- [Backend Environment Setup](./BACKEND_ENVIRONMENT_SETUP.md) - Backend-specific configuration
-- [Chrome Extension Environment](./CHROME_EXTENSION_ENVIRONMENT.md) - Extension configuration
 
 ### 🤖 Backend Documentation
-- [Backend README](./BACKEND_README.md) - Backend development guide
-- [Chat Sessions](./CHAT_SESSIONS_README.md) - Session management system
-- [MCP Integration Guide](./MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
-- [MCP Servers Overview](./MCP_SERVERS_README.md) - MCP servers documentation
-- [Firecrawl MCP Server](./FIRECRAWL_MCP_README.md) - Web page summary MCP server
-- [Notion MCP Server](./NOTION_MCP_README.md) - Notion article correction MCP server
-- [OpenAI Cost MCP Server](./OPENAI_COST_MCP_README.md) - OpenAI cost tracking MCP server
+- [Backend README](./backend/BACKEND_README.md) - Backend development guide
+- [Backend Environment Setup](./backend/BACKEND_ENVIRONMENT_SETUP.md) - Backend-specific configuration
+- [Chat Sessions](./backend/CHAT_SESSIONS_README.md) - Session management system
 
 ### 🌐 Chrome Extension Documentation
-- [Chrome Extension README](./CHROME_EXTENSION_README.md) - Extension development guide
-- [Chrome Extension Environment](./CHROME_EXTENSION_ENVIRONMENT.md) - Extension configuration
-- [Chrome Extension Tests](./CHROME_EXTENSION_TESTS_README.md) - Testing documentation
-- [Chrome Extension Stores](./CHROME_EXTENSION_STORES_README.md) - State management documentation
+- [Chrome Extension README](./extension/CHROME_EXTENSION_README.md) - Extension development guide
+- [Chrome Extension Environment](./extension/CHROME_EXTENSION_ENVIRONMENT.md) - Extension configuration
+- [Chrome Extension Tests](./extension/CHROME_EXTENSION_TESTS_README.md) - Testing documentation
+- [Chrome Extension Stores](./extension/CHROME_EXTENSION_STORES_README.md) - State management documentation
+
+### 🔌 MCP (Model Context Protocol) Documentation
+- [MCP Integration Guide](./mcp/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
+- [MCP Servers Overview](./mcp/MCP_SERVERS_README.md) - MCP servers documentation
+- [Firecrawl MCP Server](./mcp/FIRECRAWL_MCP_README.md) - Web page summary MCP server
+- [Notion MCP Server](./mcp/NOTION_MCP_README.md) - Notion article correction MCP server
+- [OpenAI Cost MCP Server](./mcp/OPENAI_COST_MCP_README.md) - OpenAI cost tracking MCP server
 
 ### ⚡ Features & Usage
-- [Turbo Mode Documentation](./TURBO_MODE_README.md) - Multi-model comparison feature
-- [Screenshot Capture Guide](./SCREENSHOT_README.md) - Screen capture functionality
-- [Screenshot Fix Guide](./SCREENSHOT_FIX_README.md) - Screenshot functionality fixes
-- [Settings Management](./SETTINGS_README.md) - Extension settings and preferences
+- [Turbo Mode Documentation](./features/TURBO_MODE_README.md) - Multi-model comparison feature
+- [Screenshot Capture Guide](./features/SCREENSHOT_README.md) - Screen capture functionality
+- [Screenshot Fix Guide](./features/SCREENSHOT_FIX_README.md) - Screenshot functionality fixes
+- [Settings Management](./features/SETTINGS_README.md) - Extension settings and preferences
 
 ### 🔧 Development & Maintenance
-- [Migration Complete](./MIGRATION_COMPLETE.md) - Migration documentation
-- [State Refactor Improvement](./STATE_REFACTOR_IMPROVEMENT.md) - State management improvements
+- [Migration Complete](./development/MIGRATION_COMPLETE.md) - Migration documentation
+- [State Refactor Improvement](./development/STATE_REFACTOR_IMPROVEMENT.md) - State management improvements
 
 
 

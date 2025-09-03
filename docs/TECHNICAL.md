@@ -225,25 +225,42 @@ Enable debug logging:
 **Backend:** Set `NODE_ENV=development` in `.env`
 **Chrome Extension:** Set `VITE_DEBUG_MODE=true` in `.env`
 
-## 📚 Detailed Documentation
+## 📚 Complete Documentation Index
 
-For more detailed information, see the following documentation:
+This section provides a comprehensive index of all documentation files in the project:
 
-### Setup & Configuration
+### 🚀 Setup & Configuration
 - [Environment Setup Guide](./ENVIRONMENT_SETUP.md) - Comprehensive setup instructions
-- [Backend Environment Setup](../backend/ENVIRONMENT_SETUP.md) - Backend-specific configuration
-- [Chrome Extension Environment](../chrome-extension/ENVIRONMENT.md) - Extension configuration
 
-### Features & Usage
-- [MCP Integration Guide](../backend/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
-- [Turbo Mode Documentation](../chrome-extension/TURBO_MODE_README.md) - Multi-model comparison feature
-- [Screenshot Capture Guide](../chrome-extension/SCREENSHOT_README.md) - Screen capture functionality
-- [Settings Management](../chrome-extension/SETTINGS_README.md) - Extension settings and preferences
+### 🤖 Backend Documentation
+- [Backend README](./backend/BACKEND_README.md) - Backend development guide
+- [Backend Environment Setup](./backend/BACKEND_ENVIRONMENT_SETUP.md) - Backend-specific configuration
+- [Chat Sessions](./backend/CHAT_SESSIONS_README.md) - Session management system
 
-### Development & Testing
-- [Backend README](../backend/README.md) - Backend development guide
-- [Chrome Extension README](../chrome-extension/README.md) - Extension development guide
-- [Chat Sessions](../backend/CHAT_SESSIONS_README.md) - Session management system
+### 🌐 Chrome Extension Documentation
+- [Chrome Extension README](./extension/CHROME_EXTENSION_README.md) - Extension development guide
+- [Chrome Extension Environment](./extension/CHROME_EXTENSION_ENVIRONMENT.md) - Extension configuration
+- [Chrome Extension Tests](./extension/CHROME_EXTENSION_TESTS_README.md) - Testing documentation
+- [Chrome Extension Stores](./extension/CHROME_EXTENSION_STORES_README.md) - State management documentation
+
+### 🔌 MCP (Model Context Protocol) Documentation
+- [MCP Integration Guide](./mcp/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
+- [MCP Servers Overview](./mcp/MCP_SERVERS_README.md) - MCP servers documentation
+- [Firecrawl MCP Server](./mcp/FIRECRAWL_MCP_README.md) - Web page summary MCP server
+- [Notion MCP Server](./mcp/NOTION_MCP_README.md) - Notion article correction MCP server
+- [OpenAI Cost MCP Server](./mcp/OPENAI_COST_MCP_README.md) - OpenAI cost tracking MCP server
+
+### ⚡ Features & Usage
+- [Turbo Mode Documentation](./features/TURBO_MODE_README.md) - Multi-model comparison feature
+- [Screenshot Capture Guide](./features/SCREENSHOT_README.md) - Screen capture functionality
+- [Screenshot Fix Guide](./features/SCREENSHOT_FIX_README.md) - Screenshot functionality fixes
+- [Settings Management](./features/SETTINGS_README.md) - Extension settings and preferences
+
+### 🔧 Development & Maintenance
+- [Migration Complete](./development/MIGRATION_COMPLETE.md) - Migration documentation
+- [State Refactor Improvement](./development/STATE_REFACTOR_IMPROVEMENT.md) - State management improvements
+
+
 
 ## 🤝 Contributing
 

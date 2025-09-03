@@ -259,9 +259,7 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Migration Complete](./MIGRATION_COMPLETE.md) - Migration documentation
 - [State Refactor Improvement](./STATE_REFACTOR_IMPROVEMENT.md) - State management improvements
 
-### 🐛 Issue Templates
-- [GitHub Bug Report Template](./GITHUB_BUG_REPORT_TEMPLATE.md) - Bug report template
-- [GitHub Feature Request Template](./GITHUB_FEATURE_REQUEST_TEMPLATE.md) - Feature request template
+
 
 ## 🤝 Contributing
 

@@ -35,7 +35,7 @@ VITE_APP_NAME=Him
 VITE_APP_VERSION=1.0.0
 
 # API Configuration
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=http://localhost:3001
 VITE_DEFAULT_MODEL=gemini-2.5-flash
 
 # Development Settings
@@ -112,7 +112,7 @@ Open browser console and look for:
   isProduction: false,
   isChromeExtension: false,
   appName: "Him",
-  apiBaseUrl: "http://localhost:3000",
+  apiBaseUrl: "http://localhost:3001",
   storagePrefix: "dev_"
 }
 ```
@@ -134,7 +134,7 @@ In development mode, localStorage keys will be prefixed:
 - `false`: Reduces console output
 
 ### **VITE_API_BASE_URL**
-- Development: `http://localhost:3000`
+- Development: `http://localhost:3001`
 - Production: Your actual API endpoint
 
 ## 🔄 Environment Switching

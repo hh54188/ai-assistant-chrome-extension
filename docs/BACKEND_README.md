@@ -22,7 +22,7 @@ npm install
 
 ### 2. Configure Environment Variables
 
-**📋 For detailed environment setup instructions, see [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md)**
+**📋 For detailed environment setup instructions, see [BACKEND_ENVIRONMENT_SETUP.md](./BACKEND_ENVIRONMENT_SETUP.md)**
 
 Create a `.env` file in the backend directory:
 

@@ -1,25 +1,58 @@
+import { isChromeExtension } from '../utils/environment';
+
 const BACKEND_URL = 'http://localhost:3001';
 
 // Dynamically import the Google GenAI SDK
 const { GoogleGenAI } = await import('@google/genai');
 
 // Utility functions to check settings
-export const isFrontendOnlyMode = () => {
-    return localStorage.getItem('frontendOnlyMode') === 'true';
+
+// Generic storage getter that handles both Chrome extension and localStorage
+const getStorageValue = async (key, defaultValue) => {
+    try {
+        if (isChromeExtension() && chrome?.storage?.local) {
+            const result = await chrome.storage.local.get([key]);
+            return result[key] || defaultValue;
+        } else {
+            // Development mode - use localStorage
+            const storedValue = localStorage.getItem(key);
+            if (storedValue) {
+                try {
+                    // Parse JSON if it was stored as JSON
+                    return JSON.parse(storedValue);
+                } catch (parseError) {
+                    // If it's not JSON, return as is
+                    return storedValue;
+                }
+            }
+            return defaultValue;
+        }
+    } catch (error) {
+        console.error(`Error getting ${key}:`, error);
+        return defaultValue;
+    }
 };
 
-export const getGeminiApiKey = () => {
-    return localStorage.getItem('geminiApiKey') || '';
+export const getGeminiApiKey = async () => {
+    return await getStorageValue('geminiApiKey', '');
 };
 
-export const hasValidApiKey = () => {
-    const apiKey = getGeminiApiKey();
+export const getBackendUrl = async () => {
+    return await getStorageValue('backendUrl', 'http://localhost:3001');
+};
+
+export const hasValidApiKey = async () => {
+    const apiKey = await getGeminiApiKey();
     return apiKey && apiKey.trim().length > 0;
 };
 
 class ChatService {
     constructor() {
-        this.baseUrl = BACKEND_URL;
+        this.baseUrl = BACKEND_URL; // Fallback URL
+    }
+
+    async getBaseUrl() {
+        return await getBackendUrl();
     }
 
     /**
@@ -36,7 +69,8 @@ class ChatService {
         } = callbacks;
 
         try {
-            const response = await fetch(`${this.baseUrl}/api/chat/stream`, {
+            const baseUrl = await this.getBaseUrl();
+            const response = await fetch(`${baseUrl}/api/chat/stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -138,7 +172,8 @@ class ChatService {
      */
     async chat(message, model = 'gpt-4.1-nano', conversationHistory = [], files = []) {
         try {
-            const response = await fetch(`${this.baseUrl}/api/chat/non-stream`, {
+            const baseUrl = await this.getBaseUrl();
+            const response = await fetch(`${baseUrl}/api/chat/non-stream`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -168,7 +203,8 @@ class ChatService {
      */
     async getModels() {
         try {
-            const response = await fetch(`${this.baseUrl}/api/chat/models`);
+            const baseUrl = await this.getBaseUrl();
+            const response = await fetch(`${baseUrl}/api/chat/models`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -187,7 +223,8 @@ class ChatService {
      */
     async testConnections() {
         try {
-            const response = await fetch(`${this.baseUrl}/api/chat/test`);
+            const baseUrl = await this.getBaseUrl();
+            const response = await fetch(`${baseUrl}/api/chat/test`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -206,7 +243,8 @@ class ChatService {
      */
     async healthCheck() {
         try {
-            const response = await fetch(`${this.baseUrl}/health`);
+            const baseUrl = await this.getBaseUrl();
+            const response = await fetch(`${baseUrl}/health`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -223,7 +261,7 @@ class ChatService {
     /**
      * Direct Gemini API call when in frontend-only mode using @google/genai SDK
      */
-    async streamChatDirectGemini(message, conversationHistory = [], callbacks = {}) {
+    async streamChatDirectGemini(message, conversationHistory = [], callbacks = {}, isFrontendMode = false) {
         const {
             onChunk,
             onComplete,
@@ -232,14 +270,17 @@ class ChatService {
             abortController
         } = callbacks;
 
-        if (!isFrontendOnlyMode() || !hasValidApiKey()) {
+        // Check if frontend-only mode is enabled and API key is valid
+        const hasValidKey = await hasValidApiKey();
+        
+        if (!isFrontendMode || !hasValidKey) {
             throw new Error('Direct API mode not enabled or invalid API key');
         }
 
         try {
             
             // Initialize Gemini client with user's API key
-            const apiKey = getGeminiApiKey();
+            const apiKey = await getGeminiApiKey();
             const genAI = new GoogleGenAI({
                 vertexai: false,
                 apiKey: apiKey

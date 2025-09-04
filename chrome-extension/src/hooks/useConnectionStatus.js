@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-
-const BACKEND_URL = 'http://localhost:3001';
+import { getBackendUrl } from '../services/chatService';
 
 const useConnectionStatus = () => {
     const [connectionStatus, setConnectionStatus] = useState(false);
@@ -8,7 +7,8 @@ const useConnectionStatus = () => {
     useEffect(() => {
         const testConnections = async () => {
             try {
-                const response = await fetch(`${BACKEND_URL}/health`);
+                const backendUrl = await getBackendUrl();
+                const response = await fetch(`${backendUrl}/health`);
                 if (response.ok) {
                     setConnectionStatus(true);
                 }

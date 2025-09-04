@@ -54,9 +54,6 @@ export const getConfig = () => {
     isDev: isDevelopment(),
     isProd: isProduction(),
     isExtension: isChromeExtension(),
-    
-    // Storage configuration
-    storagePrefix: isDevelopment() && !isChromeExtension() ? 'dev_' : '',
   };
 };
 
@@ -73,7 +70,6 @@ export const logEnvironment = () => {
     isChromeExtension: config.isExtension,
     appName: config.appName,
     apiBaseUrl: config.apiBaseUrl,
-    storagePrefix: config.storagePrefix,
     debugMode: config.debugMode,
   });
 };

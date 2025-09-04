@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { isChromeExtension, isDevelopment, getConfig } from '../utils/environment';
+import { useState, useEffect, useCallback } from 'react';
+import { isChromeExtension } from '../utils/environment';
 
 // Storage types
 const STORAGE_TYPES = {
@@ -8,14 +8,6 @@ const STORAGE_TYPES = {
     SESSION: 'session'   // Data persists until browser session ends
 };
 
-// Get storage key with prefix for development
-const getStorageKey = (key, storageType) => {
-    const config = getConfig();
-    if (config.isDev && !config.isExtension) {
-        return `${config.storagePrefix}${storageType}_${key}`;
-    }
-    return key;
-};
 
 // LocalStorage wrapper for development
 const localStorageWrapper = {
@@ -47,13 +39,7 @@ const localStorageWrapper = {
     
     clear: () => {
         try {
-            // Only clear keys that start with our prefix
-            const keys = Object.keys(localStorage);
-            keys.forEach(key => {
-                if (key.startsWith('dev_')) {
-                    localStorage.removeItem(key);
-                }
-            });
+            localStorage.clear();
         } catch (error) {
             console.error('Error clearing localStorage:', error);
         }
@@ -65,34 +51,32 @@ const useChromeStorage = (key, defaultValue, storageType = STORAGE_TYPES.LOCAL) 
     const [loading, setLoading] = useState(true);
 
     // Get value from storage
-    const getValue = async () => {
+    const getValue = useCallback(async () => {
         try {
-            if (isChromeExtension()) {
+            if (isChromeExtension() && chrome?.storage?.[storageType]) {
                 // Chrome extension mode
                 const result = await chrome.storage[storageType].get([key]);
                 return result[key] !== undefined ? result[key] : defaultValue;
             } else {
                 // Development mode - use localStorage
-                const storageKey = getStorageKey(key, storageType);
-                const storedValue = localStorageWrapper.get(storageKey);
+                const storedValue = localStorageWrapper.get(key);
                 return storedValue !== undefined ? storedValue : defaultValue;
             }
         } catch (error) {
             console.error('Error reading from storage:', error);
             return defaultValue;
         }
-    };
+    }, [key, storageType, defaultValue]);
 
     // Set value in storage
     const setStorageValue = async (newValue) => {
         try {
-            if (isChromeExtension()) {
+            if (isChromeExtension() && chrome?.storage?.[storageType]) {
                 // Chrome extension mode
                 await chrome.storage[storageType].set({ [key]: newValue });
             } else {
                 // Development mode - use localStorage
-                const storageKey = getStorageKey(key, storageType);
-                localStorageWrapper.set(storageKey, newValue);
+                localStorageWrapper.set(key, newValue);
             }
             setValue(newValue);
         } catch (error) {
@@ -108,11 +92,11 @@ const useChromeStorage = (key, defaultValue, storageType = STORAGE_TYPES.LOCAL) 
             setLoading(false);
         };
         initValue();
-    }, [key, storageType]);
+    }, [key, storageType, getValue]);
 
     // Listen for storage changes
     useEffect(() => {
-        if (isChromeExtension()) {
+        if (isChromeExtension() && chrome?.storage?.onChanged) {
             // Chrome extension mode - listen to chrome.storage changes
             const handleStorageChange = (changes, areaName) => {
                 if (areaName === storageType && changes[key]) {
@@ -125,7 +109,7 @@ const useChromeStorage = (key, defaultValue, storageType = STORAGE_TYPES.LOCAL) 
         } else {
             // Development mode - listen to localStorage changes
             const handleStorageChange = (e) => {
-                if (e.key === getStorageKey(key, storageType)) {
+                if (e.key === key) {
                     const newValue = e.newValue ? JSON.parse(e.newValue) : undefined;
                     setValue(newValue !== undefined ? newValue : defaultValue);
                 }
@@ -144,15 +128,14 @@ export const chromeStorage = {
     // Get multiple values
     getMultiple: async (keys, storageType = STORAGE_TYPES.LOCAL) => {
         try {
-            if (isChromeExtension()) {
+            if (isChromeExtension() && chrome?.storage?.[storageType]) {
                 // Chrome extension mode
                 return await chrome.storage[storageType].get(keys);
             } else {
                 // Development mode - use localStorage
                 const result = {};
                 keys.forEach(key => {
-                    const storageKey = getStorageKey(key, storageType);
-                    const value = localStorageWrapper.get(storageKey);
+                    const value = localStorageWrapper.get(key);
                     if (value !== undefined) {
                         result[key] = value;
                     }
@@ -168,14 +151,13 @@ export const chromeStorage = {
     // Set multiple values
     setMultiple: async (data, storageType = STORAGE_TYPES.LOCAL) => {
         try {
-            if (isChromeExtension()) {
+            if (isChromeExtension() && chrome?.storage?.[storageType]) {
                 // Chrome extension mode
                 await chrome.storage[storageType].set(data);
             } else {
                 // Development mode - use localStorage
                 Object.entries(data).forEach(([key, value]) => {
-                    const storageKey = getStorageKey(key, storageType);
-                    localStorageWrapper.set(storageKey, value);
+                    localStorageWrapper.set(key, value);
                 });
             }
         } catch (error) {
@@ -186,14 +168,13 @@ export const chromeStorage = {
     // Remove specific keys
     remove: async (keys, storageType = STORAGE_TYPES.LOCAL) => {
         try {
-            if (isChromeExtension()) {
+            if (isChromeExtension() && chrome?.storage?.[storageType]) {
                 // Chrome extension mode
                 await chrome.storage[storageType].remove(keys);
             } else {
                 // Development mode - use localStorage
                 keys.forEach(key => {
-                    const storageKey = getStorageKey(key, storageType);
-                    localStorageWrapper.remove(storageKey);
+                    localStorageWrapper.remove(key);
                 });
             }
         } catch (error) {
@@ -204,7 +185,7 @@ export const chromeStorage = {
     // Clear all data
     clear: async (storageType = STORAGE_TYPES.LOCAL) => {
         try {
-            if (isChromeExtension()) {
+            if (isChromeExtension() && chrome?.storage?.[storageType]) {
                 // Chrome extension mode
                 await chrome.storage[storageType].clear();
             } else {

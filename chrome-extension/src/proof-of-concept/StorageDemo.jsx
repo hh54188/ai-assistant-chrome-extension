@@ -134,7 +134,6 @@ const StorageDemo = () => {
             {typeof chrome === 'undefined' && (
               <div style={{ fontSize: '12px', fontFamily: 'monospace', background: '#f5f5f5', padding: 8, borderRadius: 4 }}>
                 {Object.keys(localStorage)
-                  .filter(key => key.startsWith('dev_'))
                   .map(key => <div key={key}>{key}</div>)
                 }
               </div>

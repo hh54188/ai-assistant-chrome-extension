@@ -412,14 +412,16 @@ describe('CopilotSidebar Integration Tests - Attachment Feature', () => {
     });
 
     it('should disable attachments when in frontend-only mode', async () => {
-      // Mock isFrontendOnlyMode to return true for this test
-      const { isFrontendOnlyMode } = await import('../../services/chatService');
-      vi.mocked(isFrontendOnlyMode).mockReturnValue(true);
+      // Mock chrome storage to return frontendOnlyMode: true
+      global.chrome.storage.local.get.mockResolvedValue({ frontendOnlyMode: true });
 
       renderWithMocks(<CopilotSidebar {...mockProps} />);
       
-      expect(screen.queryByTestId('attachments-section')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('attachment-button')).not.toBeInTheDocument();
+      // Wait for the chrome storage to load
+      await waitFor(() => {
+        expect(screen.queryByTestId('attachments-section')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('attachment-button')).not.toBeInTheDocument();
+      });
     });
   });
 

@@ -10,9 +10,10 @@ import SettingsModal from './components/SettingsModal';
 import TurboChatList from './components/TurboChatList';
 import DropZoneOverlay from './components/DropZoneOverlay';
 import useConnectionStatus from './hooks/useConnectionStatus';
+import useChromeStorage from './hooks/useChromeStorage';
 // ScreenCapture is now handled by content script
 
-import chatService, { isFrontendOnlyMode } from './services/chatService';
+import chatService from './services/chatService';
 import { useCopilotStyle } from './CopilotSidebar.styles';
 import usePageSelection from './hooks/usePageSelection';
 import { useUIStore, useChatStore } from './stores';
@@ -80,6 +81,9 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         getSessionById,
         addSession
     } = useChatStore();
+    
+    // Chrome storage hooks
+    const [frontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
     
     // Computed values from stores
     const sessionList = getSessionList();
@@ -234,7 +238,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         const requestSessionId = currentSessionId;
         
         // Check if we should use direct Gemini API or backend
-        const useDirectApi = isFrontendOnlyMode() && selectedProvider.includes('gemini');
+        const useDirectApi = frontendOnlyMode && selectedProvider.includes('gemini');
         
         if (useDirectApi) {
             // Use direct Gemini API
@@ -273,7 +277,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     setLoading(isLoading);
                 },
                 abortController: abortController
-            });
+            }, frontendOnlyMode);
         } else {
             // Use chatService for streaming with files
             await chatService.streamChat(val, selectedProvider, conversationHistory, requestSessionId, {
@@ -623,7 +627,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     isExpanded={isExpanded}
                     onToggleExpand={handleToggleExpand}
                     onScreenshotCapture={handleScreenshotCapture}
-                    isDirectApiMode={isFrontendOnlyMode()}
+                    isDirectApiMode={frontendOnlyMode}
                     connectionStatus={connectionStatus}
                 />
                 <div className={styles.mainContent}>
@@ -661,7 +665,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                         />
                     )}
                     {turboMode && turboModeExpanded ? null : <ChatSender
-                        allowAttachments={!isFrontendOnlyMode() && connectionStatus}
+                        allowAttachments={!frontendOnlyMode && connectionStatus}
                         styles={styles}
                         handleUserSubmit={handleUserSubmit}
                         disabled={turboMode && turboModeExpanded}

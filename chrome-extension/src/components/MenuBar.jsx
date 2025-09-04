@@ -39,8 +39,6 @@ const MenuBar = ({
 }) => {
     const { styles } = useMenuBarStyle();
 
-
-
     return (
         <div className={styles.menuBar}>
             <div className={styles.menuBarTop}>

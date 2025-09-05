@@ -22,6 +22,11 @@ const SettingsModal = ({
     // Initialize local state with stored values when modal opens or values change
     useEffect(() => {
         if (visible && !frontendModeLoading && !apiKeyLoading && !backendUrlLoading) {
+            console.log('SettingsModal loading stored values:', {
+                frontendOnlyMode: storedFrontendOnlyMode,
+                apiKey: storedApiKey ? storedApiKey.substring(0, 10) + '...' : 'empty',
+                backendUrl: storedBackendUrl
+            });
             setFrontendOnlyMode(storedFrontendOnlyMode);
             setApiKey(storedApiKey);
             setBackendUrl(storedBackendUrl);

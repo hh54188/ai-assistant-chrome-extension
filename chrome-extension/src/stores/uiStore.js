@@ -21,6 +21,7 @@ export const useUIStore = create(
         referenceModalVisible: false,
         modelSelectionModalVisible: false,
         settingsModalVisible: false,
+        forceConfigModalVisible: false,
         currentSelection: null,
         selectedModels: [],
         
@@ -69,6 +70,10 @@ export const useUIStore = create(
         
         setSettingsModalVisible: (visible) => set((state) => {
             state.settingsModalVisible = visible;
+        }),
+        
+        setForceConfigModalVisible: (visible) => set((state) => {
+            state.forceConfigModalVisible = visible;
         }),
         
         setCurrentSelection: (selection) => set((state) => {
@@ -156,6 +161,7 @@ export const useUIStore = create(
             state.loading = false;
             state.referenceModalVisible = false;
             state.modelSelectionModalVisible = false;
+            state.forceConfigModalVisible = false;
             state.currentSelection = null;
             state.selectedModels = [];
             state.isScreenshotMode = false;
@@ -183,7 +189,7 @@ export const useUIStore = create(
                 hasScreenshot: !!state.screenshotData,
                 hasFiles: state.currentSessionFiles.length > 0,
                 hasSelection: !!state.currentSelection,
-                isAnyModalOpen: state.referenceModalVisible || state.modelSelectionModalVisible,
+                isAnyModalOpen: state.referenceModalVisible || state.modelSelectionModalVisible || state.forceConfigModalVisible,
                 isDragOver: state.isDragOver,
             };
         }

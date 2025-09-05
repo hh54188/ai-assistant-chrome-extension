@@ -51,6 +51,14 @@ const SettingsModal = ({
         onCancel();
     };
 
+    const handleRestoreDefaults = () => {
+        // Reset to default values
+        setFrontendOnlyMode(false);
+        setApiKey('');
+        setBackendUrl('http://localhost:3001');
+        notification.info('Settings restored to defaults');
+    };
+
     if (!visible) return null;
 
     // Show loading state while settings are being loaded
@@ -145,16 +153,23 @@ const SettingsModal = ({
 
                     {/* Footer */}
                     <div style={styles.footer}>
-                        <Button onClick={handleCancel}>
-                            Cancel
-                        </Button>
-                        <Button 
-                            type="primary" 
-                            onClick={handleSave}
-                            disabled={frontendOnlyMode && !apiKey.trim()}
-                        >
-                            Save
-                        </Button>
+                        <div style={styles.footerLeft}>
+                            <Button onClick={handleRestoreDefaults}>
+                                Restore Defaults
+                            </Button>
+                        </div>
+                        <div style={styles.footerRight}>
+                            <Button onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                            <Button 
+                                type="primary" 
+                                onClick={handleSave}
+                                disabled={frontendOnlyMode && !apiKey.trim()}
+                            >
+                                Save
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>

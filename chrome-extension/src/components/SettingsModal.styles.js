@@ -117,8 +117,19 @@ export const styles = {
         padding: '16px 20px',
         borderTop: '1px solid #f0f0f0',
         display: 'flex',
-        justifyContent: 'flex-end',
-        gap: '8px',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         flexShrink: 0
+    },
+
+    footerLeft: {
+        display: 'flex',
+        alignItems: 'center'
+    },
+
+    footerRight: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
     }
 };

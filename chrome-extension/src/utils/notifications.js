@@ -41,7 +41,7 @@ export const showNotification = (message, type = 'success', duration = 3000) => 
     toast.textContent = fullMessage;
     toast.style.cssText = `
         position: fixed !important;
-        top: ${20 + (currentId - 1) * 60}px !important;
+        top: 20px !important;
         right: 20px !important;
         background: ${backgroundColor} !important;
         color: white !important;

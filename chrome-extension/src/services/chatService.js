@@ -20,7 +20,7 @@ const getStorageValue = async (key, defaultValue) => {
                 try {
                     // Parse JSON if it was stored as JSON
                     return JSON.parse(storedValue);
-                } catch (parseError) {
+                } catch {
                     // If it's not JSON, return as is
                     return storedValue;
                 }

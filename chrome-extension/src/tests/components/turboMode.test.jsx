@@ -18,6 +18,8 @@ vi.mock('../../stores', () => {
     }),
     settingsModalVisible: false,
     setSettingsModalVisible: vi.fn(),
+    forceConfigModalVisible: false,
+    setForceConfigModalVisible: vi.fn(),
     currentSelection: null,
     setCurrentSelection: vi.fn(),
     selectedModels: [],
@@ -363,9 +365,17 @@ vi.mock('../../components/SettingsModal', () => ({
   default: ({ visible }) => visible ? <div data-testid="settings-modal">Settings Modal</div> : null
 }));
 
+vi.mock('../../components/ForceConfigModal', () => ({
+  default: ({ visible }) => visible ? <div data-testid="force-config-modal">Force Config Modal</div> : null
+}));
+
 // Mock hooks
 vi.mock('../../hooks/useConnectionStatus', () => ({
-  default: () => true
+  default: () => ({
+    connectionStatus: true,
+    isLoading: false,
+    retryConnection: vi.fn()
+  })
 }));
 
 vi.mock('../../hooks/usePageSelection', () => ({

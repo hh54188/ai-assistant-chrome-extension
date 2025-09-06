@@ -7,6 +7,7 @@ import MenuBar from './components/MenuBar';
 import ReferenceModal from './components/ReferenceModal';
 import ModelSelectionModal from './components/ModelSelectionModal';
 import SettingsModal from './components/SettingsModal';
+import ForceConfigModal from './components/ForceConfigModal';
 import TurboChatList from './components/TurboChatList';
 import DropZoneOverlay from './components/DropZoneOverlay';
 import useConnectionStatus from './hooks/useConnectionStatus';
@@ -34,6 +35,8 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setModelSelectionModalVisible,
         settingsModalVisible,
         setSettingsModalVisible,
+        forceConfigModalVisible,
+        setForceConfigModalVisible,
         currentSelection,
         setCurrentSelection,
         selectedModels,
@@ -83,13 +86,16 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
     } = useChatStore();
     
     // Chrome storage hooks
-    const [frontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
+    const [frontendOnlyMode, setFrontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
+    const [geminiApiKey] = useChromeStorage('geminiApiKey', '');
+    
+    // Connection status hook
+    const { connectionStatus, isLoading: connectionLoading, retryConnection } = useConnectionStatus();
     
     // Computed values from stores
     const sessionList = getSessionList();
     const messages = getCurrentMessages();
     const currentSession = getCurrentSession();
-    const connectionStatus = useConnectionStatus();
 
 
     // No need for Ant Design message API anymore - using custom notifications
@@ -604,6 +610,46 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         }
     }, [turboMode, turboModeExpanded, setTurboModeExpanded]);
 
+    // Force config modal logic - show when backend is not available and no API key
+    useEffect(() => {
+        // Don't show if connection is still loading
+        if (connectionLoading) return;
+        
+        const hasApiKey = geminiApiKey && geminiApiKey.trim().length > 0;
+        
+        // If backend is connected, hide modal and ensure frontend-only mode is disabled
+        if (connectionStatus) {
+            setForceConfigModalVisible(false);
+            return;
+        }
+        
+        // If backend is offline but user has API key, automatically enable direct API mode
+        if (!connectionStatus && hasApiKey) {
+            setForceConfigModalVisible(false);
+            
+            // Auto-enable direct API mode if not already enabled
+            if (!frontendOnlyMode) {
+                console.log('Auto-enabling direct API mode - backend offline but API key available');
+                // Enable frontend-only mode automatically
+                const enableDirectMode = async () => {
+                    try {
+                        await setFrontendOnlyMode(true);
+                        notification.info('Direct API mode enabled automatically - backend is offline');
+                    } catch (error) {
+                        console.error('Failed to auto-enable direct API mode:', error);
+                    }
+                };
+                enableDirectMode();
+            }
+            return;
+        }
+        
+        // Show force config modal only if backend is not available and no API key
+        if (!connectionStatus && !hasApiKey) {
+            setForceConfigModalVisible(true);
+        }
+    }, [connectionStatus, connectionLoading, geminiApiKey, frontendOnlyMode, setForceConfigModalVisible, setFrontendOnlyMode]);
+
 
     return (
         <div 
@@ -717,6 +763,14 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     visible={settingsModalVisible}
                     onCancel={handleSettingsCancel}
                     onConfirm={handleSettingsConfirm}
+                />
+            )}
+            {isOpen && (
+                <ForceConfigModal
+                    visible={forceConfigModalVisible}
+                    connectionStatus={connectionStatus}
+                    onRetryConnection={retryConnection}
+                    onConfigured={() => setForceConfigModalVisible(false)}
                 />
             )}
             

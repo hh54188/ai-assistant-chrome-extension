@@ -22,6 +22,11 @@ const SettingsModal = ({
     // Initialize local state with stored values when modal opens or values change
     useEffect(() => {
         if (visible && !frontendModeLoading && !apiKeyLoading && !backendUrlLoading) {
+            console.log('SettingsModal loading stored values:', {
+                frontendOnlyMode: storedFrontendOnlyMode,
+                apiKey: storedApiKey ? storedApiKey.substring(0, 10) + '...' : 'empty',
+                backendUrl: storedBackendUrl
+            });
             setFrontendOnlyMode(storedFrontendOnlyMode);
             setApiKey(storedApiKey);
             setBackendUrl(storedBackendUrl);
@@ -49,6 +54,14 @@ const SettingsModal = ({
         setApiKey(storedApiKey);
         setBackendUrl(storedBackendUrl);
         onCancel();
+    };
+
+    const handleRestoreDefaults = () => {
+        // Reset to default values
+        setFrontendOnlyMode(false);
+        setApiKey('');
+        setBackendUrl('http://localhost:3001');
+        notification.info('Settings restored to defaults');
     };
 
     if (!visible) return null;
@@ -145,16 +158,23 @@ const SettingsModal = ({
 
                     {/* Footer */}
                     <div style={styles.footer}>
-                        <Button onClick={handleCancel}>
-                            Cancel
-                        </Button>
-                        <Button 
-                            type="primary" 
-                            onClick={handleSave}
-                            disabled={frontendOnlyMode && !apiKey.trim()}
-                        >
-                            Save
-                        </Button>
+                        <div style={styles.footerLeft}>
+                            <Button onClick={handleRestoreDefaults}>
+                                Restore Defaults
+                            </Button>
+                        </div>
+                        <div style={styles.footerRight}>
+                            <Button onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                            <Button 
+                                type="primary" 
+                                onClick={handleSave}
+                                disabled={frontendOnlyMode && !apiKey.trim()}
+                            >
+                                Save
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>

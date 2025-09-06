@@ -1,0 +1,7 @@
+---
+description: Document Rules
+globs: 
+alwaysApply: true
+---
+
+- All the document files should saved inside the `docs` folder which exist in the root path of the project and been referenced in the TECHINICAL.md

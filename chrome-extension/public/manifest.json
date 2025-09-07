@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Him",
+  "name": "Hiim",
   "version": "1.0.0",
-  "description": "An AI copilot sidebar for web browsing",
+  "description": "AI assistant sidebar",
   "permissions": [
     "activeTab",
     "scripting",

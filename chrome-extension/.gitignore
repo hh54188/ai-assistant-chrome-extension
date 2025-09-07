@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# E2E test screenshots (don't commit to git)
+tests/e2e/screenshots/

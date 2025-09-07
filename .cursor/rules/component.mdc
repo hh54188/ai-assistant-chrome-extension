@@ -1,0 +1,8 @@
+---
+description: React Components Rules
+globs:
+alwaysApply: true
+---
+
+- The css style of React component should be saved in a separated file
+

@@ -1,6 +1,6 @@
 ---
 description: Document Rules
-globs: 
+globs: *.md 
 alwaysApply: true
 ---
 

@@ -18,7 +18,8 @@ import {
     ExpandOutlined,
     CompressOutlined,
     LoadingOutlined,
-    CameraOutlined
+    CameraOutlined,
+    QuestionCircleOutlined
 } from '@ant-design/icons';
 import { Conversations } from '@ant-design/x';
 import { Button, Tooltip, Popover } from 'antd';
@@ -27,6 +28,7 @@ import { useMenuBarStyle } from './MenuBar.styles';
 
 const MenuBar = ({ 
     onOpenSettings,
+    onOpenHelp,
     sessionList,
     curSession,
     handleSessionChange,
@@ -181,6 +183,18 @@ const MenuBar = ({
                             </div>
                         }
                         onClick={onOpenSettings}
+                        className={styles.menuButton}
+                    />
+                </Tooltip>
+                <Tooltip 
+                    getPopupContainer={(triggerNode) => triggerNode.parentNode} 
+                    title="Help & About"
+                    placement="right"
+                >
+                    <Button
+                        type="text"
+                        icon={<QuestionCircleOutlined />}
+                        onClick={onOpenHelp}
                         className={styles.menuButton}
                     />
                 </Tooltip>

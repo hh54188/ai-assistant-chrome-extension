@@ -7,6 +7,7 @@ import MenuBar from './components/MenuBar';
 import ReferenceModal from './components/ReferenceModal';
 import ModelSelectionModal from './components/ModelSelectionModal';
 import SettingsModal from './components/SettingsModal';
+import HelpModal from './components/HelpModal';
 import ForceConfigModal from './components/ForceConfigModal';
 import TurboChatList from './components/TurboChatList';
 import DropZoneOverlay from './components/DropZoneOverlay';
@@ -35,6 +36,8 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setModelSelectionModalVisible,
         settingsModalVisible,
         setSettingsModalVisible,
+        helpModalVisible,
+        setHelpModalVisible,
         forceConfigModalVisible,
         setForceConfigModalVisible,
         currentSelection,
@@ -542,6 +545,15 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setSettingsModalVisible(false);
     };
 
+    // Help modal handlers
+    const handleOpenHelp = () => {
+        setHelpModalVisible(true);
+    };
+
+    const handleHelpCancel = () => {
+        setHelpModalVisible(false);
+    };
+
     const handleCancelTurboMode = () => {
         setTurboMode(false);
         setTurboModeExpanded(false);
@@ -666,6 +678,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
             <div className={styles.sidebarLayout}>
                 <MenuBar
                     onOpenSettings={handleOpenSettings}
+                    onOpenHelp={handleOpenHelp}
                     sessionList={sessionList}
                     curSession={currentSessionId}
                     handleSessionChange={handleSessionChange}
@@ -763,6 +776,12 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     visible={settingsModalVisible}
                     onCancel={handleSettingsCancel}
                     onConfirm={handleSettingsConfirm}
+                />
+            )}
+            {isOpen && (
+                <HelpModal
+                    visible={helpModalVisible}
+                    onCancel={handleHelpCancel}
                 />
             )}
             {isOpen && (

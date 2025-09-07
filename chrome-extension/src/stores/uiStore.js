@@ -21,6 +21,7 @@ export const useUIStore = create(
         referenceModalVisible: false,
         modelSelectionModalVisible: false,
         settingsModalVisible: false,
+        helpModalVisible: false,
         forceConfigModalVisible: false,
         currentSelection: null,
         selectedModels: [],
@@ -70,6 +71,10 @@ export const useUIStore = create(
         
         setSettingsModalVisible: (visible) => set((state) => {
             state.settingsModalVisible = visible;
+        }),
+        
+        setHelpModalVisible: (visible) => set((state) => {
+            state.helpModalVisible = visible;
         }),
         
         setForceConfigModalVisible: (visible) => set((state) => {

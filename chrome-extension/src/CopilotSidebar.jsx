@@ -545,10 +545,6 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setSettingsModalVisible(false);
     };
 
-    const handleShowForceConfig = () => {
-        setSettingsModalVisible(false);
-        setForceConfigModalVisible(true);
-    };
 
     // Help modal handlers
     const handleOpenHelp = () => {
@@ -640,24 +636,10 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
             return;
         }
         
-        // If backend is offline but user has API key, automatically enable direct API mode
+        // If backend is offline but user has API key, hide force config modal
+        // but DON'T automatically switch modes - respect user's settings choice
         if (!connectionStatus && hasApiKey) {
             setForceConfigModalVisible(false);
-            
-            // Auto-enable direct API mode if not already enabled
-            if (!frontendOnlyMode) {
-                console.log('Auto-enabling direct API mode - backend offline but API key available');
-                // Enable frontend-only mode automatically
-                const enableDirectMode = async () => {
-                    try {
-                        await setFrontendOnlyMode(true);
-                        notification.info('Direct API mode enabled automatically - backend is offline');
-                    } catch (error) {
-                        console.error('Failed to auto-enable direct API mode:', error);
-                    }
-                };
-                enableDirectMode();
-            }
             return;
         }
         
@@ -781,7 +763,6 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     visible={settingsModalVisible}
                     onCancel={handleSettingsCancel}
                     onConfirm={handleSettingsConfirm}
-                    onShowForceConfig={handleShowForceConfig}
                 />
             )}
             {isOpen && (

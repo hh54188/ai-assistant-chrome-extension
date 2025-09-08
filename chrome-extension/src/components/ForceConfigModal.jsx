@@ -59,44 +59,37 @@ const ForceConfigModal = ({
         }
     };
 
-    const handleSaveBackendUrl = async () => {
-        try {
-            await setStoredBackendUrl(backendUrl);
-            notification.success('Backend URL updated successfully');
-        } catch (error) {
-            notification.error('Failed to save backend URL');
-            console.error('Error saving backend URL:', error);
-        }
-    };
-
-    const handleRetryConnection = async () => {
+    const handleSaveAndTestConnection = async () => {
         setIsRetrying(true);
         try {
-            // Save the backend URL if it has changed
-            if (backendUrl !== storedBackendUrl) {
-                await setStoredBackendUrl(backendUrl);
-            }
+            // Always save the backend URL first
+            await setStoredBackendUrl(backendUrl);
+            
+            // Then test the connection
             await onRetryConnection();
+            
             // Give a small delay to allow connection status to update
             setTimeout(() => {
                 setIsRetrying(false);
                 if (connectionStatus) {
-                    notification.success('Backend connection established!');
+                    notification.success('Backend URL saved and connection established!');
                     onConfigured();
                 } else {
-                    notification.info('Backend is still not reachable. Please check if it\'s running.');
+                    notification.info('Backend URL saved, but server is still not reachable. Please check if it\'s running.');
                 }
             }, 1000);
-        } catch {
+        } catch (error) {
             setIsRetrying(false);
-            notification.error('Failed to test connection');
+            notification.error('Failed to save URL or test connection');
+            console.error('Error saving URL or testing connection:', error);
         }
     };
+
 
     const handleOpenBackendGuide = () => {
         // Open the backend setup guide in a new tab
         // Using a generic GitHub URL - update this to your actual repository
-        const githubUrl = 'https://github.com/ai-assistant-chrome-extension/blob/main/docs/backend/BACKEND_ENVIRONMENT_SETUP.md';
+        const githubUrl = 'https://github.com/hh54188/ai-assistant-chrome-extension/blob/master/docs/backend/BACKEND_ENVIRONMENT_SETUP.md';
         if (typeof chrome !== 'undefined' && chrome.tabs) {
             chrome.tabs.create({ url: githubUrl });
         } else {
@@ -221,18 +214,11 @@ const ForceConfigModal = ({
                                         onChange={(e) => setBackendUrl(e.target.value)}
                                         placeholder="http://localhost:3001"
                                         style={styles.backendUrlInput}
-                                        onPressEnter={handleSaveBackendUrl}
+                                        onPressEnter={handleSaveAndTestConnection}
                                     />
-                                    <Button 
-                                        onClick={handleSaveBackendUrl}
-                                        disabled={backendUrl === storedBackendUrl}
-                                        style={styles.saveUrlButton}
-                                    >
-                                        Save
-                                    </Button>
                                 </div>
                                 <div style={styles.backendUrlDescription}>
-                                    URL of the backend server. Changes are saved automatically when testing connection.
+                                    URL of the backend server. Click "Save & Test Connection" to save and verify the connection.
                                 </div>
                             </div>
                             
@@ -244,11 +230,11 @@ const ForceConfigModal = ({
                                     📖 View Setup Guide
                                 </Button>
                                 <Button 
-                                    onClick={handleRetryConnection}
+                                    onClick={handleSaveAndTestConnection}
                                     loading={isRetrying}
                                     style={styles.retryButton}
                                 >
-                                    🔄 Test Connection
+                                    💾 Save & Test Connection
                                 </Button>
                             </div>
 

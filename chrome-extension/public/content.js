@@ -47,7 +47,8 @@ function toggleSidebar() {
 function getSidebarWidth() {
   if (isTurboModeExpanded && selectedModelsCount > 0) {
     // Dynamic width based on number of selected models for turbo mode
-    return Math.max(450, Math.min(1200, 300 + (selectedModelsCount * 350)));
+    // Match the formula from CopilotSidebar.jsx: 50 + (selectedModels.length * 35) + (selectedModels.length * 350)
+    return Math.max(450, Math.min(1200, 50 + (selectedModelsCount * 35) + (selectedModelsCount * 350)));
   }
   return isExpanded ? 1024 : 450;
 }

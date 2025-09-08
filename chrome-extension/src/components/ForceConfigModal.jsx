@@ -13,17 +13,20 @@ const ForceConfigModal = ({
     // Read current values from storage and get setter functions
     const [storedApiKey, setStoredApiKey, apiKeyLoading] = useChromeStorage('geminiApiKey', '');
     const [, setStoredFrontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
+    const [storedBackendUrl, setStoredBackendUrl, backendUrlLoading] = useChromeStorage('backendUrl', 'http://localhost:3001');
 
     // Local state for editing
     const [apiKey, setApiKey] = useState('');
+    const [backendUrl, setBackendUrl] = useState('http://localhost:3001');
     const [isRetrying, setIsRetrying] = useState(false);
 
     // Initialize local state with stored values when modal opens
     useEffect(() => {
-        if (visible && !apiKeyLoading) {
+        if (visible && !apiKeyLoading && !backendUrlLoading) {
             setApiKey(storedApiKey);
+            setBackendUrl(storedBackendUrl);
         }
-    }, [visible, storedApiKey, apiKeyLoading]);
+    }, [visible, storedApiKey, storedBackendUrl, apiKeyLoading, backendUrlLoading]);
 
     const handleUseDirectApi = async () => {
         if (!apiKey.trim()) {
@@ -56,41 +59,55 @@ const ForceConfigModal = ({
         }
     };
 
-    const handleRetryConnection = async () => {
+    const handleSaveAndTestConnection = async () => {
         setIsRetrying(true);
         try {
+            // Always save the backend URL first
+            await setStoredBackendUrl(backendUrl);
+            
+            // Then test the connection
             await onRetryConnection();
+            
             // Give a small delay to allow connection status to update
             setTimeout(() => {
                 setIsRetrying(false);
                 if (connectionStatus) {
-                    notification.success('Backend connection established!');
+                    notification.success('Backend URL saved and connection established!');
                     onConfigured();
                 } else {
-                    notification.info('Backend is still not reachable. Please check if it\'s running.');
+                    notification.info('Backend URL saved, but server is still not reachable. Please check if it\'s running.');
                 }
             }, 1000);
-        } catch {
+        } catch (error) {
             setIsRetrying(false);
-            notification.error('Failed to test connection');
+            notification.error('Failed to save URL or test connection');
+            console.error('Error saving URL or testing connection:', error);
         }
     };
+
 
     const handleOpenBackendGuide = () => {
         // Open the backend setup guide in a new tab
         // Using a generic GitHub URL - update this to your actual repository
-        const githubUrl = 'https://github.com/ai-assistant-chrome-extension/blob/main/docs/backend/BACKEND_ENVIRONMENT_SETUP.md';
+        const githubUrl = 'https://github.com/hh54188/ai-assistant-chrome-extension/blob/master/docs/backend/BACKEND_ENVIRONMENT_SETUP.md';
         if (typeof chrome !== 'undefined' && chrome.tabs) {
             chrome.tabs.create({ url: githubUrl });
         } else {
-            window.open(githubUrl, '_blank');
+            // Create a temporary link element and click it
+            const link = document.createElement('a');
+            link.href = githubUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     };
 
     if (!visible) return null;
 
     // Show loading state while settings are being loaded
-    if (apiKeyLoading) {
+    if (apiKeyLoading || backendUrlLoading) {
         return (
             <div style={styles.overlay}>
                 <div style={styles.loadingContainer}>
@@ -186,6 +203,25 @@ const ForceConfigModal = ({
                                 multiple AI providers, and enhanced functionality.
                             </div>
                             
+                            {/* Backend URL Input */}
+                            <div style={styles.backendUrlContainer}>
+                                <label style={styles.backendUrlLabel}>
+                                    Backend URL
+                                </label>
+                                <div style={styles.backendUrlInputContainer}>
+                                    <Input
+                                        value={backendUrl}
+                                        onChange={(e) => setBackendUrl(e.target.value)}
+                                        placeholder="http://localhost:3001"
+                                        style={styles.backendUrlInput}
+                                        onPressEnter={handleSaveAndTestConnection}
+                                    />
+                                </div>
+                                <div style={styles.backendUrlDescription}>
+                                    URL of the backend server. Click "Save & Test Connection" to save and verify the connection.
+                                </div>
+                            </div>
+                            
                             <div style={styles.backendActions}>
                                 <Button 
                                     onClick={handleOpenBackendGuide}
@@ -194,11 +230,11 @@ const ForceConfigModal = ({
                                     📖 View Setup Guide
                                 </Button>
                                 <Button 
-                                    onClick={handleRetryConnection}
+                                    onClick={handleSaveAndTestConnection}
                                     loading={isRetrying}
                                     style={styles.retryButton}
                                 >
-                                    🔄 Test Connection
+                                    💾 Save & Test Connection
                                 </Button>
                             </div>
 

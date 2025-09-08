@@ -207,6 +207,57 @@ export const styles = {
         padding: '0 8px',
     },
 
+    backendUrlContainer: {
+        marginBottom: '16px',
+        minWidth: 0,
+        width: '100%',
+    },
+
+    backendUrlLabel: {
+        display: 'block',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: '#1a1a1a',
+        marginBottom: '8px',
+    },
+
+    backendUrlInputContainer: {
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'stretch',
+        marginBottom: '8px',
+        minWidth: 0,
+        width: '100%',
+    },
+
+    backendUrlInput: {
+        flex: 1,
+        height: '36px',
+        borderRadius: '6px',
+        border: '1px solid #d9d9d9',
+        fontSize: '13px',
+        minWidth: 0,
+        boxSizing: 'border-box',
+    },
+
+    saveUrlButton: {
+        height: '36px',
+        borderRadius: '6px',
+        paddingLeft: '12px',
+        paddingRight: '12px',
+        fontSize: '13px',
+        fontWeight: '500',
+        flexShrink: 0,
+    },
+
+    backendUrlDescription: {
+        fontSize: '12px',
+        color: '#666',
+        lineHeight: '1.4',
+        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
+    },
+
     backendActions: {
         display: 'flex',
         flexDirection: 'column',

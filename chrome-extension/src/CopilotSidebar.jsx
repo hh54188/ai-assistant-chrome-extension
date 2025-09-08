@@ -545,6 +545,11 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         setSettingsModalVisible(false);
     };
 
+    const handleShowForceConfig = () => {
+        setSettingsModalVisible(false);
+        setForceConfigModalVisible(true);
+    };
+
     // Help modal handlers
     const handleOpenHelp = () => {
         setHelpModalVisible(true);
@@ -776,6 +781,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     visible={settingsModalVisible}
                     onCancel={handleSettingsCancel}
                     onConfirm={handleSettingsConfirm}
+                    onShowForceConfig={handleShowForceConfig}
                 />
             )}
             {isOpen && (

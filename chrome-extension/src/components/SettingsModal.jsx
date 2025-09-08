@@ -8,6 +8,7 @@ const SettingsModal = ({
     visible,
     onCancel,
     onConfirm,
+    onShowForceConfig,
 }) => {
     // Read current values from storage and get setter functions
     const [storedFrontendOnlyMode, setStoredFrontendOnlyMode, frontendModeLoading] = useChromeStorage('frontendOnlyMode', false);
@@ -18,6 +19,7 @@ const SettingsModal = ({
     const [frontendOnlyMode, setFrontendOnlyMode] = useState(false);
     const [apiKey, setApiKey] = useState('');
     const [backendUrl, setBackendUrl] = useState('http://localhost:3001');
+    const [isValidating, setIsValidating] = useState(false);
 
     // Initialize local state with stored values when modal opens or values change
     useEffect(() => {
@@ -33,11 +35,97 @@ const SettingsModal = ({
         }
     }, [visible, storedFrontendOnlyMode, storedApiKey, storedBackendUrl, frontendModeLoading, apiKeyLoading, backendUrlLoading]);
 
-    const handleSave = async () => {
+    // Backend validation function
+    const validateBackendUrl = async (url) => {
         try {
+            // Create timeout controller for better browser compatibility
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch(`${url}/health`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            return response.ok;
+        } catch (error) {
+            console.error('Backend validation failed:', error);
+            return false;
+        }
+    };
+
+    const handleSave = async () => {
+        setIsValidating(true);
+        
+        try {
+            // Check if we need to validate backend
+            // Only validate if the backend URL has actually changed, not just when switching modes
+            const backendUrlChanged = backendUrl !== storedBackendUrl;
+            const shouldValidateBackend = !frontendOnlyMode && backendUrlChanged;
+            
+            console.log('SettingsModal handleSave:', {
+                frontendOnlyMode,
+                backendUrlChanged,
+                shouldValidateBackend,
+                apiKey: apiKey ? apiKey.substring(0, 10) + '...' : 'empty'
+            });
+            
+            if (shouldValidateBackend) {
+                console.log('Validating backend URL:', backendUrl);
+                const isValid = await validateBackendUrl(backendUrl);
+                
+                if (!isValid) {
+                    // Backend validation failed
+                    const hasApiKey = apiKey && apiKey.trim().length > 0;
+                    
+                    if (hasApiKey) {
+                        // Validate API key format before switching to direct mode
+                        const trimmedKey = apiKey.trim();
+                        if (!trimmedKey.startsWith('AIza') && !trimmedKey.startsWith('AI')) {
+                            notification.error('Invalid API key format. Gemini API keys should start with "AIza" or "AI".');
+                            return;
+                        }
+                        
+                        // Switch to direct mode automatically
+                        console.log('Backend validation failed, switching to direct mode');
+                        await setStoredFrontendOnlyMode(true);
+                        await setStoredApiKey(trimmedKey);
+                        await setStoredBackendUrl(backendUrl);
+                        
+                        notification.warning('Backend is not reachable. Switched to Direct API mode automatically.');
+                        onConfirm();
+                        return;
+                    } else {
+                        // No API key available, show ForceConfigModal
+                        console.log('Backend validation failed, no API key, showing ForceConfigModal');
+                        notification.error('Backend is not reachable and no API key is configured.');
+                        onCancel(); // Close settings modal
+                        if (onShowForceConfig) {
+                            onShowForceConfig();
+                        }
+                        return;
+                    }
+                }
+            }
+            
+            // Validate API key format if frontend-only mode is enabled
+            if (frontendOnlyMode && apiKey.trim()) {
+                const trimmedKey = apiKey.trim();
+                if (!trimmedKey.startsWith('AIza') && !trimmedKey.startsWith('AI')) {
+                    notification.error('Invalid API key format. Gemini API keys should start with "AIza" or "AI".');
+                    return;
+                }
+                await setStoredApiKey(trimmedKey);
+            } else {
+                await setStoredApiKey(apiKey);
+            }
+            
             // Save local state values to storage
             await setStoredFrontendOnlyMode(frontendOnlyMode);
-            await setStoredApiKey(apiKey);
             await setStoredBackendUrl(backendUrl);
             
             notification.success('Settings saved successfully');
@@ -45,6 +133,8 @@ const SettingsModal = ({
         } catch (error) {
             notification.error('Failed to save settings');
             console.error('Error saving settings:', error);
+        } finally {
+            setIsValidating(false);
         }
     };
 
@@ -170,6 +260,7 @@ const SettingsModal = ({
                             <Button 
                                 type="primary" 
                                 onClick={handleSave}
+                                loading={isValidating}
                                 disabled={frontendOnlyMode && !apiKey.trim()}
                             >
                                 Save

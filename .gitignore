@@ -7,3 +7,5 @@ _pycache_
 .env.test.local
 .env.production.local
 temp
+*.zip
+.DS_Store

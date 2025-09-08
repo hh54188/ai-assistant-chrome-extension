@@ -242,6 +242,7 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Chrome Extension Environment](./extension/CHROME_EXTENSION_ENVIRONMENT.md) - Extension configuration
 - [Chrome Extension Tests](./extension/CHROME_EXTENSION_TESTS_README.md) - Testing documentation
 - [Chrome Extension Stores](./extension/CHROME_EXTENSION_STORES_README.md) - State management documentation
+- [ForceConfigModal Component](./ForceConfigModal.README.md) - Force configuration modal documentation
 
 ### 🔌 MCP (Model Context Protocol) Documentation
 - [MCP Integration Guide](./mcp/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage

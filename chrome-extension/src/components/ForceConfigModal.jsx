@@ -13,17 +13,20 @@ const ForceConfigModal = ({
     // Read current values from storage and get setter functions
     const [storedApiKey, setStoredApiKey, apiKeyLoading] = useChromeStorage('geminiApiKey', '');
     const [, setStoredFrontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
+    const [storedBackendUrl, setStoredBackendUrl, backendUrlLoading] = useChromeStorage('backendUrl', 'http://localhost:3001');
 
     // Local state for editing
     const [apiKey, setApiKey] = useState('');
+    const [backendUrl, setBackendUrl] = useState('http://localhost:3001');
     const [isRetrying, setIsRetrying] = useState(false);
 
     // Initialize local state with stored values when modal opens
     useEffect(() => {
-        if (visible && !apiKeyLoading) {
+        if (visible && !apiKeyLoading && !backendUrlLoading) {
             setApiKey(storedApiKey);
+            setBackendUrl(storedBackendUrl);
         }
-    }, [visible, storedApiKey, apiKeyLoading]);
+    }, [visible, storedApiKey, storedBackendUrl, apiKeyLoading, backendUrlLoading]);
 
     const handleUseDirectApi = async () => {
         if (!apiKey.trim()) {
@@ -56,9 +59,23 @@ const ForceConfigModal = ({
         }
     };
 
+    const handleSaveBackendUrl = async () => {
+        try {
+            await setStoredBackendUrl(backendUrl);
+            notification.success('Backend URL updated successfully');
+        } catch (error) {
+            notification.error('Failed to save backend URL');
+            console.error('Error saving backend URL:', error);
+        }
+    };
+
     const handleRetryConnection = async () => {
         setIsRetrying(true);
         try {
+            // Save the backend URL if it has changed
+            if (backendUrl !== storedBackendUrl) {
+                await setStoredBackendUrl(backendUrl);
+            }
             await onRetryConnection();
             // Give a small delay to allow connection status to update
             setTimeout(() => {
@@ -83,14 +100,21 @@ const ForceConfigModal = ({
         if (typeof chrome !== 'undefined' && chrome.tabs) {
             chrome.tabs.create({ url: githubUrl });
         } else {
-            window.open(githubUrl, '_blank');
+            // Create a temporary link element and click it
+            const link = document.createElement('a');
+            link.href = githubUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     };
 
     if (!visible) return null;
 
     // Show loading state while settings are being loaded
-    if (apiKeyLoading) {
+    if (apiKeyLoading || backendUrlLoading) {
         return (
             <div style={styles.overlay}>
                 <div style={styles.loadingContainer}>
@@ -184,6 +208,32 @@ const ForceConfigModal = ({
                             <div style={styles.optionDescription}>
                                 Run the backend server to access advanced features like file attachments,
                                 multiple AI providers, and enhanced functionality.
+                            </div>
+                            
+                            {/* Backend URL Input */}
+                            <div style={styles.backendUrlContainer}>
+                                <label style={styles.backendUrlLabel}>
+                                    Backend URL
+                                </label>
+                                <div style={styles.backendUrlInputContainer}>
+                                    <Input
+                                        value={backendUrl}
+                                        onChange={(e) => setBackendUrl(e.target.value)}
+                                        placeholder="http://localhost:3001"
+                                        style={styles.backendUrlInput}
+                                        onPressEnter={handleSaveBackendUrl}
+                                    />
+                                    <Button 
+                                        onClick={handleSaveBackendUrl}
+                                        disabled={backendUrl === storedBackendUrl}
+                                        style={styles.saveUrlButton}
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
+                                <div style={styles.backendUrlDescription}>
+                                    URL of the backend server. Changes are saved automatically when testing connection.
+                                </div>
                             </div>
                             
                             <div style={styles.backendActions}>

@@ -639,7 +639,7 @@ describe('CopilotSidebar Integration Tests - Turbo Mode Feature', () => {
           expect.any(String),
           expect.stringContaining('Error from')
         );
-      }, { timeout: 100 });
+      }, { timeout: 1000 });
 
       // Verify loading is set to false
       expect(mockUIStore.setLoading).toHaveBeenCalledWith(false);

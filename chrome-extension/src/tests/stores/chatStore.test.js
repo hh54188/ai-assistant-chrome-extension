@@ -123,6 +123,7 @@ describe('ChatStore', () => {
         const newSession = state.sessions[0]; // New sessions are added to the beginning
         expect(newSession.provider).toBe('gemini-2.5-flash');
         expect(newSession.label).toBe('New session');
+        expect(newSession.group).toBe('Today');
         expect(newSession.messages).toEqual([]);
         expect(newSession.loading).toBe(false);
         expect(newSession.files).toEqual([]);
@@ -152,6 +153,26 @@ describe('ChatStore', () => {
         const state = useChatStore.getState();
         expect(state.sessions[0].provider).toBe('claude-3');
         expect(state.sessions[1].id).toBe(firstSessionId);
+      });
+    });
+
+    describe('addSession', () => {
+      it('should add a new session without switching to it', () => {
+        const { addSession } = useChatStore.getState();
+        const initialSessionId = useChatStore.getState().currentSessionId;
+        const initialSessionsCount = useChatStore.getState().sessions.length;
+
+        dayjs.advanceTime(1000);
+        const newSessionId = dayjs().valueOf().toString();
+        addSession(newSessionId, 'gpt-4');
+
+        const state = useChatStore.getState();
+        expect(state.sessions.length).toBe(initialSessionsCount + 1);
+        expect(state.currentSessionId).toBe(initialSessionId); // Should not switch
+
+        const newSession = state.sessions.find(s => s.id === newSessionId);
+        expect(newSession).toBeDefined();
+        expect(newSession.provider).toBe('gpt-4');
       });
     });
 

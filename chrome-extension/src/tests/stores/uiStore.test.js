@@ -14,19 +14,28 @@ describe('UIStore', () => {
       // Modal States
       referenceModalVisible: false,
       modelSelectionModalVisible: false,
+      settingsModalVisible: false,
+      helpModalVisible: false,
+      forceConfigModalVisible: false,
       currentSelection: null,
       selectedModels: [],
       
       // UI Layout States
       isExpanded: false,
       turboMode: false,
+      turboModeExpanded: false,
+      turboSessions: {},
       
       // Screenshot States
       isScreenshotMode: false,
       screenshotData: null,
+
+      // Drag and Drop States
+      isDragOver: false,
       
       // File Upload States
-      currentSessionFiles: []
+      currentSessionFiles: [],
+      attachmentsOpen: false,
     });
   });
 
@@ -145,6 +154,57 @@ describe('UIStore', () => {
         
         const state = useUIStore.getState();
         expect(state.modelSelectionModalVisible).toBe(false);
+      });
+    });
+
+    describe('setSettingsModalVisible', () => {
+      it('should show settings modal', () => {
+        const { setSettingsModalVisible } = useUIStore.getState();
+        setSettingsModalVisible(true);
+        const state = useUIStore.getState();
+        expect(state.settingsModalVisible).toBe(true);
+      });
+
+      it('should hide settings modal', () => {
+        const { setSettingsModalVisible } = useUIStore.getState();
+        setSettingsModalVisible(true);
+        setSettingsModalVisible(false);
+        const state = useUIStore.getState();
+        expect(state.settingsModalVisible).toBe(false);
+      });
+    });
+
+    describe('setHelpModalVisible', () => {
+      it('should show help modal', () => {
+        const { setHelpModalVisible } = useUIStore.getState();
+        setHelpModalVisible(true);
+        const state = useUIStore.getState();
+        expect(state.helpModalVisible).toBe(true);
+      });
+
+      it('should hide help modal', () => {
+        const { setHelpModalVisible } = useUIStore.getState();
+        setHelpModalVisible(true);
+        setHelpModalVisible(false);
+        const state = useUIStore.getState();
+        expect(state.helpModalVisible).toBe(false);
+      });
+    });
+
+    describe('setForceConfigModalVisible', () => {
+      it('should show force config modal', () => {
+        const { setForceConfigModalVisible } = useUIStore.getState();
+        setForceConfigModalVisible(true);
+        const state = useUIStore.getState();
+        expect(state.forceConfigModalVisible).toBe(true);
+      });
+
+      it('should hide force config modal', () => {
+        const { setForceConfigModalVisible } = useUIStore.getState();
+        setForceConfigModalVisible(true);
+        setForceConfigModalVisible(false);
+        const state = useUIStore.getState();
+        expect(state.forceConfigModalVisible).toBe(false);
       });
     });
 
@@ -353,6 +413,43 @@ describe('UIStore', () => {
         expect(state.turboMode).toBe(false);
       });
     });
+
+    describe('setTurboModeExpanded', () => {
+      it('should set turbo mode expanded state to true', () => {
+        const { setTurboModeExpanded } = useUIStore.getState();
+        setTurboModeExpanded(true);
+        const state = useUIStore.getState();
+        expect(state.turboModeExpanded).toBe(true);
+      });
+
+      it('should set turbo mode expanded state to false', () => {
+        const { setTurboModeExpanded } = useUIStore.getState();
+        setTurboModeExpanded(true);
+        setTurboModeExpanded(false);
+        const state = useUIStore.getState();
+        expect(state.turboModeExpanded).toBe(false);
+      });
+    });
+
+    describe('setTurboSessions', () => {
+      it('should set turbo sessions', () => {
+        const { setTurboSessions } = useUIStore.getState();
+        const sessions = { 'gpt-4': 'session-123' };
+        setTurboSessions(sessions);
+        const state = useUIStore.getState();
+        expect(state.turboSessions).toEqual(sessions);
+      });
+    });
+
+    describe('clearTurboSessions', () => {
+      it('should clear turbo sessions', () => {
+        const { setTurboSessions, clearTurboSessions } = useUIStore.getState();
+        setTurboSessions({ 'gpt-4': 'session-123' });
+        clearTurboSessions();
+        const state = useUIStore.getState();
+        expect(state.turboSessions).toEqual({});
+      });
+    });
   });
 
   describe('Screenshot State Management', () => {
@@ -474,6 +571,44 @@ describe('UIStore', () => {
     });
   });
 
+  describe('Drag and Drop State Management', () => {
+    describe('setIsDragOver', () => {
+      it('should set isDragOver to true', () => {
+        const { setIsDragOver } = useUIStore.getState();
+        setIsDragOver(true);
+        const state = useUIStore.getState();
+        expect(state.isDragOver).toBe(true);
+      });
+
+      it('should set isDragOver to false', () => {
+        const { setIsDragOver } = useUIStore.getState();
+        setIsDragOver(true);
+        setIsDragOver(false);
+        const state = useUIStore.getState();
+        expect(state.isDragOver).toBe(false);
+      });
+    });
+  });
+
+  describe('Attachment State Management', () => {
+    describe('setAttachmentsOpen', () => {
+      it('should set attachmentsOpen to true', () => {
+        const { setAttachmentsOpen } = useUIStore.getState();
+        setAttachmentsOpen(true);
+        const state = useUIStore.getState();
+        expect(state.attachmentsOpen).toBe(true);
+      });
+
+      it('should set attachmentsOpen to false', () => {
+        const { setAttachmentsOpen } = useUIStore.getState();
+        setAttachmentsOpen(true);
+        setAttachmentsOpen(false);
+        const state = useUIStore.getState();
+        expect(state.attachmentsOpen).toBe(false);
+      });
+    });
+  });
+
   describe('State Reset Logic', () => {
     describe('resetUIState', () => {
       it('should reset session-specific state', () => {
@@ -482,11 +617,18 @@ describe('UIStore', () => {
           setLoading, 
           setReferenceModalVisible,
           setModelSelectionModalVisible,
+          setSettingsModalVisible,
+          setHelpModalVisible,
+          setForceConfigModalVisible,
           setCurrentSelection,
           addSelectedModel,
           setIsScreenshotMode,
           setScreenshotData,
+          setIsDragOver,
           setCurrentSessionFiles,
+          setAttachmentsOpen,
+          setTurboModeExpanded,
+          setTurboSessions,
           resetUIState
         } = useUIStore.getState();
         
@@ -495,11 +637,18 @@ describe('UIStore', () => {
         setLoading(true);
         setReferenceModalVisible(true);
         setModelSelectionModalVisible(true);
+        setSettingsModalVisible(true);
+        setHelpModalVisible(true);
+        setForceConfigModalVisible(true);
         setCurrentSelection({ text: 'test' });
         addSelectedModel('gpt-4');
         setIsScreenshotMode(true);
         setScreenshotData({ name: 'test.png' });
+        setIsDragOver(true);
         setCurrentSessionFiles([{ name: 'file.png' }]);
+        setAttachmentsOpen(true);
+        setTurboModeExpanded(true);
+        setTurboSessions({ 'gpt-4': 'session-123' });
         
         resetUIState();
         
@@ -510,11 +659,18 @@ describe('UIStore', () => {
         expect(state.loading).toBe(false);
         expect(state.referenceModalVisible).toBe(false);
         expect(state.modelSelectionModalVisible).toBe(false);
+        expect(state.settingsModalVisible).toBe(false);
+        expect(state.helpModalVisible).toBe(false);
+        expect(state.forceConfigModalVisible).toBe(false);
         expect(state.currentSelection).toBe(null);
         expect(state.selectedModels).toEqual([]);
         expect(state.isScreenshotMode).toBe(false);
         expect(state.screenshotData).toBe(null);
+        expect(state.isDragOver).toBe(false);
         expect(state.currentSessionFiles).toEqual([]);
+        expect(state.attachmentsOpen).toBe(false);
+        expect(state.turboModeExpanded).toBe(false);
+        expect(state.turboSessions).toEqual({});
       });
 
       it('should preserve user preferences', () => {
@@ -562,10 +718,13 @@ describe('UIStore', () => {
         expect(uiState).toHaveProperty('loading');
         expect(uiState).toHaveProperty('isExpanded');
         expect(uiState).toHaveProperty('turboMode');
+        expect(uiState).toHaveProperty('turboModeExpanded');
+        expect(uiState).toHaveProperty('turboSessions');
         expect(uiState).toHaveProperty('hasScreenshot');
         expect(uiState).toHaveProperty('hasFiles');
         expect(uiState).toHaveProperty('hasSelection');
         expect(uiState).toHaveProperty('isAnyModalOpen');
+        expect(uiState).toHaveProperty('isDragOver');
       });
 
       it('should compute hasScreenshot correctly', () => {

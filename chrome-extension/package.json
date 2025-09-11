@@ -19,7 +19,8 @@
     "test:e2e": "vitest --run tests/e2e/",
     "test:e2e:watch": "vitest --watch tests/e2e/",
     "test:e2e:image": "vitest --run tests/e2e/image-upload.e2e.test.js",
-    "test:e2e:chat": "vitest --run tests/e2e/gemini-chat.e2e.test.js"
+    "test:e2e:chat": "vitest --run tests/e2e/gemini-chat.e2e.test.js",
+    "test:e2e:drag-drop": "vitest --run tests/e2e/drag-drop.e2e.test.js"
   },
   "dependencies": {
     "@ant-design/x": "^1.4.0",

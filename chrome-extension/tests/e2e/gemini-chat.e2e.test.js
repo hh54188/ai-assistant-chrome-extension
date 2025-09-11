@@ -9,19 +9,46 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from backend .env file
+// Enhanced environment variable loading for both local and CI environments
 const backendDir = path.resolve(__dirname, '../../../backend');
 const envPath = path.join(backendDir, '.env');
 
-if (!fs.existsSync(envPath)) {
-  throw new Error(`Backend .env file not found at ${envPath}. Please create it from env.example`);
-}
+// Detect if running in GitHub Actions (CI environment)
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
 
-dotenv.config({ path: envPath });
+console.log(`🔧 Environment detection: CI=${isCI}, GitHub Actions=${isGitHubActions}`);
 
-// Validate required environment variables
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is required in backend .env file for E2E tests');
+// Load environment variables based on environment
+if (isCI) {
+  // In CI (GitHub Actions), use environment variables from process.env
+  // These should be set as GitHub Actions secrets
+  console.log('🏗️ Running in CI environment - using process.env variables');
+  
+  // Validate that required environment variables are available
+  const requiredVars = ['GEMINI_API_KEY'];
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    throw new Error(`Missing required environment variables in CI: ${missingVars.join(', ')}. Please set these as GitHub Actions secrets.`);
+  }
+  
+  console.log('✅ Required environment variables found in CI environment');
+} else {
+  // Running locally, try to load from .env file
+  console.log('🏠 Running locally - attempting to load from .env file');
+  
+  if (!fs.existsSync(envPath)) {
+    throw new Error(`Backend .env file not found at ${envPath}. Please create it from env.example`);
+  }
+  
+  dotenv.config({ path: envPath });
+  console.log('✅ Loaded environment variables from .env file');
+  
+  // Validate required environment variables
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is required in backend .env file for E2E tests');
+  }
 }
 
 describe('Chrome Extension E2E Tests', () => {
@@ -32,7 +59,7 @@ describe('Chrome Extension E2E Tests', () => {
   const BACKEND_URL = `http://localhost:${BACKEND_PORT}`;
   const EXTENSION_PATH = path.resolve(__dirname, '../../dist');
 
-  // Environment variables loaded from backend .env file
+  // Environment variables for test backend server
   const TEST_ENV = {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'dummy_openai_key',
@@ -41,6 +68,14 @@ describe('Chrome Extension E2E Tests', () => {
     PORT: BACKEND_PORT,
     NODE_ENV: 'test'
   };
+
+  // Log environment variable status for debugging
+  console.log('🔧 Test environment variables status:');
+  console.log(`  - GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Missing'}`);
+  console.log(`  - OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✅ Set' : '⚠️ Using dummy'}`);
+  console.log(`  - NOTION_API_KEY: ${process.env.NOTION_API_KEY ? '✅ Set' : '⚠️ Using dummy'}`);
+  console.log(`  - FIRECRAWL_API_KEY: ${process.env.FIRECRAWL_API_KEY ? '✅ Set' : '⚠️ Using dummy'}`);
+  console.log(`  - Environment: ${isCI ? 'CI/GitHub Actions' : 'Local'}`);
 
   beforeAll(async () => {
     console.log('🚀 Starting E2E test setup...');
@@ -244,7 +279,7 @@ describe('Chrome Extension E2E Tests', () => {
         inputFound = true;
         console.log(`✅ Found input field with selector: ${selector}`);
         break;
-      } catch (error) {
+      } catch {
         console.log(`❌ Input selector ${selector} not found`);
       }
     }
@@ -281,7 +316,7 @@ describe('Chrome Extension E2E Tests', () => {
         sendButtonFound = true;
         console.log(`✅ Clicked send button with selector: ${selector}`);
         break;
-      } catch (error) {
+      } catch {
         console.log(`❌ Send button selector ${selector} not found or not clickable`);
       }
     }

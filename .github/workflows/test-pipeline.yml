@@ -1,0 +1,262 @@
+name: Test Pipeline
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+
+jobs:
+  # Unit Tests for Chrome Extension
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: chrome-extension/package-lock.json
+        
+    - name: Install Chrome Extension dependencies
+      working-directory: ./chrome-extension
+      run: npm ci
+      
+    - name: Build Chrome Extension
+      working-directory: ./chrome-extension
+      run: npm run build
+      
+    - name: Run Unit Tests (Components)
+      working-directory: ./chrome-extension
+      run: npm run test:components
+      
+    - name: Run Unit Tests (Stores)
+      working-directory: ./chrome-extension
+      run: npm run test:stores
+      
+    - name: Run Unit Tests (All)
+      working-directory: ./chrome-extension
+      run: npm run test
+      
+    - name: Generate Test Coverage
+      working-directory: ./chrome-extension
+      run: npm run test:coverage
+      
+    - name: Upload Coverage Reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./chrome-extension/coverage/lcov.info
+        flags: unit-tests
+        name: chrome-extension-coverage
+
+  # Backend Tests
+  # backend-tests:
+  #   name: Backend Tests
+  #   runs-on: ubuntu-latest
+    
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+      
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '18'
+  #       cache: 'npm'
+  #       cache-dependency-path: backend/package-lock.json
+        
+  #   - name: Install Backend dependencies
+  #     working-directory: ./backend
+  #     run: npm ci
+      
+  #   - name: Run Backend Tests
+  #     working-directory: ./backend
+  #     env:
+  #       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  #       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  #       NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+  #       FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+  #       NODE_ENV: test
+  #       PORT: 3001
+  #     run: |
+  #       # Run individual test files since there's no test script in backend package.json
+  #       node tests/test-gemini-conversation-tokens.js
+  #       node tests/test-gemini-token-counting.js
+  #       node tests/test-base64-image-upload.js
+  #       node tests/test-file-attachments.js
+  #       node tests/test-chat-sessions.js
+
+  # E2E Tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          chrome-extension/package-lock.json
+          backend/package-lock.json
+        
+    - name: Install Chrome Extension dependencies
+      working-directory: ./chrome-extension
+      run: npm ci
+      
+    - name: Install Backend dependencies
+      working-directory: ./backend
+      run: npm ci
+      
+    - name: Build Chrome Extension for E2E
+      working-directory: ./chrome-extension
+      run: npm run build
+      
+    - name: Install Puppeteer dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget gnupg
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+    - name: Run E2E Tests - Gemini Chat
+      working-directory: ./chrome-extension
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+        NODE_ENV: test
+        CI: true
+        GITHUB_ACTIONS: true
+      run: npm run test:e2e:chat
+      
+    - name: Run E2E Tests - Image Upload
+      working-directory: ./chrome-extension
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+        NODE_ENV: test
+        CI: true
+        GITHUB_ACTIONS: true
+      run: npm run test:e2e:image
+      
+    - name: Run E2E Tests - Drag and Drop
+      working-directory: ./chrome-extension
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+        NODE_ENV: test
+        CI: true
+        GITHUB_ACTIONS: true
+      run: npm run test:e2e:drag-drop
+      
+    # - name: Run All E2E Tests
+    #   working-directory: ./chrome-extension
+    #   env:
+    #     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    #     NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+    #     FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+    #     NODE_ENV: test
+    #     CI: true
+    #     GITHUB_ACTIONS: true
+    #   run: npm run test:e2e
+    #   continue-on-error: true  # Allow partial failures for debugging
+      
+    - name: Upload E2E Test Screenshots
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-screenshots
+        path: chrome-extension/tests/e2e/screenshots/
+        retention-days: 1
+
+  # Lint and Code Quality
+  # lint-and-quality:
+  #   name: Lint and Code Quality
+  #   runs-on: ubuntu-latest
+    
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+      
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '18'
+  #       cache: 'npm'
+  #       cache-dependency-path: chrome-extension/package-lock.json
+        
+  #   - name: Install Chrome Extension dependencies
+  #     working-directory: ./chrome-extension
+  #     run: npm ci
+      
+  #   - name: Run ESLint
+  #     working-directory: ./chrome-extension
+  #     run: npm run lint
+
+  # Build Verification
+  build-verification:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          chrome-extension/package-lock.json
+          backend/package-lock.json
+        
+    - name: Install Chrome Extension dependencies
+      working-directory: ./chrome-extension
+      run: npm ci
+      
+    - name: Build Chrome Extension
+      working-directory: ./chrome-extension
+      run: npm run build
+      
+    - name: Verify Extension Files
+      run: |
+        echo "Verifying Chrome Extension build files..."
+        ls -la chrome-extension/dist/
+        test -f chrome-extension/dist/manifest.json
+        test -f chrome-extension/dist/background.js
+        test -f chrome-extension/dist/content.js
+        test -f chrome-extension/dist/main.js
+        echo "✅ All required extension files present"
+        
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts-${{ matrix.os }}
+        path: |
+          chrome-extension/dist/
+        retention-days: 1
+

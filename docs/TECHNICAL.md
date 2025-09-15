@@ -26,6 +26,10 @@ power-apps/
 - **npm** or **yarn**
 - **Chrome browser** (for extension)
 
+### GitHub Actions CI/CD
+
+For automated testing and deployment, see the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md).
+
 ### Backend Development
 
 ```bash

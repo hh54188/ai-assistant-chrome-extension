@@ -1,10 +1,11 @@
 name: E2E Tests
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master ]
 
 jobs:
   e2e-tests:
@@ -34,7 +35,17 @@ jobs:
       run: |
         cd chrome-extension
         npm run build
-        
+
+    - name: Run UI store tests
+      run: |
+        cd chrome-extension
+        npm run test:stores
+
+    - name: Run UI component tests
+      run: |
+        cd chrome-extension
+        npm run test:components
+
     - name: Run E2E tests
       env:
         # Required environment variables for E2E tests
@@ -58,4 +69,4 @@ jobs:
       with:
         name: e2e-test-screenshots
         path: chrome-extension/tests/e2e/screenshots/
-        retention-days: 7
+        retention-days: 1

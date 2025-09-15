@@ -35,19 +35,20 @@ if (isCI) {
   
   console.log('✅ Required environment variables found in CI environment');
 } else {
-  // Running locally, try to load from .env file
+  // Running locally, try to load from .env file first, then fallback to process.env
   console.log('🏠 Running locally - attempting to load from .env file');
   
-  if (!fs.existsSync(envPath)) {
-    throw new Error(`Backend .env file not found at ${envPath}. Please create it from env.example`);
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    console.log('✅ Loaded environment variables from .env file');
+  } else {
+    console.log('⚠️ Backend .env file not found, using environment variables from process.env');
+    console.log('💡 You can create a .env file from env.example for local development');
   }
   
-  dotenv.config({ path: envPath });
-  console.log('✅ Loaded environment variables from .env file');
-  
-  // Validate required environment variables
+  // Validate required environment variables (from either .env file or process.env)
   if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is required in backend .env file for E2E tests');
+    throw new Error('GEMINI_API_KEY is required for E2E tests. Please set it in your .env file or as an environment variable');
   }
 }
 

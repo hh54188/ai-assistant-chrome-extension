@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { renderWithMocks } from '../utils/componentTestUtils.jsx';
 import CopilotSidebar from '../../CopilotSidebar.jsx';
 import React from 'react';
@@ -416,10 +416,13 @@ vi.mock('antd', () => ({
 describe('CopilotSidebar Integration Tests - Turbo Mode Feature', () => {
   let mockChatService;
   let mockProps;
+
   let mockUIStore;
   let mockChatStore;
 
   beforeEach(async () => {
+    // Clean up any previous renders
+    cleanup();
     mockProps = {
       isOpen: true,
       onClose: vi.fn()
@@ -440,6 +443,8 @@ describe('CopilotSidebar Integration Tests - Turbo Mode Feature', () => {
   });
 
   afterEach(() => {
+    // Clean up after each test
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -823,14 +828,14 @@ describe('CopilotSidebar Integration Tests - Turbo Mode Feature', () => {
 
       const { rerender } = renderWithMocks(<CopilotSidebar {...mockProps} />);
       
-      expect(screen.getByTestId('models-count')).toHaveTextContent('(2 models selected)');
+      expect(screen.getAllByTestId('models-count')[0]).toHaveTextContent('(2 models selected)');
 
       // Test with 4 models
       mockUIStore.selectedModels = ['gpt-4o-mini', 'gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet'];
       
       rerender(<CopilotSidebar {...mockProps} />);
       
-      expect(screen.getByTestId('models-count')).toHaveTextContent('(4 models selected)');
+      expect(screen.getAllByTestId('models-count')[0]).toHaveTextContent('(4 models selected)');
     });
   });
 
@@ -845,8 +850,8 @@ describe('CopilotSidebar Integration Tests - Turbo Mode Feature', () => {
 
       // In turbo mode, the component automatically expands turbo mode
       // Let's verify that turbo mode is properly set up
-      expect(screen.getByTestId('turbo-mode-indicator')).toBeInTheDocument();
-      expect(screen.getByTestId('turbo-mode-indicator')).toHaveTextContent('Turbo Mode Active (Expanded)');
+      expect(screen.getAllByTestId('turbo-mode-indicator')[0]).toBeInTheDocument();
+      expect(screen.getAllByTestId('turbo-mode-indicator')[0]).toHaveTextContent('Turbo Mode Active (Expanded)');
       
       // When turbo mode is expanded, ChatSender is hidden and TurboChatList is shown
       expect(screen.getByTestId('turbo-chat-list')).toBeInTheDocument();
@@ -873,7 +878,7 @@ describe('CopilotSidebar Integration Tests - Turbo Mode Feature', () => {
       renderWithMocks(<CopilotSidebar {...mockProps} />);
 
       // Switch to a different session
-      const session2Button = screen.getByTestId('session-session-2');
+      const session2Button = screen.getAllByTestId('session-session-2')[0];
       fireEvent.click(session2Button);
 
       // Verify UI state is reset

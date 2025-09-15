@@ -30,6 +30,7 @@
     "axios": "^1.10.0",
     "clipboard": "^2.0.11",
     "copy-to-clipboard": "^3.3.3",
+    "dotenv": "^17.2.2",
     "html2canvas": "^1.4.1",
     "immer": "^10.1.1",
     "markdown-it": "^14.1.0",

@@ -75,6 +75,9 @@ beforeEach(() => {
   // Reset all mocks before each test
   vi.clearAllMocks();
   
+  // Clear any existing timeouts/intervals
+  vi.clearAllTimers();
+  
   // Reset chrome storage mocks
   global.chrome.storage.local.get.mockResolvedValue({});
   global.chrome.storage.local.set.mockResolvedValue();
@@ -86,6 +89,10 @@ beforeEach(() => {
     json: () => Promise.resolve({}),
     text: () => Promise.resolve('')
   });
+  
+  // Clear global mock stores to prevent cross-test contamination
+  globalThis.mockUIStore = null;
+  globalThis.mockChatStore = null;
   
   // Suppress console warnings/errors during tests unless explicitly testing them
   console.error = vi.fn();

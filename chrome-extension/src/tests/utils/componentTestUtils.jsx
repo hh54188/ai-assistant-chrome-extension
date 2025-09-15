@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, cleanup } from '@testing-library/react';
 import { createMockStore, createMockSession } from '../mocks/storeMocks';
 
 /**
@@ -299,8 +299,14 @@ export const renderWithMocks = (component, options = {}) => {
   });
 
   // Store mocking is now handled at the test file level with vi.mock
+  // Clean up any previous renders to prevent multiple elements
+  cleanup();
 
   const result = render(component, renderOptions);
+
+  // Store references globally for tests that need them
+  globalThis.mockUIStore = mockUIStore;
+  globalThis.mockChatStore = mockChatStore;
 
   return {
     ...result,
@@ -308,7 +314,13 @@ export const renderWithMocks = (component, options = {}) => {
     mockChatStore,
     // Helper to get current store states
     getUIState: () => mockUIStore.getState(),
-    getChatState: () => mockChatStore.getState()
+    getChatState: () => mockChatStore.getState(),
+    // Helper to cleanup after test
+    cleanup: () => {
+      cleanup();
+      globalThis.mockUIStore = null;
+      globalThis.mockChatStore = null;
+    }
   };
 };
 

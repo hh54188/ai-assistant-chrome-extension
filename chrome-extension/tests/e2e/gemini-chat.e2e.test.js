@@ -158,8 +158,12 @@ describe('Chrome Extension E2E Tests', () => {
     console.log('🌐 Launching browser with extension...');
     console.log('Extension path:', EXTENSION_PATH);
     
+    // Determine if we should run headless based on environment
+    const shouldRunHeadless = isCI || process.env.HEADLESS === 'true';
+    console.log(`🔧 Browser mode: ${shouldRunHeadless ? 'headless' : 'headed'}`);
+    
     browser = await puppeteer.launch({
-      headless: false, // Run in headed mode to see the extension UI
+      headless: shouldRunHeadless, // Run headless in CI, headed locally
       devtools: false,
       args: [
         `--disable-extensions-except=${EXTENSION_PATH}`,
@@ -169,7 +173,17 @@ describe('Chrome Extension E2E Tests', () => {
         '--disable-dev-shm-usage',
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
-        '--window-size=1280,720'
+        '--window-size=1280,720',
+        // Additional args for headless mode in CI
+        ...(shouldRunHeadless ? [
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection'
+        ] : [])
       ]
     });
 

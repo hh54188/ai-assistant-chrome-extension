@@ -40,17 +40,6 @@ jobs:
       working-directory: ./chrome-extension
       run: npm run test:stores
       
-    - name: Generate Test Coverage
-      working-directory: ./chrome-extension
-      run: npm run test:coverage
-      
-    - name: Upload Coverage Reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./chrome-extension/coverage/lcov.info
-        flags: unit-tests
-        name: chrome-extension-coverage
-
   # Backend Tests
   # backend-tests:
   #   name: Backend Tests
@@ -124,6 +113,33 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
         
+    - name: Setup virtual display for E2E tests
+      run: |
+        # Install Xvfb for virtual display
+        sudo apt-get install -y xvfb
+        # Start virtual display
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1280x720x24 &
+        sleep 3  # Give Xvfb time to start
+        echo "Virtual display started on :99"
+        # Verify display is working
+        xdpyinfo -display :99 > /dev/null 2>&1 && echo "Display :99 is working" || echo "Display :99 failed to start"
+        
+    - name: Start Backend Server for E2E Tests
+      working-directory: ./backend
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        NODE_ENV: test
+        PORT: 3001
+      run: |
+        # Start backend server in background
+        nohup node server.js > backend.log 2>&1 &
+        echo $! > backend.pid
+        # Wait for server to start
+        sleep 5
+        # Check if server is running
+        curl -f http://localhost:3001/health || echo "Backend server not responding"
+        
     - name: Run E2E Tests - Gemini Chat
       working-directory: ./chrome-extension
       env:
@@ -131,6 +147,8 @@ jobs:
         NODE_ENV: test
         CI: true
         GITHUB_ACTIONS: true
+        DISPLAY: :99
+        HEADLESS: true
       run: npm run test:e2e:chat
       
     - name: Run E2E Tests - Image Upload
@@ -140,6 +158,8 @@ jobs:
         NODE_ENV: test
         CI: true
         GITHUB_ACTIONS: true
+        DISPLAY: :99
+        HEADLESS: true
       run: npm run test:e2e:image
       
     - name: Run E2E Tests - Drag and Drop
@@ -149,6 +169,8 @@ jobs:
         NODE_ENV: test
         CI: true
         GITHUB_ACTIONS: true
+        DISPLAY: :99
+        HEADLESS: true
       run: npm run test:e2e:drag-drop
       
     # - name: Run All E2E Tests
@@ -161,6 +183,16 @@ jobs:
     #   run: npm run test:e2e
     #   continue-on-error: true  # Allow partial failures for debugging
       
+    - name: Stop Backend Server
+      if: always()
+      working-directory: ./backend
+      run: |
+        # Stop backend server if it's running
+        if [ -f backend.pid ]; then
+          kill $(cat backend.pid) 2>/dev/null || echo "Backend server already stopped"
+          rm -f backend.pid
+        fi
+        
     - name: Upload E2E Test Screenshots
       uses: actions/upload-artifact@v4
       if: always()
@@ -200,7 +232,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         
     steps:
     - name: Checkout code

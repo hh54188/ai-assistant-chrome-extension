@@ -99,6 +99,12 @@ Tests image upload and analysis functionality:
 - Asks "What's inside this image?"
 - Verifies the response contains animal-related keywords ("dog", "animal", "corgi", etc.)
 
+### 3. `drag-drop.e2e.test.js`
+Tests drag and drop functionality:
+- Tests file drag and drop operations
+- Verifies drag and drop UI interactions
+- Captures screenshots of drag and drop results
+
 ## Running Tests
 
 ### Run All E2E Tests
@@ -114,13 +120,28 @@ npm run test:e2e:watch
 ### Run Specific Test
 ```bash
 # Run only the image upload test
-npm run test:e2e -- image-upload.e2e.test.js
+npm run test:e2e:image
 
 # Run only the chat test
-npm run test:e2e -- gemini-chat.e2e.test.js
+npm run test:e2e:chat
+
+# Run only the drag-drop test
+npm run test:e2e:drag-drop
 
 # Run specific test with vitest
 npx vitest run tests/e2e/gemini-chat.e2e.test.js
+```
+
+### Force Headless Mode Locally
+```bash
+# Windows PowerShell
+$env:HEADLESS="true"; npm run test:e2e:chat
+
+# Windows Command Prompt
+set HEADLESS=true && npm run test:e2e:chat
+
+# Linux/Mac
+HEADLESS=true npm run test:e2e:chat
 ```
 
 ## Test Configuration
@@ -130,10 +151,12 @@ The test automatically detects the environment using these conditions:
 
 ```javascript
 const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+const shouldRunHeadless = isCI || process.env.HEADLESS === 'true';
 ```
 
 - `CI=true` - Standard CI environment variable
 - `GITHUB_ACTIONS=true` - GitHub Actions specific variable
+- `HEADLESS=true` - Force headless mode locally (optional)
 
 ### Required Environment Variables
 - `GEMINI_API_KEY`: Required for AI responses
@@ -142,8 +165,13 @@ const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 - `FIRECRAWL_API_KEY`: Optional (uses dummy if not set)
 
 ### Backend Ports
-- Chat test uses port `3001`
-- Image upload test uses port `3002` (to avoid conflicts)
+- All E2E tests use port `3001` (backend server starts automatically)
+- Tests automatically start and stop the backend server
+
+### Browser Mode Configuration
+- **Local Development**: Runs in headed mode (visible browser window)
+- **CI Environment**: Automatically runs in headless mode (no visible browser)
+- **Screenshots**: Work in both modes and are automatically captured
 
 ## Test Features
 
@@ -201,6 +229,13 @@ If no direct file input is found, the test tries these button selectors:
 Test screenshots are saved to `tests/e2e/screenshots/` with timestamps:
 - `test-result-{timestamp}.png` - Chat test results
 - `image-upload-test-result-{timestamp}.png` - Image upload test results
+- `drag-drop-test-result-{timestamp}.png` - Drag and drop test results
+
+**Screenshot Features:**
+- ✅ Work in both headed and headless modes
+- ✅ Automatically uploaded as CI artifacts
+- ✅ Full page screenshots for comprehensive debugging
+- ✅ Timestamped for easy identification
 
 ### Console Output
 The tests provide detailed logging:
@@ -217,12 +252,26 @@ The test provides detailed logging about environment variable status:
 🔧 Environment detection: CI=true, GitHub Actions=true
 🏗️ Running in CI environment - using process.env variables
 ✅ Required environment variables found in CI environment
+🔧 Browser mode: headless
 🔧 Test environment variables status:
   - GEMINI_API_KEY: ✅ Set
   - OPENAI_API_KEY: ⚠️ Using dummy
   - NOTION_API_KEY: ⚠️ Using dummy
   - FIRECRAWL_API_KEY: ⚠️ Using dummy
   - Environment: CI/GitHub Actions
+```
+
+### Browser Mode Logging
+The tests show which browser mode is being used:
+
+**Local Development:**
+```
+🔧 Browser mode: headed
+```
+
+**CI Environment:**
+```
+🔧 Browser mode: headless
 ```
 
 ## Troubleshooting
@@ -236,6 +285,8 @@ The test provides detailed logging about environment variable status:
 5. **Real Extension Issues**: Ensure the extension builds properly and all files are in `dist/` folder
 6. **File Upload Not Found**: Check if the extension UI has changed
 7. **Image Not Found**: Ensure `dog.jpg` exists in the test directory
+8. **Headless Mode Issues**: If tests fail in headless mode, try running locally with `HEADLESS=true` to debug
+9. **CI Display Issues**: The CI pipeline automatically sets up virtual display (Xvfb) for headless browsers
 
 ### Error Handling
 
@@ -288,21 +339,55 @@ Each test follows this pattern:
 ## CI/CD Integration
 
 ### GitHub Actions Workflow
-The included `.github/workflows/e2e-tests.yml` file shows how to configure the CI environment:
+The CI pipeline (`.github/workflows/ci-pipeline.yml`) includes comprehensive E2E test setup:
 
 ```yaml
-- name: Run E2E tests
+- name: Setup virtual display for E2E tests
+  run: |
+    # Install Xvfb for virtual display
+    sudo apt-get install -y xvfb
+    # Start virtual display
+    export DISPLAY=:99
+    Xvfb :99 -screen 0 1280x720x24 &
+    sleep 3  # Give Xvfb time to start
+    echo "Virtual display started on :99"
+    # Verify display is working
+    xdpyinfo -display :99 > /dev/null 2>&1 && echo "Display :99 is working" || echo "Display :99 failed to start"
+
+- name: Start Backend Server for E2E Tests
+  working-directory: ./backend
   env:
     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-    FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+    NODE_ENV: test
+    PORT: 3001
+  run: |
+    # Start backend server in background
+    nohup node server.js > backend.log 2>&1 &
+    echo $! > backend.pid
+    # Wait for server to start
+    sleep 5
+    # Check if server is running
+    curl -f http://localhost:3001/health || echo "Backend server not responding"
+
+- name: Run E2E Tests - Gemini Chat
+  working-directory: ./chrome-extension
+  env:
+    GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    NODE_ENV: test
     CI: true
     GITHUB_ACTIONS: true
-  run: |
-    cd chrome-extension
-    npm run test:e2e
+    DISPLAY: :99
+    HEADLESS: true
+  run: npm run test:e2e:chat
 ```
+
+### CI Features
+- ✅ **Virtual Display Setup**: Automatically installs and configures Xvfb
+- ✅ **Backend Server Management**: Starts and stops backend server automatically
+- ✅ **Headless Mode**: Tests run in headless mode for CI efficiency
+- ✅ **Screenshot Artifacts**: Screenshots are automatically uploaded as CI artifacts
+- ✅ **Environment Variables**: Properly configured for CI environment
+- ✅ **Error Handling**: Comprehensive error reporting and cleanup
 
 ### Best Practices
 1. **Never commit `.env` files** - They contain sensitive API keys
@@ -314,10 +399,12 @@ The included `.github/workflows/e2e-tests.yml` file shows how to configure the C
 ## Important Notes
 
 - **Environment Variables**: The test automatically reads the Gemini API key from the backend's `.env` file. Make sure it's properly configured.
-- **Headless Mode**: Tests run in headed mode (browser visible) to help with debugging. Change `headless: false` to `headless: true` for CI environments.
+- **Browser Mode**: Tests automatically run in headed mode locally (visible browser) and headless mode in CI environments.
 - **Backend Dependency**: The test automatically starts and stops the backend server.
 - **Extension Loading**: The test loads the built extension from the `dist/` folder.
 - **Real Extension Testing**: Uses the actual chrome extension loaded into Puppeteer browser for authentic E2E testing.
+- **Screenshots**: Work in both headed and headless modes, automatically captured and uploaded as CI artifacts.
+- **Virtual Display**: CI environment automatically sets up Xvfb for headless browser support.
 
 ## Contributing
 
@@ -330,9 +417,13 @@ When adding new E2E tests:
 
 ## Future Improvements
 
+- [x] Add CI/CD integration with GitHub Actions
+- [x] Add screenshot capture on test failures
+- [x] Add headless mode support for CI environments
+- [x] Add virtual display setup for headless browsers
+- [x] Add drag and drop functionality testing
 - [ ] Add more comprehensive test scenarios
-- [ ] Add CI/CD integration
-- [ ] Add screenshot capture on test failures
 - [ ] Add performance monitoring
 - [ ] Test different AI models
 - [ ] Test error scenarios and edge cases
+- [ ] Add video recording of test runs

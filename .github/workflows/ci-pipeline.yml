@@ -40,10 +40,6 @@ jobs:
       working-directory: ./chrome-extension
       run: npm run test:stores
       
-    - name: Run Unit Tests (All)
-      working-directory: ./chrome-extension
-      run: npm run test
-      
     - name: Generate Test Coverage
       working-directory: ./chrome-extension
       run: npm run test:coverage
@@ -79,9 +75,6 @@ jobs:
   #     working-directory: ./backend
   #     env:
   #       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-  #       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  #       NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-  #       FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
   #       NODE_ENV: test
   #       PORT: 3001
   #     run: |
@@ -135,9 +128,6 @@ jobs:
       working-directory: ./chrome-extension
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-        FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         NODE_ENV: test
         CI: true
         GITHUB_ACTIONS: true
@@ -147,9 +137,6 @@ jobs:
       working-directory: ./chrome-extension
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-        FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         NODE_ENV: test
         CI: true
         GITHUB_ACTIONS: true
@@ -159,9 +146,6 @@ jobs:
       working-directory: ./chrome-extension
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-        FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         NODE_ENV: test
         CI: true
         GITHUB_ACTIONS: true
@@ -171,9 +155,6 @@ jobs:
     #   working-directory: ./chrome-extension
     #   env:
     #     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-    #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    #     NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-    #     FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
     #     NODE_ENV: test
     #     CI: true
     #     GITHUB_ACTIONS: true

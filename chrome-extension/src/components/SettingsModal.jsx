@@ -207,10 +207,11 @@ const SettingsModal = ({
                         {/* Frontend Only Mode Setting */}
                         <div style={styles.settingContainer}>
                             <div style={styles.settingHeader}>
-                                <label style={styles.settingLabel}>
+                                <label htmlFor="direct-api-mode-switch" style={styles.settingLabel}>
                                     Direct API Mode
                                 </label>
                                 <Switch
+                                    id="direct-api-mode-switch"
                                     checked={frontendOnlyMode}
                                     onChange={setFrontendOnlyMode}
                                 />
@@ -224,10 +225,11 @@ const SettingsModal = ({
                         {/* API Key Input - Only show when Direct Mode is enabled */}
                         {frontendOnlyMode && (
                             <div style={styles.settingContainer}>
-                                <label style={styles.apiKeyLabel}>
+                                <label htmlFor="gemini-api-key-input" style={styles.apiKeyLabel}>
                                     Gemini API Key *
                                 </label>
                                 <Input.Password
+                                    id="gemini-api-key-input"
                                     value={apiKey}
                                     onChange={(e) => setApiKey(e.target.value)}
                                     placeholder="Enter your Gemini API key"
@@ -250,10 +252,11 @@ const SettingsModal = ({
                         {/* Backend URL Input - Only show when Direct Mode is disabled */}
                         {!frontendOnlyMode && (
                             <div style={styles.settingContainer}>
-                                <label style={styles.apiKeyLabel}>
+                                <label htmlFor="backend-url-input" style={styles.apiKeyLabel}>
                                     Backend URL *
                                 </label>
                                 <Input
+                                    id="backend-url-input"
                                     value={backendUrl}
                                     onChange={(e) => setBackendUrl(e.target.value)}
                                     placeholder="http://localhost:3001"

@@ -66,7 +66,6 @@ export const showNotification = (message, type = 'success', duration = 3000) => 
     });
     
     document.body.appendChild(toast);
-    console.log(`🎯 Toast element added to DOM:`, toast);
     
     // Animate in
     setTimeout(() => {

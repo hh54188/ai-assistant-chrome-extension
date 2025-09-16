@@ -52,3 +52,9 @@ Required to capture screenshots of the visible tab content for AI analysis. The 
 
 Required for advanced screenshot capabilities and screen recording features. This permission enables the extension to capture content from the user's screen beyond just the current tab, providing additional functionality for comprehensive visual analysis and assistance.
 
+
+**Host Permission**
+
+<all_urls>: Required for development/testing to communicate with local backend servers for AI processing. Required to inject the AI assistant sidebar on all websites, allowing users to access AI assistance on any web page they visit. The extension's core functionality is to provide contextual AI help across all websites.
+
+

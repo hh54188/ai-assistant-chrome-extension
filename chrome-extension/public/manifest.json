@@ -8,8 +8,7 @@
     "scripting",
     "storage",
     "clipboardWrite",
-    "desktopCapture",
-    "tabs"
+    "desktopCapture"
   ],
   "host_permissions": [
     "<all_urls>"

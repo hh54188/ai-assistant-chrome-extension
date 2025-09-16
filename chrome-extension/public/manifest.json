@@ -8,13 +8,10 @@
     "scripting",
     "storage",
     "clipboardWrite",
-    "clipboardRead",
     "desktopCapture",
     "tabs"
   ],
   "host_permissions": [
-    "http://localhost:3000/*",
-    "https://*/*",
     "<all_urls>"
   ],
   "action": {

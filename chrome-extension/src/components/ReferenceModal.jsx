@@ -127,15 +127,15 @@ Page Content: ${document.body.innerText || ''}`;
             ),
             value: 'selected-text'
         },
-        {
-            label: (
-                <Space>
-                    <LinkOutlined />
-                    Links
-                </Space>
-            ),
-            value: 'links'
-        },
+        // {
+        //     label: (
+        //         <Space>
+        //             <LinkOutlined />
+        //             Links
+        //         </Space>
+        //     ),
+        //     value: 'links'
+        // },
         // {
         //     label: (
         //         <Space>

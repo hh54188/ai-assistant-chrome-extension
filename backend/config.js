@@ -3,10 +3,7 @@ dotenv.config();
 
 // Validate required environment variables
 const requiredEnvVars = [
-    'OPENAI_API_KEY',
     'GEMINI_API_KEY',
-    'NOTION_API_KEY',
-    'FIRECRAWL_API_KEY'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);

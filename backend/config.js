@@ -2,15 +2,11 @@ import dotenv from 'dotenv';
 
 // Load .env file only in development mode (not in production or test)
 // In test/CI environments, rely on environment variables passed from the parent process
-if (process.env.NODE_ENV === 'development') {
-    try {
-        dotenv.config();
-        console.log('✅ Loaded environment variables from .env file');
-    } catch (error) {
-        console.log('No .env file found, using environment variables directly');
-    }
-} else {
-    console.log('Using environment variables from process environment');
+try {
+    dotenv.config();
+    console.log('✅ Loaded environment variables from .env file');
+} catch (error) {
+    console.log('No .env file found, using environment variables directly');
 }
 
 // Debug: Log environment variable status

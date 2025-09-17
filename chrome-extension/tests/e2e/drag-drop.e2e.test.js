@@ -59,8 +59,8 @@ describe('Chrome Extension Drag and Drop E2E Tests', () => {
   const BACKEND_PORT = 3001;
   let BACKEND_URL = `http://localhost:${BACKEND_PORT}`;
   const EXTENSION_PATH = path.resolve(__dirname, '../../dist');
-  const TEST_URL = 'https://httpbin.org/html';
-  const EXPECTED_TEXT = 'Herman Melville - Moby-Dick';
+  const TEST_URL = 'https://httpi.dev/';
+  const EXPECTED_TEXT = 'HTTPSpot';
 
   // Environment variables for test backend server
   const TEST_ENV = {
@@ -569,7 +569,7 @@ describe('Chrome Extension Drag and Drop E2E Tests', () => {
       });
       
       // Set the dropped text data
-      dropEvent.dataTransfer.setData('text/plain', 'Herman Melville - Moby-Dick');
+      dropEvent.dataTransfer.setData('text/plain', 'HTTPSpot');
       
       // Dispatch the drop event on the sidebar container
       container.dispatchEvent(dropEvent);
@@ -704,7 +704,7 @@ describe('Chrome Extension Drag and Drop E2E Tests', () => {
         const elements = document.querySelectorAll('*');
         for (const el of elements) {
           const text = el.textContent || el.innerText;
-          if (text.includes('Herman Melville') || text.includes('Moby-Dick')) {
+          if (text.includes('HTTPSpot')) {
             return text;
           }
         }

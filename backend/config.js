@@ -1,5 +1,13 @@
 import dotenv from 'dotenv';
-dotenv.config();
+
+// Only load .env file in development mode
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+    try {
+        dotenv.config();
+    } catch (error) {
+        console.log('No .env file found, using environment variables directly');
+    }
+}
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -10,7 +18,7 @@ const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 if (missingEnvVars.length > 0) {
     console.error('❌ Missing required environment variables:');
     missingEnvVars.forEach(envVar => console.error(`   - ${envVar}`));
-    console.error('Please check your .env file and ensure all required variables are set.');
+    console.error('Please check your .env file (for local development) or environment variables (for CI/production) and ensure all required variables are set.');
     process.exit(1);
 }
 

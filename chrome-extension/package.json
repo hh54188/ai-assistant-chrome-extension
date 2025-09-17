@@ -12,6 +12,7 @@
     "test:watch": "vitest --watch",
     "test:stores": "vitest --run src/tests/stores/",
     "test:stores:watch": "vitest --watch src/tests/stores/",
+    "test:stores:coverage": "vitest --coverage --run src/tests/stores/ --coverage.include='src/stores/**/*Store.js'",
     "test:components": "vitest --run src/tests/components/",
     "test:components:watch": "vitest --watch src/tests/components/",
     "test:coverage": "vitest --coverage",

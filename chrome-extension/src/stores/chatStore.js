@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { persist } from 'zustand/middleware';
 import dayjs from 'dayjs';
 
 const DEFAULT_PROVIDER = 'gemini-2.5-flash';
@@ -297,19 +296,4 @@ export const useChatStore = create(
                 return state.sessions.reduce((total, session) => total + session.messages.length, 0);
             }
         })),
-        {
-            name: 'chat-store', // Storage key
-            // Only persist certain parts of the state
-            partialize: (state) => ({
-                currentSessionId: state.currentSessionId,
-                selectedProvider: state.selectedProvider,
-                sessions: state.sessions.map(session => ({
-                    ...session,
-                    // Don't persist abortController as it can't be serialized
-                    abortController: null,
-                    // Reset loading state on page load
-                    loading: false
-                }))
-            }),
-        }
 );

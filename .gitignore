@@ -9,3 +9,4 @@ _pycache_
 temp
 *.zip
 .DS_Store
+coverage/

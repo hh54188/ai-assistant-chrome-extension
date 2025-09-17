@@ -2,6 +2,8 @@ name: CI Pipeline
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -38,6 +40,18 @@ jobs:
       working-directory: ./chrome-extension
       run: npm run test:stores
       
+    - name: Run Stores Coverage Report
+      working-directory: ./chrome-extension
+      run: npm run test:stores:coverage
+      
+    - name: Upload Stores Coverage Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: stores-coverage-report
+        path: chrome-extension/coverage/
+        retention-days: 1
+
   # Backend Tests
   # backend-tests:
   #   name: Backend Tests

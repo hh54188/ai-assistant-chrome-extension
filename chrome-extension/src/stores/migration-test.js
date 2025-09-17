@@ -71,31 +71,6 @@ export const testMigration = () => {
     return true;
 };
 
-// Test persistence (localStorage)
-export const testPersistence = () => {
-    console.log('🔄 Testing Persistence...');
-    
-    const chatState = useChatStore.getState();
-    const beforeReload = {
-        currentSessionId: chatState.currentSessionId,
-        selectedProvider: chatState.selectedProvider,
-        sessionsCount: chatState.sessions.length
-    };
-    
-    console.log('State before persistence test:', beforeReload);
-    
-    // Simulate page reload by checking if data exists in localStorage
-    const persistedData = localStorage.getItem('chat-store');
-    if (persistedData) {
-        console.log('✅ Persistence working - data found in localStorage');
-        console.log('Persisted keys:', Object.keys(JSON.parse(persistedData).state));
-    } else {
-        console.log('❌ No persisted data found');
-    }
-    
-    return !!persistedData;
-};
-
 // Test performance with selective subscriptions
 export const testPerformance = () => {
     console.log('⚡ Testing Performance with Selective Subscriptions...');

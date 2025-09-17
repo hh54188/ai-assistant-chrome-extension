@@ -137,20 +137,7 @@ jobs:
         # Verify display is working
         xdpyinfo -display :99 > /dev/null 2>&1 && echo "Display :99 is working" || echo "Display :99 failed to start"
         
-    - name: Start Backend Server for E2E Tests
-      working-directory: ./backend
-      env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        NODE_ENV: test
-        PORT: 3001
-      run: |
-        # Start backend server in background
-        nohup node server.js > backend.log 2>&1 &
-        echo $! > backend.pid
-        # Wait for server to start
-        sleep 5
-        # Check if server is running
-        curl -f http://localhost:3001/health || echo "Backend server not responding"
+    # Remove the "Start Backend Server for E2E Tests" step - the E2E test handles this
         
     - name: Run E2E Tests - Gemini Chat
       working-directory: ./chrome-extension
@@ -185,26 +172,6 @@ jobs:
         HEADLESS: true
       run: npm run test:e2e:drag-drop
       
-    # - name: Run All E2E Tests
-    #   working-directory: ./chrome-extension
-    #   env:
-    #     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-    #     NODE_ENV: test
-    #     CI: true
-    #     GITHUB_ACTIONS: true
-    #   run: npm run test:e2e
-    #   continue-on-error: true  # Allow partial failures for debugging
-      
-    - name: Stop Backend Server
-      if: always()
-      working-directory: ./backend
-      run: |
-        # Stop backend server if it's running
-        if [ -f backend.pid ]; then
-          kill $(cat backend.pid) 2>/dev/null || echo "Backend server already stopped"
-          rm -f backend.pid
-        fi
-        
     - name: Upload E2E Test Screenshots
       uses: actions/upload-artifact@v4
       if: always()

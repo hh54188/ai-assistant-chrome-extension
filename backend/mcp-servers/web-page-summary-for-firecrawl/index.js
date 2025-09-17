@@ -1,11 +1,14 @@
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { GoogleGenAI } from '@google/genai';
-import { config } from '../../config.js';
+
+// Get API keys directly from environment variables
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
 
 // Initialize Gemini client
 const genAI = new GoogleGenAI({
     vertexai: false,
-    apiKey: config.gemini.apiKey
+    apiKey: GEMINI_API_KEY
 });
 
 // Function to split content into batches with overlap
@@ -65,7 +68,7 @@ Article Metadata:
 
         // Create a new chat session with Gemini
         const chat = genAI.chats.create({
-            model: config.gemini.model || 'gemini-2.5-flash'
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
         });
 
         const response = await chat.sendMessage({
@@ -86,7 +89,7 @@ async function detectPaywallWithContent(content, geminiApiKey) {
     try {
         // Create a new chat session with Gemini
         const chat = genAI.chats.create({
-            model: config.gemini.model || 'gemini-2.5-flash'
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
         });
 
         const response = await chat.sendMessage({
@@ -124,7 +127,7 @@ async function summarizeContent(content, geminiApiKey) {
     try {
         // Create a new chat session with Gemini
         const chat = genAI.chats.create({
-            model: config.gemini.model || 'gemini-2.5-flash'
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
         });
 
         const response = await chat.sendMessage({
@@ -220,8 +223,8 @@ export async function summarizeWebPage(params) {
     }
     
     // Use API keys from config
-    const firecrawlApiKey = config.firecrawl.apiKey;
-    const geminiApiKey = config.gemini.apiKey;
+    const firecrawlApiKey = FIRECRAWL_API_KEY;
+    const geminiApiKey = GEMINI_API_KEY;
     
     if (!firecrawlApiKey) {
         return {

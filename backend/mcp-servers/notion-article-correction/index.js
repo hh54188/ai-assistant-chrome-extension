@@ -1,14 +1,19 @@
 import { Client } from "@notionhq/client";
 import OpenAI from "openai";
 import { GoogleGenAI } from '@google/genai';
-import { config } from '../../config.js';
 import dotenv from "dotenv";
-dotenv.config();
 
-// Configuration - these will be passed as parameters to the MCP tool
-const NOTION_TOKEN = config.notion.apiKey;
-const OPENAI_API_KEY = config.openai.apiKey;
-const GEMINI_API_KEY = config.gemini.apiKey;
+// Load environment variables - try .env file first, then fallback to process.env
+try {
+    dotenv.config();
+} catch (error) {
+    // .env file doesn't exist, use process.env directly
+}
+
+// Configuration - get from environment variables directly
+const NOTION_TOKEN = process.env.NOTION_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Initialize clients
 const notion = new Client({ auth: NOTION_TOKEN });

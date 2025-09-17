@@ -36,7 +36,15 @@ class AIService {
             // Create MCP client transport with the server command
             const transport = new StdioClientTransport({
                 command: "node",
-                args: [path.join(process.cwd(), "mcp-servers", "index.js")]
+                args: [path.join(process.cwd(), "mcp-servers", "index.js")],
+                env: {
+                    ...process.env,
+                    GEMINI_API_KEY: config.gemini.apiKey,
+                    OPENAI_API_KEY: config.openai.apiKey,
+                    NOTION_API_KEY: config.notion.apiKey,
+                    FIRECRAWL_API_KEY: config.firecrawl.apiKey,
+                    NODE_ENV: process.env.NODE_ENV || 'development'
+                }
             });
             
             // Create MCP client

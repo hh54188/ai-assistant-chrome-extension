@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
-import { config } from '../../config.js';
-
-const OPENAI_API_KEY = config.openai.apiKey;
+// Get API key directly from environment variables
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 async function getOpenAICosts(startTime) {
     try {

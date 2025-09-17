@@ -110,9 +110,16 @@ describe('Chrome Extension E2E Tests', () => {
       
       const backendDir = path.resolve(__dirname, '../../../backend');
       
+      // Debug: Log what environment variables we're passing
+      const finalEnv = { ...process.env, ...TEST_ENV };
+      console.log('🔧 Environment variables being passed to backend:');
+      console.log(`  - GEMINI_API_KEY: ${finalEnv.GEMINI_API_KEY ? '✅ Set' : '❌ Missing'}`);
+      console.log(`  - NODE_ENV: ${finalEnv.NODE_ENV}`);
+      console.log(`  - PORT: ${finalEnv.PORT}`);
+      
       backendProcess = spawn('node', ['server.js'], {
         cwd: backendDir,
-        env: { ...process.env, ...TEST_ENV },
+        env: finalEnv,
         stdio: 'pipe'
       });
 

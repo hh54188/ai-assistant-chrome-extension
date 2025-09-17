@@ -1,13 +1,23 @@
 import dotenv from 'dotenv';
 
-// Only load .env file in development mode
-if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+// Load .env file only in development mode (not in production or test)
+// In test/CI environments, rely on environment variables passed from the parent process
+if (process.env.NODE_ENV === 'development') {
     try {
         dotenv.config();
+        console.log('✅ Loaded environment variables from .env file');
     } catch (error) {
         console.log('No .env file found, using environment variables directly');
     }
+} else {
+    console.log('Using environment variables from process environment');
 }
+
+// Debug: Log environment variable status
+console.log('🔧 Backend environment variable status:');
+console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`  - GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Missing'}`);
+console.log(`  - PORT: ${process.env.PORT || 'default (3001)'}`);
 
 // Validate required environment variables
 const requiredEnvVars = [

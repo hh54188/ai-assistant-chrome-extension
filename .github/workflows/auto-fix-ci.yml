@@ -2,13 +2,14 @@ name: Fix CI Failures
 
 on:
   workflow_run:
-    workflows: [Test]
+    workflows: [CI Pipeline]
     types: [completed]
 
 permissions:
-  contents: write
-  pull-requests: write
-  actions: read
+  contents: write      # ✅ Push branches, create commits
+  pull-requests: write # ✅ Comment on PRs  
+  actions: write       # 🆕 Trigger workflows on verification branch
+  checks: write        # 🆕 Create/update check runs for verification status
 
 jobs:
   attempt-fix:
@@ -66,4 +67,20 @@ jobs:
           # Deliverables when updates occur:
           - Pushed commits to the persistent fix branch for this PR head.
           - A single natural-language PR comment on the original PR that includes the inline compare link above.
+
+          # Requirements:
+          1) Identify the PR associated with the failed workflow run and determine its base and head branches.
+          2) Maintain a persistent fix branch for this PR head using the Fix Branch Prefix.
+          3) Attempt to resolve the CI failure by making minimal, targeted edits.
+          4) Create a verification branch that merges the original PR branch with your fix branch.
+          5) Run the specific CI job that failed on this verification branch to confirm the fix works.
+          6) Only if verification passes, post the compare link. If verification fails, iterate on the fix or post no comment.
+
+          # Verification Process:
+          - Create verification branch: git checkout -b verify-fix-{PR_NUMBER} {PR_BRANCH}
+          - Merge your fix: git merge {CI_FIX_BRANCH}
+          - Push verification branch: git push origin verify-fix-{PR_NUMBER}
+          - Trigger the same CI workflow that failed: gh api repos/{REPO}/actions/workflows/ci-pipeline.yml/dispatches --field ref=verify-fix-{PR_NUMBER}
+          - Wait for CI completion and check results
+          - Only proceed with compare link if CI passes on verification branch
           " --force --model "$MODEL" --output-format=text

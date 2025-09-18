@@ -33,7 +33,8 @@ router.post('/stream', async (req, res) => {
             stream = await aiService.streamOpenAI(message, conversationHistory, model);
         } else if (model.startsWith('gemini-')) {
             provider = 'gemini';
-            stream = await aiService.streamGeminiWithTools(message, conversationHistory, model, sessionId, files);
+            // stream = await aiService.streamGeminiWithTools(message, conversationHistory, model, sessionId, files);
+            stream = await aiService.streamGemini(message, conversationHistory, model, sessionId, files, false);
         } else {
             throw new Error(`Unsupported model: ${model}`);
         }

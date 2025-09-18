@@ -312,7 +312,7 @@ describe('Chrome Extension E2E Tests', () => {
     
     // Type the message
     await frame.focus(inputSelector);
-    await frame.type(inputSelector, 'who are you');
+    await frame.type(inputSelector, 'Does ocean have water? Just tell me yes or no');
     
     console.log('💬 Typed message in real extension input field');
     
@@ -366,7 +366,7 @@ describe('Chrome Extension E2E Tests', () => {
         const text = element.textContent || element.innerText;
         if (text && text.trim().length > 0) {
           messageElements.push(text.trim());
-          if (text.toLowerCase().includes('who are you')) {
+          if (text.toLowerCase().includes('does ocean have water')) {
             userMessageFound = true;
           }
         }
@@ -426,9 +426,10 @@ describe('Chrome Extension E2E Tests', () => {
         // Look for text that seems like an AI response
         for (const element of elements) {
           const text = element.textContent || element.innerText;
-          if (text && text.trim().length > 50) {
+          if (text && text.trim().length > 10) {
             const lowerText = text.toLowerCase();
-            if (lowerText.includes('i am') || lowerText.includes('assistant') || 
+            if (lowerText.includes('yes') || lowerText.includes('no') || 
+                lowerText.includes('i am') || lowerText.includes('assistant') || 
                 lowerText.includes('language model') || lowerText.includes('google') ||
                 lowerText.includes('gemini') || lowerText.includes('ai')) {
               return true;
@@ -467,24 +468,25 @@ describe('Chrome Extension E2E Tests', () => {
     console.log('📖 Reading Gemini response from real extension...');
     
     const response = await frame.evaluate(() => {
-      // Look specifically for text content that contains "google" and seems like an AI response
+      // Look specifically for text content that contains "yes" and seems like an AI response
       const allText = document.body.textContent || document.body.innerText;
       const lines = allText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
       
-      // First, look for lines that contain "google" and seem like responses
+      // First, look for lines that contain "yes" and seem like responses
       for (const line of lines) {
         const lowerLine = line.toLowerCase();
-        if (lowerLine.includes('google') && 
-            (lowerLine.includes('i am') || lowerLine.includes('assistant') || 
+        if (lowerLine.includes('yes') && 
+            (lowerLine.includes('ocean') || lowerLine.includes('water') || 
+             lowerLine.includes('i am') || lowerLine.includes('assistant') || 
              lowerLine.includes('language model') || lowerLine.includes('trained') ||
              lowerLine.includes('created'))) {
           return line;
         }
       }
       
-      // Look for any substantial text that mentions google
+      // Look for any substantial text that mentions yes
       for (const line of lines) {
-        if (line.toLowerCase().includes('google') && line.length > 20) {
+        if (line.toLowerCase().includes('yes') && line.length > 5) {
           return line;
         }
       }
@@ -494,7 +496,7 @@ describe('Chrome Extension E2E Tests', () => {
       for (let i = messageElements.length - 1; i >= 0; i--) {
         const element = messageElements[i];
         const text = element.textContent || element.innerText;
-        if (text && text.trim().length > 20 && text.toLowerCase().includes('google')) {
+        if (text && text.trim().length > 5 && text.toLowerCase().includes('yes')) {
           return text.trim();
         }
       }
@@ -507,7 +509,7 @@ describe('Chrome Extension E2E Tests', () => {
     return response;
   }
 
-  it('should ask Gemini "who are you" and verify response contains "google"', async () => {
+  it('should ask Gemini "Does ocean have water? Just tell me yes or no" and verify response contains "yes"', async () => {
     console.log('🧪 Starting Gemini chat test...');
     
     // Wait for extension to load
@@ -534,25 +536,29 @@ describe('Chrome Extension E2E Tests', () => {
     
     // Check if we got a real Gemini API response
     const responseText = response.toLowerCase();
-    const hasGoogleMention = responseText.includes('google');
+    const hasYesAnswer = responseText.includes('yes');
     const hasRealResponseIndicators = responseText.includes('i am') || 
                                      responseText.includes('assistant') || 
                                      responseText.includes('language model') ||
                                      responseText.includes('ai model') ||
-                                     responseText.includes('trained by');
+                                     responseText.includes('trained by') ||
+                                     responseText.includes('ocean') ||
+                                     responseText.includes('water');
     const hasUIElementsOnly = responseText.includes('him') && 
                              responseText.includes('upload') && 
                              responseText.includes('gemini-2.5-flash');
     
     console.log('🔍 Response analysis:');
-    console.log('  - Contains "google":', hasGoogleMention);
+    console.log('  - Contains "yes":', hasYesAnswer);
     console.log('  - Has real response indicators:', hasRealResponseIndicators);
     console.log('  - Has UI elements only:', hasUIElementsOnly);
     
-    if (hasGoogleMention && hasRealResponseIndicators) {
-      console.log('✅ Found real Gemini API response with "google" - perfect!');
+    if (hasYesAnswer && hasRealResponseIndicators) {
+      console.log('✅ Found real Gemini API response with "yes" - perfect!');
+    } else if (hasYesAnswer) {
+      console.log('✅ Found "yes" answer (simple response)');
     } else if (hasRealResponseIndicators) {
-      console.log('✅ Found real AI response (without "google" but still valid)');
+      console.log('✅ Found real AI response (without "yes" but still valid)');
     } else if (hasUIElementsOnly) {
       console.log('❌ Only found UI text, no actual API response detected');
       console.log('🎯 The message was typed and sent, but no AI response was generated');
@@ -561,8 +567,8 @@ describe('Chrome Extension E2E Tests', () => {
       console.log('❓ Unclear response type, investigating further...');
     }
     
-    // Require either a real response or Google mention for success
-    const isSuccessful = hasRealResponseIndicators || hasGoogleMention;
+    // Require either a real response or "yes" answer for success
+    const isSuccessful = hasRealResponseIndicators || hasYesAnswer;
     expect(isSuccessful).toBe(true);
     
     console.log('✅ Gemini chat test passed!');

@@ -30,6 +30,11 @@ power-apps/
 
 For automated testing and deployment, see the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md).
 
+The project includes three main workflows:
+- **CI Pipeline**: Main testing and build verification
+- **Auto Fix CI**: Automatic CI failure resolution
+- **Store Coverage Enforcer**: Automatic test coverage improvement to 100%
+
 ### Backend Development
 
 ```bash
@@ -260,6 +265,7 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Screenshot Capture Guide](./features/SCREENSHOT_README.md) - Screen capture functionality
 - [Screenshot Fix Guide](./features/SCREENSHOT_FIX_README.md) - Screenshot functionality fixes
 - [Settings Management](./features/SETTINGS_README.md) - Extension settings and preferences
+- [Coverage Enforcer](./features/COVERAGE_ENFORCER_README.md) - Automatic test coverage improvement workflow
 
 ### 🔧 Development & Maintenance
 - [Migration Complete](./development/MIGRATION_COMPLETE.md) - Migration documentation

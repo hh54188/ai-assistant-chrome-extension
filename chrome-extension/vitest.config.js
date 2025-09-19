@@ -19,6 +19,18 @@ export default defineConfig({
     fileParallelism: false,
     // Increase timeout for e2e tests since they run sequentially
     testTimeout: 120000,
-    hookTimeout: 120000
+    hookTimeout: 120000,
+    // Coverage configuration
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      include: ['src/stores/**/*.js'],
+      exclude: [
+        'src/stores/examples.js',
+        'src/stores/migration-test.js',
+        '**/*.test.js',
+        '**/*.spec.js'
+      ]
+    }
   }
 })

@@ -1,215 +1,152 @@
-# GitHub Actions Setup Guide
+# GitHub Actions Setup
 
-This guide explains how to set up the GitHub Actions test pipeline for the AI Assistant Chrome Extension project.
+This document describes the GitHub Actions workflows configured for this project.
 
-## Overview
+## Workflows Overview
 
-The test pipeline runs automatically on:
-- Pull requests targeting the `master` or `main` branch
-- Pushes to the `master` or `main` branch
+### 1. CI Pipeline (`.github/workflows/ci-pipeline.yml`)
+The main CI pipeline that runs on every push and pull request to the master branch.
 
-## Required GitHub Secrets
+**Features:**
+- Unit tests for Chrome Extension components and stores
+- E2E tests with Puppeteer
+- Build verification
+- Coverage reporting for store tests
 
-The pipeline requires several API keys to be configured as GitHub repository secrets. These secrets are used for testing the integration with external services.
+**Jobs:**
+- `unit-tests`: Runs component and store tests with coverage
+- `e2e-tests`: Runs end-to-end tests with Chrome browser
+- `build-verification`: Verifies the extension builds correctly
 
-### Required Secrets
+### 2. Auto Fix CI (`.github/workflows/auto-fix-ci.yml`)
+Automatically attempts to fix CI failures by creating fix branches and PRs.
 
-You need to add the following secrets to your GitHub repository:
+**Trigger:** Runs after CI Pipeline completes with failure status
+**Features:**
+- Uses Cursor AI to analyze and fix CI failures
+- Creates persistent fix branches
+- Generates PR comments with compare links
 
-1. **`GEMINI_API_KEY`** (Required)
-   - Google Gemini API key for AI chat functionality
-   - Get it from: [Google AI Studio](https://aistudio.google.com/app/apikey)
-   - Used in: E2E tests, Backend tests
+### 3. Store Coverage Enforcer (`.github/workflows/coverage-enforcer.yml`)
+**NEW WORKFLOW** - Automatically ensures store test coverage reaches 100%.
 
-2. **`OPENAI_API_KEY`** (Optional but recommended)
-   - OpenAI API key for GPT models
-   - Get it from: [OpenAI Platform](https://platform.openai.com/api-keys)
-   - Used in: Backend tests, MCP integration tests
+**Trigger:** Runs after CI Pipeline completes successfully
+**Features:**
+- Downloads and analyzes coverage artifacts from CI Pipeline
+- Parses lcov.info coverage data
+- Identifies uncovered code paths
+- Generates additional tests automatically
+- Creates pull requests with test improvements
+- Prevents duplicate PRs for the same coverage issue
 
-3. **`NOTION_API_KEY`** (Optional)
-   - Notion API key for Notion integration
-   - Get it from: [Notion Developers](https://www.notion.so/my-integrations)
-   - Used in: Backend tests, MCP integration tests
+## Store Coverage Enforcer Details
 
-4. **`FIRECRAWL_API_KEY`** (Optional)
-   - Firecrawl API key for web scraping functionality
-   - Get it from: [Firecrawl](https://firecrawl.dev/)
-   - Used in: Backend tests, MCP integration tests
+### How It Works
 
-### How to Add Secrets
+1. **Coverage Analysis**: Downloads coverage artifacts from the CI Pipeline and parses the lcov.info file to determine current coverage percentages.
 
-1. Go to your GitHub repository
-2. Click on **Settings** tab
-3. In the left sidebar, click **Secrets and variables** → **Actions**
-4. Click **New repository secret**
-5. Enter the secret name and value
-6. Click **Add secret**
+2. **Gap Identification**: Identifies specific uncovered lines in store files that need additional tests.
 
-## Pipeline Jobs
+3. **Test Generation**: Automatically generates test files for uncovered code paths using AI assistance.
 
-The test pipeline consists of 6 main jobs:
+4. **Verification**: Runs the tests to ensure they pass and improve coverage.
 
-### 1. Unit Tests
-- **Purpose**: Run React component and store unit tests
-- **Dependencies**: None (uses mocks)
-- **Commands**: 
-  - `npm run test:components`
-  - `npm run test:stores`
-  - `npm run test`
-  - `npm run test:coverage`
+5. **PR Creation**: Creates a pull request with the generated tests, but only if:
+   - Coverage is below 100%
+   - No existing coverage improvement PR exists
+   - The generated tests actually improve coverage
 
-### 2. Backend Tests
-- **Purpose**: Test backend API functionality
-- **Dependencies**: All API keys (with fallback to dummy values)
-- **Commands**: Individual test file execution
-- **Tests**: Gemini integration, file uploads, chat sessions
+### Coverage Requirements
 
-### 3. E2E Tests
-- **Purpose**: End-to-end testing with real Chrome browser
-- **Dependencies**: Chrome Extension build, Backend server, API keys
-- **Tests**: 
-  - Gemini chat functionality
-  - Image upload and analysis
-  - Drag and drop functionality
-- **Browser**: Google Chrome with Puppeteer
+The workflow enforces 100% coverage for:
+- **Lines**: All executable lines must be covered
+- **Functions**: All functions must be called in tests
+- **Branches**: All conditional branches must be tested
 
-### 4. Lint and Code Quality
-- **Purpose**: Code style and quality checks
-- **Dependencies**: None
-- **Commands**: `npm run lint`
+### Configuration
 
-### 5. Build Verification
-- **Purpose**: Verify that the project builds successfully
-- **Platforms**: Ubuntu, Windows, macOS
-- **Verification**: Extension files, backend server startup
+The workflow uses the following npm scripts:
+- `npm run test:stores` - Runs store tests
+- `npm run test:stores:coverage` - Runs store tests with coverage reporting
 
-### 6. Test Summary
-- **Purpose**: Generate a summary of all test results
-- **Dependencies**: All other jobs
-- **Output**: Markdown summary in GitHub Actions
-
-## Test Categories
-
-### Unit Tests (Fast)
-- React component rendering tests
-- Zustand store state management tests
-- Utility function tests
-- Uses mocks for external dependencies
-
-### Backend Tests (Medium)
-- API endpoint tests
-- MCP server integration tests
-- File upload/processing tests
-- Uses real API keys (with rate limiting)
-
-### E2E Tests (Slow)
-- Full browser automation tests
-- Real Chrome extension testing
-- Backend server integration
-- Screenshot capture for debugging
-
-## Environment Variables
-
-The pipeline sets the following environment variables:
-
-```yaml
-env:
-  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-  FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-  NODE_ENV: test
-  CI: true
-  GITHUB_ACTIONS: true
+Coverage is configured in `chrome-extension/package.json`:
+```json
+"test:stores:coverage": "vitest --coverage --run src/tests/stores/ --coverage.include='src/stores/**/*Store.js'"
 ```
 
-## Artifacts
+### Artifacts
 
-The pipeline generates several artifacts:
+The workflow generates several artifacts:
+- `coverage-analysis-report` - Contains coverage analysis and test suggestions
+- Coverage reports in HTML and LCOV formats
 
-1. **Test Coverage Reports**: Uploaded to Codecov
-2. **E2E Screenshots**: Saved for debugging failed tests
-3. **Build Artifacts**: Extension files for verification
+### Permissions Required
 
-## Debugging Failed Tests
+The workflow requires the following GitHub permissions:
+- `contents: write` - To create branches and commits
+- `pull-requests: write` - To create and manage PRs
+- `actions: write` - To trigger workflows
+- `checks: write` - To create check runs
+- `issues: write` - To create tracking issues
 
-### Unit Test Failures
-- Check the test output for specific assertion failures
-- Review component mocks in `src/tests/setup.jsx`
+### Environment Variables
 
-### Backend Test Failures
-- Verify API keys are correctly set
-- Check network connectivity and API rate limits
-- Review test logs for specific error messages
+Required secrets:
+- `CURSOR_API_KEY` - For AI-powered test generation
+- `GITHUB_TOKEN` - Automatically provided by GitHub Actions
 
-### E2E Test Failures
-- Download and review E2E screenshots
-- Check browser console logs in the test output
-- Verify Chrome extension build is correct
-- Ensure backend server starts successfully
+## Setup Instructions
 
-## Local Testing
+### 1. Enable GitHub Actions
+GitHub Actions are enabled by default when the workflow files are present in `.github/workflows/`.
 
-To run the same tests locally:
+### 2. Configure Secrets
+Add the following secrets in your repository settings:
+- `CURSOR_API_KEY`: Your Cursor API key for AI test generation
+- `GEMINI_API_KEY`: Your Gemini API key for E2E tests
 
-```bash
-# Unit tests
-cd chrome-extension
-npm run test
+### 3. Verify Workflow Triggers
+The workflows are configured to trigger on:
+- Push to master branch
+- Pull requests to master branch
+- Workflow completion events
 
-# Backend tests
-cd backend
-node tests/test-gemini-conversation-tokens.js
-
-# E2E tests
-cd chrome-extension
-npm run test:e2e
-```
-
-## Pipeline Status
-
-The pipeline will show one of these statuses:
-
-- ✅ **Success**: All tests passed
-- ❌ **Failure**: Critical tests failed
-- ⚠️ **Partial**: Some non-critical tests failed
-
-## Cost Considerations
-
-- **GitHub Actions**: Free tier includes 2,000 minutes/month
-- **API Usage**: E2E tests make real API calls (monitor usage)
-- **Storage**: Artifacts are retained for 7-30 days
-
-## Security Notes
-
-- API keys are stored as encrypted secrets
-- Keys are only accessible during workflow execution
-- No secrets are logged or exposed in outputs
-- Dummy keys are used when secrets are not available
+### 4. Monitor Workflow Runs
+You can monitor workflow runs in the GitHub Actions tab of your repository.
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Missing API Keys**: Add required secrets to repository
-2. **Rate Limiting**: API calls may be throttled
-3. **Chrome Installation**: Puppeteer may fail to install Chrome
-4. **Build Failures**: Check Node.js version compatibility
+1. **Coverage Not Generated**: Ensure the CI Pipeline is running the coverage step and uploading artifacts.
 
-### Getting Help
+2. **Permission Errors**: Verify that the GitHub token has the required permissions.
 
-1. Check the GitHub Actions logs for detailed error messages
-2. Review the test output for specific failures
-3. Verify all required secrets are configured
-4. Test locally to reproduce issues
+3. **Test Generation Fails**: Check that the CURSOR_API_KEY secret is properly configured.
 
-## Updating the Pipeline
+4. **Duplicate PRs**: The workflow prevents duplicate coverage PRs by checking for existing open PRs.
 
-To modify the pipeline:
+### Debug Information
 
-1. Edit `.github/workflows/test-pipeline.yml`
-2. Test changes in a feature branch
-3. Create a pull request to merge changes
-4. Monitor the pipeline execution
+The workflow includes extensive logging and debugging information:
+- Coverage percentages are logged at each step
+- Test generation progress is tracked
+- PR creation status is reported
 
-The pipeline is designed to be robust and handle partial failures gracefully while providing comprehensive test coverage for the Chrome extension and backend services.
+## Best Practices
+
+1. **Review Generated Tests**: Always review automatically generated tests before merging.
+
+2. **Monitor Coverage Trends**: Use the coverage reports to track coverage improvements over time.
+
+3. **Maintain Test Quality**: Ensure generated tests follow the same quality standards as manual tests.
+
+4. **Regular Cleanup**: Periodically clean up old coverage improvement branches and PRs.
+
+## Future Enhancements
+
+Potential improvements to consider:
+- Integration with code quality tools
+- Custom coverage thresholds per file
+- Integration with project management tools
+- Enhanced test generation with more sophisticated AI prompts

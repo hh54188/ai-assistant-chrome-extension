@@ -74,7 +74,7 @@ jobs:
           3) Attempt to resolve the CI failure by making minimal, targeted edits.
           4) Create a verification branch that merges the original PR branch with your fix branch.
           5) Run the specific CI job that failed on this verification branch to confirm the fix works.
-          6) Only if verification passes, post the compare link. If verification fails, iterate on the fix or post no comment.
+          6) Only if verification passes, post the compare link. If verification fails, iterate on the fix, 3 times at most. If after 3 iterations, the verification still fails, post no comment.
 
           # Verification Process:
           - Create verification branch: git checkout -b verify-fix-{PR_NUMBER} {PR_BRANCH}

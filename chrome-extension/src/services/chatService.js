@@ -132,6 +132,7 @@ class ChatService {
                                     }
 
                                     if (jsonData.content && onChunk) {
+                                        console.log('jsonData.content----->', jsonData.content);
                                         onChunk(jsonData.content);
                                     }
                                 } catch (parseError) {

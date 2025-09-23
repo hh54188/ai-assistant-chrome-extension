@@ -81,7 +81,8 @@ class ChatService {
                     model,
                     conversationHistory,
                     sessionId,
-                    files
+                    files,
+                    useFakeStream: true
                 }),
                 signal: abortController?.signal
             });

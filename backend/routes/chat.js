@@ -11,7 +11,7 @@ async function sleep(ms) {
  * Stream chat response from AI provider
  */
 router.post('/stream', async (req, res) => {
-    const { message, model = 'gpt-4.1-nano', conversationHistory = [], sessionId = 'default', files = []} = req.body;
+    const { message, model = 'gpt-4.1-nano', conversationHistory = [], sessionId = 'default', files = [], useFakeStream = false} = req.body;
 
     if (!message || !message.trim()) {
         return res.status(400).json({ error: 'Message is required' });
@@ -33,8 +33,14 @@ router.post('/stream', async (req, res) => {
             stream = await aiService.streamOpenAI(message, conversationHistory, model);
         } else if (model.startsWith('gemini-')) {
             provider = 'gemini';
-            // stream = await aiService.streamGeminiWithTools(message, conversationHistory, model, sessionId, files);
-            stream = await aiService.streamGemini(message, conversationHistory, model, sessionId, files, false);
+            // Use fake stream for debugging if requested
+            if (useFakeStream) {
+                console.log('🔧 Using FAKE Gemini stream for debugging');
+                stream = await aiService.streamGeminiFake(message, conversationHistory, model, sessionId, files, false);
+            } else {
+                // stream = await aiService.streamGeminiWithTools(message, conversationHistory, model, sessionId, files);
+                stream = await aiService.streamGemini(message, conversationHistory, model, sessionId, files, false);
+            }
         } else {
             throw new Error(`Unsupported model: ${model}`);
         }

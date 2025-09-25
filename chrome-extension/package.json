@@ -24,7 +24,7 @@
     "test:e2e:drag-drop": "vitest --run tests/e2e/drag-drop.e2e.test.js"
   },
   "dependencies": {
-    "@ant-design/x": "^1.4.0",
+    "@ant-design/x": "^1.6.1",
     "@google/genai": "^1.15.0",
     "antd": "^5.26.4",
     "antd-style": "^3.7.1",

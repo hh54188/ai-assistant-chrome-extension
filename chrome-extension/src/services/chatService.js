@@ -64,6 +64,7 @@ class ChatService {
             onComplete,
             onError,
             onLoadingChange,
+            onFirstChunk,
             abortController,
             files = []
         } = callbacks;
@@ -81,7 +82,8 @@ class ChatService {
                     model,
                     conversationHistory,
                     sessionId,
-                    files
+                    files,
+                    useFakeStream: false
                 }),
                 signal: abortController?.signal
             });
@@ -95,6 +97,7 @@ class ChatService {
             const decoder = new TextDecoder();
 
             let buffer = '';
+            let isFirstChunk = true;
 
             const readChunk = () => {
                 reader.read()
@@ -133,6 +136,13 @@ class ChatService {
 
                                     if (jsonData.content && onChunk) {
                                         console.log('jsonData.content----->', jsonData.content);
+                                        
+                                        // Call onFirstChunk callback if this is the first chunk
+                                        if (isFirstChunk && onFirstChunk) {
+                                            onFirstChunk();
+                                            isFirstChunk = false;
+                                        }
+                                        
                                         onChunk(jsonData.content);
                                     }
                                 } catch (parseError) {
@@ -268,6 +278,7 @@ class ChatService {
             onComplete,
             onError,
             onLoadingChange,
+            onFirstChunk,
             abortController
         } = callbacks;
 
@@ -305,6 +316,7 @@ class ChatService {
             });
 
             // Process the streaming response
+            let isFirstChunk = true;
             for await (const chunk of response) {
                 // Check if the request was aborted
                 if (abortController?.signal?.aborted) {
@@ -316,6 +328,12 @@ class ChatService {
 
                 // Handle text chunks
                 if (chunk.text) {
+                    // Call onFirstChunk callback if this is the first chunk
+                    if (isFirstChunk && onFirstChunk) {
+                        onFirstChunk();
+                        isFirstChunk = false;
+                    }
+                    
                     if (onChunk) onChunk(chunk.text);
                 }
             }

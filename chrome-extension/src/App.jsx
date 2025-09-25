@@ -9,7 +9,7 @@ import { logEnvironment } from './utils/environment';
 const App = () => {
   logEnvironment();
   
-  return <ChatListTroubleshooting />;
+  return <CopilotApp />;
 };
 
 export default App;

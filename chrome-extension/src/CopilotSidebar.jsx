@@ -166,6 +166,10 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                 
                 // Use chatService for streaming
                 await chatService.streamChat(val, model, conversationHistory, sessionId, {
+                    onFirstChunk: () => {
+                        // Update message status to streaming when first chunk is received
+                        updateLastMessageStatus(sessionId, 'streaming');
+                    },
                     onChunk: (content) => {
                         // Append content to the last message in the session
                         appendToLastMessage(sessionId, content);
@@ -252,6 +256,10 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         if (useDirectApi) {
             // Use direct Gemini API
             await chatService.streamChatDirectGemini(val, conversationHistory, {
+                onFirstChunk: () => {
+                    // Update message status to streaming when first chunk is received
+                    updateLastMessageStatus(requestSessionId, 'streaming');
+                },
                 onChunk: (content) => {
                     // Append content to the last message in the session
                     appendToLastMessage(requestSessionId, content);
@@ -290,21 +298,25 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         } else {
             // Use chatService for streaming with files
             await chatService.streamChat(val, selectedProvider, conversationHistory, requestSessionId, {
-            onChunk: (content) => {
-                // Append content to the last message in the session
-                appendToLastMessage(requestSessionId, content);
-            },
-            onComplete: () => {
-                // Mark last message as complete
-                updateLastMessageStatus(requestSessionId, 'done');
-                setSessionLoading(requestSessionId, false);
-                setLoading(false);
-                clearSessionFiles(requestSessionId); // Clear files for this session
-                // Clear screenshot data after AI response completes to prevent loops
-                if (requestSessionId === currentSessionId) {
-                    clearScreenshotData();
-                }
-            },
+                onFirstChunk: () => {
+                    // Update message status to streaming when first chunk is received
+                    updateLastMessageStatus(requestSessionId, 'streaming');
+                },
+                onChunk: (content) => {
+                    // Append content to the last message in the session
+                    appendToLastMessage(requestSessionId, content);
+                },
+                onComplete: () => {
+                    // Mark last message as complete
+                    updateLastMessageStatus(requestSessionId, 'done');
+                    setSessionLoading(requestSessionId, false);
+                    setLoading(false);
+                    clearSessionFiles(requestSessionId); // Clear files for this session
+                    // Clear screenshot data after AI response completes to prevent loops
+                    if (requestSessionId === currentSessionId) {
+                        clearScreenshotData();
+                    }
+                },
             onError: (errorMessage) => {
                 // Update last message with error content
                 updateLastMessage(requestSessionId, errorMessage);

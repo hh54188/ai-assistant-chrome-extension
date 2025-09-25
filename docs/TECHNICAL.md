@@ -266,6 +266,7 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Screenshot Fix Guide](./features/SCREENSHOT_FIX_README.md) - Screenshot functionality fixes
 - [Settings Management](./features/SETTINGS_README.md) - Extension settings and preferences
 - [Coverage Enforcer](./features/COVERAGE_ENFORCER_README.md) - Automatic test coverage improvement workflow
+- [Fake Stream Debug Tool](./features/FAKE_STREAM_DEBUG_README.md) - Simulate and debug streaming responses
 
 ### 🔧 Development & Maintenance
 - [Migration Complete](./development/MIGRATION_COMPLETE.md) - Migration documentation

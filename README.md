@@ -111,3 +111,6 @@ MIT License - see the [LICENSE](./LICENSE) file for details.
 ---
 
 **Ready to get started?** Follow the Quick Start guide above to set up your AI assistant!
+
+
+<!-- Security scan triggered at 2025-09-28 15:56:35 -->

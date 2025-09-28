@@ -173,15 +173,36 @@ jobs:
         if [ -f "../coverage/lcov.info" ]; then
           echo "Parsing lcov.info..."
           
-          # Extract coverage percentages
-          COVERAGE_DATA=$(grep -A 1 "LF:" ../coverage/lcov.info | tail -n +2 | awk '{print $2}' | tr -d '%')
-          LINES_COVERED=$(echo "$COVERAGE_DATA" | head -1)
-          FUNCTIONS_COVERED=$(echo "$COVERAGE_DATA" | sed -n '2p')
-          BRANCHES_COVERED=$(echo "$COVERAGE_DATA" | sed -n '3p')
+          # Extract raw coverage counts from lcov.info
+          LINES_FOUND=$(grep "^LF:" ../coverage/lcov.info | awk '{print $2}')
+          LINES_HIT=$(grep "^LH:" ../coverage/lcov.info | awk '{print $2}')
+          FUNCTIONS_FOUND=$(grep "^FNF:" ../coverage/lcov.info | awk '{print $2}')
+          FUNCTIONS_HIT=$(grep "^FNH:" ../coverage/lcov.info | awk '{print $2}')
+          BRANCHES_FOUND=$(grep "^BRF:" ../coverage/lcov.info | awk '{print $2}')
+          BRANCHES_HIT=$(grep "^BRH:" ../coverage/lcov.info | awk '{print $2}')
           
-          echo "Lines covered: $LINES_COVERED%"
-          echo "Functions covered: $FUNCTIONS_COVERED%"
-          echo "Branches covered: $BRANCHES_COVERED%"
+          # Calculate percentages
+          if [ "$LINES_FOUND" -gt 0 ]; then
+            LINES_COVERED=$((LINES_HIT * 100 / LINES_FOUND))
+          else
+            LINES_COVERED=0
+          fi
+          
+          if [ "$FUNCTIONS_FOUND" -gt 0 ]; then
+            FUNCTIONS_COVERED=$((FUNCTIONS_HIT * 100 / FUNCTIONS_FOUND))
+          else
+            FUNCTIONS_COVERED=0
+          fi
+          
+          if [ "$BRANCHES_FOUND" -gt 0 ]; then
+            BRANCHES_COVERED=$((BRANCHES_HIT * 100 / BRANCHES_FOUND))
+          else
+            BRANCHES_COVERED=0
+          fi
+          
+          echo "Lines: $LINES_HIT/$LINES_FOUND ($LINES_COVERED%)"
+          echo "Functions: $FUNCTIONS_HIT/$FUNCTIONS_FOUND ($FUNCTIONS_COVERED%)"
+          echo "Branches: $BRANCHES_HIT/$BRANCHES_FOUND ($BRANCHES_COVERED%)"
           
           echo "lines_coverage=$LINES_COVERED" >> $GITHUB_OUTPUT
           echo "functions_coverage=$FUNCTIONS_COVERED" >> $GITHUB_OUTPUT

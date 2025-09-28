@@ -91,41 +91,145 @@ jobs:
         echo "  - Artifact: $ARTIFACT_NAME"
         echo "  - Download path: $DOWNLOAD_PATH"
 
-    - name: Print Pipeline Information
-      run: |
-        echo "🔍 Pipeline Run Information:"
-        echo "================================"
-        echo "📋 Current Workflow Details:"
-        echo "  - Workflow Name: ${{ github.workflow }}"
-        echo "  - Workflow Run ID: ${{ github.run_id }}"
-        echo "  - Workflow Run Number: ${{ github.run_number }}"
-        echo "  - Workflow Run Attempt: ${{ github.run_attempt }}"
-        echo "  - Event Name: ${{ github.event_name }}"
-        echo "  - Event Type: ${{ github.event.action || 'N/A' }}"
-        echo ""
-        echo "🏗️ Repository Information:"
-        echo "  - Repository: ${{ github.repository }}"
-        echo "  - Repository Owner: ${{ github.repository_owner }}"
-        echo "  - Ref: ${{ github.ref }}"
-        echo "  - Ref Name: ${{ github.ref_name }}"
-        echo "  - Ref Type: ${{ github.ref_type }}"
-        echo "  - SHA: ${{ github.sha }}"
-        echo "  - Head Ref: ${{ github.head_ref || 'N/A' }}"
-        echo "  - Base Ref: ${{ github.base_ref || 'N/A' }}"
-        echo ""
-        echo "🎯 Target Run Information:"
-        echo "  - Target Run ID: ${{ env.RUN_ID }}"
-        echo "  - Target Artifact: ${{ env.artifact_name }}"
-        echo "  - Download Path: ${{ env.download_path }}"
-        echo ""
-        echo "👤 Actor Information:"
-        echo "  - Actor: ${{ github.actor }}"
-        echo "  - Triggered By: ${{ github.triggering_actor || github.actor }}"
-        echo ""
-        echo "🕐 Timing Information:"
-        echo "  - Workflow Started: ${{ github.workflow_run.created_at || 'N/A' }}"
-        echo "  - Current Time: $(date -u '+%Y-%m-%m-%dT%H:%M:%SZ')"
-        echo "================================"
+    # - name: Print Pipeline Information
+    #   run: |
+    #     echo "🔍 Pipeline Run Information:"
+    #     echo "================================"
+    #     echo "📋 Current Workflow Details:"
+    #     echo "  - Workflow Name: ${{ github.workflow }}"
+    #     echo "  - Workflow Run ID: ${{ github.run_id }}"
+    #     echo "  - Workflow Run Number: ${{ github.run_number }}"
+    #     echo "  - Workflow Run Attempt: ${{ github.run_attempt }}"
+    #     echo "  - Event Name: ${{ github.event_name }}"
+    #     echo "  - Event Type: ${{ github.event.action || 'N/A' }}"
+    #     echo "  - Workflow File: ${{ github.workflow_ref }}"
+    #     echo "  - Job Name: ${{ github.job }}"
+    #     echo "  - Step Name: ${{ github.step }}"
+    #     echo ""
+    #     echo "🏗️ Repository Information:"
+    #     echo "  - Repository: ${{ github.repository }}"
+    #     echo "  - Repository Owner: ${{ github.repository_owner }}"
+    #     echo "  - Ref: ${{ github.ref }}"
+    #     echo "  - Ref Name: ${{ github.ref_name }}"
+    #     echo "  - Ref Type: ${{ github.ref_type }}"
+    #     echo "  - SHA: ${{ github.sha }}"
+    #     echo "  - Head Ref: ${{ github.head_ref || 'N/A' }}"
+    #     echo "  - Base Ref: ${{ github.base_ref || 'N/A' }}"
+    #     echo "  - Repository URL: https://github.com/${{ github.repository }}"
+    #     echo "  - Commit URL: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+    #     echo ""
+    #     echo "🎯 Target Run Information:"
+    #     echo "  - Target Run ID: ${{ env.RUN_ID }}"
+    #     echo "  - Target Artifact: ${{ env.artifact_name }}"
+    #     echo "  - Download Path: ${{ env.download_path }}"
+    #     echo "  - Target Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}"
+    #     echo ""
+    #     echo "👤 Actor Information:"
+    #     echo "  - Actor: ${{ github.actor }}"
+    #     echo "  - Triggered By: ${{ github.triggering_actor || github.actor }}"
+    #     echo "  - Actor ID: ${{ github.actor_id }}"
+    #     echo ""
+    #     echo "🕐 Timing Information:"
+    #     echo "  - Workflow Started: ${{ github.workflow_run.created_at || 'N/A' }}"
+    #     echo "  - Current Time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    #     echo "  - Timezone: UTC"
+    #     echo ""
+    #     echo "🌐 Environment Information:"
+    #     echo "  - Runner OS: ${{ runner.os }}"
+    #     echo "  - Runner Name: ${{ runner.name }}"
+    #     echo "  - Runner Arch: ${{ runner.arch }}"
+    #     echo "  - Runner Temp: ${{ runner.temp }}"
+    #     echo "  - Runner Tool Cache: ${{ runner.tool_cache }}"
+    #     echo "  - Runner Workspace: ${{ runner.workspace }}"
+    #     echo ""
+    #     echo "📊 Event Payload Information:"
+    #     echo "  - Event Path: ${{ github.event_path }}"
+    #     echo "  - Event Name: ${{ github.event_name }}"
+    #     echo "  - Event Action: ${{ github.event.action || 'N/A' }}"
+    #     echo ""
+    #     echo "🔗 URLs and Links:"
+    #     echo "  - Workflow Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    #     echo "  - Repository URL: https://github.com/${{ github.repository }}"
+    #     echo "  - Commit URL: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+    #     echo "  - Branch URL: https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}"
+    #     echo "  - Target Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}"
+    #     echo ""
+    #     echo "📝 Additional Context:"
+    #     echo "  - Server URL: ${{ github.server_url }}"
+    #     echo "  - API URL: ${{ github.api_url }}"
+    #     echo "  - GraphQL URL: ${{ github.graphql_url }}"
+    #     echo "  - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN != '' && 'Present' || 'Not Present' }}"
+    #     echo "================================"
+
+    # - name: Fetch Target Run Details via API
+    #   id: fetch-run-details
+    #   run: |
+    #     echo "🔍 Fetching detailed information about target run ID: ${{ env.RUN_ID }}"
+        
+    #     # Use GitHub CLI to get detailed run information
+    #     if command -v gh &> /dev/null; then
+    #       echo "📊 Target Run Details (via GitHub CLI):"
+    #       echo "========================================"
+          
+    #       # Get workflow run details
+    #       gh api repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }} --jq '{
+    #         id: .id,
+    #         name: .name,
+    #         status: .status,
+    #         conclusion: .conclusion,
+    #         created_at: .created_at,
+    #         updated_at: .updated_at,
+    #         run_started_at: .run_started_at,
+    #         jobs_url: .jobs_url,
+    #         logs_url: .logs_url,
+    #         check_suite_url: .check_suite_url,
+    #         artifacts_url: .artifacts_url,
+    #         cancel_url: .cancel_url,
+    #         rerun_url: .rerun_url,
+    #         workflow_url: .workflow_url,
+    #         head_branch: .head_branch,
+    #         head_sha: .head_sha,
+    #         path: .path,
+    #         run_number: .run_number,
+    #         run_attempt: .run_attempt,
+    #         event: .event,
+    #         display_title: .display_title,
+    #         url: .url,
+    #         html_url: .html_url,
+    #         pull_requests: .pull_requests,
+    #         created_at_formatted: (.created_at | strptime("%Y-%m-%dT%H:%M:%SZ") | strftime("%Y-%m-%d %H:%M:%S UTC")),
+    #         updated_at_formatted: (.updated_at | strptime("%Y-%m-%dT%H:%M:%SZ") | strftime("%Y-%m-%d %H:%M:%S UTC"))
+    #       }' | jq -r 'to_entries[] | "  - \(.key): \(.value)"'
+          
+    #       echo ""
+    #       echo "📋 Workflow Details:"
+    #       gh api repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }} --jq '.workflow_run' | jq -r 'to_entries[] | "  - \(.key): \(.value)"'
+          
+    #       echo ""
+    #       echo "👤 Actor Details:"
+    #       gh api repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }} --jq '.actor' | jq -r 'to_entries[] | "  - \(.key): \(.value)"'
+          
+    #       echo ""
+    #       echo "🏗️ Repository Details:"
+    #       gh api repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }} --jq '.repository' | jq -r 'to_entries[] | "  - \(.key): \(.value)"'
+          
+    #       echo ""
+    #       echo "📦 Available Artifacts:"
+    #       gh api repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}/artifacts --jq '.artifacts[] | "  - Name: \(.name), Size: \(.size_in_bytes) bytes, Created: \(.created_at)"'
+          
+    #     else
+    #       echo "⚠️  GitHub CLI not available, using curl to fetch basic information"
+          
+    #       # Fallback to curl if gh CLI is not available
+    #       RUN_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+    #         "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}")
+          
+    #       echo "📊 Target Run Details (via API):"
+    #       echo "========================================"
+    #       echo "$RUN_INFO" | jq -r 'to_entries[] | "  - \(.key): \(.value)"' 2>/dev/null || echo "  - Error: Could not parse run information"
+    #     fi
+        
+    #     echo "========================================"
 
     - name: Download Coverage Artifacts
       id: download
@@ -135,7 +239,7 @@ jobs:
         path: ${{ env.download_path }}
         run-id: ${{ env.RUN_ID }}
         repository: ${{ github.repository }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Verify Coverage Artifact
       run: |

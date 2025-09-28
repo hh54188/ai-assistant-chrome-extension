@@ -173,13 +173,13 @@ jobs:
         if [ -f "../coverage/lcov.info" ]; then
           echo "Parsing lcov.info..."
           
-          # Extract raw coverage counts from lcov.info
-          LINES_FOUND=$(grep "^LF:" ../coverage/lcov.info | awk '{print $2}')
-          LINES_HIT=$(grep "^LH:" ../coverage/lcov.info | awk '{print $2}')
-          FUNCTIONS_FOUND=$(grep "^FNF:" ../coverage/lcov.info | awk '{print $2}')
-          FUNCTIONS_HIT=$(grep "^FNH:" ../coverage/lcov.info | awk '{print $2}')
-          BRANCHES_FOUND=$(grep "^BRF:" ../coverage/lcov.info | awk '{print $2}')
-          BRANCHES_HIT=$(grep "^BRH:" ../coverage/lcov.info | awk '{print $2}')
+          # Extract raw coverage counts from lcov.info (sum across all records)
+          LINES_FOUND=$(grep "^LF:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
+          LINES_HIT=$(grep "^LH:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
+          FUNCTIONS_FOUND=$(grep "^FNF:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
+          FUNCTIONS_HIT=$(grep "^FNH:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
+          BRANCHES_FOUND=$(grep "^BRF:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
+          BRANCHES_HIT=$(grep "^BRH:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
           
           # Calculate percentages
           if [ "$LINES_FOUND" -gt 0 ]; then
@@ -223,369 +223,318 @@ jobs:
           exit 1
         fi
 
-    - name: 🛑 TEMPORARY EXIT - Test Previous Steps
-      run: |
-        echo "🛑 TEMPORARY EXIT POINT"
-        echo "✅ All previous steps completed successfully!"
-        echo "Coverage analysis completed:"
-        echo "- Lines: ${{ steps.coverage-analysis.outputs.lines_coverage }}%"
-        echo "- Functions: ${{ steps.coverage-analysis.outputs.functions_coverage }}%"
-        echo "- Branches: ${{ steps.coverage-analysis.outputs.branches_coverage }}%"
-        echo "- Coverage available: ${{ steps.coverage-analysis.outputs.coverage_available }}"
-        echo "- Coverage sufficient: ${{ steps.coverage-analysis.outputs.coverage_sufficient }}"
-        echo ""
-        echo "This is a temporary exit point for testing purposes."
-        echo "Remove this step when ready to continue with the full workflow."
-        exit 0
-
-    - name: Generate Coverage Report
-      if: steps.coverage-analysis.outputs.coverage_available == 'true'
-      working-directory: ./chrome-extension
-      run: |
-        echo "Generating detailed coverage report..."
+    # - name: Check for Existing Coverage PR
+    #   id: check-existing-pr
+    #   run: |
+    #     echo "Checking for existing coverage improvement PRs..."
         
-        # Create a detailed report of uncovered code
-        if [ -f "coverage/lcov.info" ]; then
-          echo "# Coverage Analysis Report" > coverage-report.md
-          echo "" >> coverage-report.md
-          echo "## Current Coverage Status" >> coverage-report.md
-          echo "- Lines: ${{ steps.coverage-analysis.outputs.lines_coverage }}%" >> coverage-report.md
-          echo "- Functions: ${{ steps.coverage-analysis.outputs.functions_coverage }}%" >> coverage-report.md
-          echo "- Branches: ${{ steps.coverage-analysis.outputs.branches_coverage }}%" >> coverage-report.md
-          echo "" >> coverage-report.md
-          
-          # Extract uncovered lines from lcov.info
-          echo "## Uncovered Code Sections" >> coverage-report.md
-          echo "" >> coverage-report.md
-          
-          # Parse lcov.info to find uncovered lines
-          awk '/^SF:/ { file = $2 } 
-               /^DA:/ { 
-                 split($2, arr, ",")
-                 if (arr[2] == 0) {
-                   print file ":" arr[1] " - Line not covered"
-                 }
-               }' coverage/lcov.info | head -50 >> coverage-report.md
-          
-          echo "" >> coverage-report.md
-          echo "## Recommendation" >> coverage-report.md
-          echo "Add unit tests for the uncovered lines above to reach 100% coverage." >> coverage-report.md
-          
-          cat coverage-report.md
-        fi
-
-    - name: Check for Existing Coverage PR
-      id: check-existing-pr
-      run: |
-        echo "Checking for existing coverage improvement PRs..."
+    #     # Check if there's already an open PR for coverage improvements
+    #     EXISTING_PR=$(gh pr list --state open --search "coverage improvement" --json number --jq '.[0].number' || echo "")
         
-        # Check if there's already an open PR for coverage improvements
-        EXISTING_PR=$(gh pr list --state open --search "coverage improvement" --json number --jq '.[0].number' || echo "")
+    #     if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
+    #       echo "existing_pr=$EXISTING_PR" >> $GITHUB_OUTPUT
+    #       echo "pr_exists=true" >> $GITHUB_OUTPUT
+    #       echo "Found existing PR #$EXISTING_PR"
+    #     else
+    #       echo "pr_exists=false" >> $GITHUB_OUTPUT
+    #       echo "No existing coverage PR found"
+    #     fi
+
+    # - name: Create Coverage Improvement Branch
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
+    #     steps.check-existing-pr.outputs.pr_exists == 'false'
+    #   run: |
+    #     echo "Creating coverage improvement branch..."
         
-        if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
-          echo "existing_pr=$EXISTING_PR" >> $GITHUB_OUTPUT
-          echo "pr_exists=true" >> $GITHUB_OUTPUT
-          echo "Found existing PR #$EXISTING_PR"
-        else
-          echo "pr_exists=false" >> $GITHUB_OUTPUT
-          echo "No existing coverage PR found"
-        fi
+    #     # Create a new branch for coverage improvements
+    #     BRANCH_NAME="coverage-improvement-$(date +%Y%m%d-%H%M%S)"
+    #     git checkout -b "$BRANCH_NAME"
+    #     echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+    #     echo "Created branch: $BRANCH_NAME"
 
-    - name: Create Coverage Improvement Branch
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
-      run: |
-        echo "Creating coverage improvement branch..."
+    # - name: Generate Additional Tests
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
+    #     steps.check-existing-pr.outputs.pr_exists == 'false'
+    #   working-directory: ./chrome-extension
+    #   env:
+    #     CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+    #   run: |
+    #     echo "Generating additional tests to improve coverage..."
         
-        # Create a new branch for coverage improvements
-        BRANCH_NAME="coverage-improvement-$(date +%Y%m%d-%H%M%S)"
-        git checkout -b "$BRANCH_NAME"
-        echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
-        echo "Created branch: $BRANCH_NAME"
+    #     # Create a script to analyze uncovered code and generate tests
+    #     cat > generate-tests.js << 'EOF'
+    #     const fs = require('fs');
+    #     const path = require('path');
 
-    - name: Generate Additional Tests
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
-      working-directory: ./chrome-extension
-      env:
-        CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-      run: |
-        echo "Generating additional tests to improve coverage..."
+    #     // Read lcov.info to find uncovered lines
+    #     function findUncoveredCode() {
+    #       const lcovPath = 'coverage/lcov.info';
+    #       if (!fs.existsSync(lcovPath)) {
+    #         console.log('No coverage file found');
+    #         return [];
+    #       }
+
+    #       const lcovContent = fs.readFileSync(lcovPath, 'utf8');
+    #       const uncovered = [];
+          
+    #       let currentFile = '';
+    #       const lines = lcovContent.split('\n');
+          
+    #       for (const line of lines) {
+    #         if (line.startsWith('SF:')) {
+    #           currentFile = line.substring(3).trim();
+    #         } else if (line.startsWith('DA:') && line.includes(',0')) {
+    #           const parts = line.substring(3).split(',');
+    #           const lineNumber = parseInt(parts[0]);
+    #           uncovered.push({
+    #             file: currentFile,
+    #             line: lineNumber
+    #           });
+    #         }
+    #       }
+          
+    #       return uncovered;
+    #     }
+
+    #     // Generate test suggestions
+    #     function generateTestSuggestions(uncovered) {
+    #       const suggestions = [];
+          
+    #       // Group by file
+    #       const byFile = {};
+    #       uncovered.forEach(item => {
+    #         if (!byFile[item.file]) {
+    #           byFile[item.file] = [];
+    #         }
+    #         byFile[item.file].push(item.line);
+    #       });
+
+    #       // Generate suggestions for each file
+    #       Object.keys(byFile).forEach(file => {
+    #         if (file.includes('src/stores/') && file.endsWith('.js')) {
+    #           const lines = byFile[file];
+    #           suggestions.push({
+    #             file: file,
+    #             uncoveredLines: lines,
+    #             testFile: file.replace('src/stores/', 'src/tests/stores/').replace('.js', '.test.js')
+    #           });
+    #         }
+    #       });
+
+    #       return suggestions;
+    #     }
+
+    #     const uncovered = findUncoveredCode();
+    #     const suggestions = generateTestSuggestions(uncovered);
         
-        # Create a script to analyze uncovered code and generate tests
-        cat > generate-tests.js << 'EOF'
-        const fs = require('fs');
-        const path = require('path');
-
-        // Read lcov.info to find uncovered lines
-        function findUncoveredCode() {
-          const lcovPath = 'coverage/lcov.info';
-          if (!fs.existsSync(lcovPath)) {
-            console.log('No coverage file found');
-            return [];
-          }
-
-          const lcovContent = fs.readFileSync(lcovPath, 'utf8');
-          const uncovered = [];
-          
-          let currentFile = '';
-          const lines = lcovContent.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('SF:')) {
-              currentFile = line.substring(3).trim();
-            } else if (line.startsWith('DA:') && line.includes(',0')) {
-              const parts = line.substring(3).split(',');
-              const lineNumber = parseInt(parts[0]);
-              uncovered.push({
-                file: currentFile,
-                line: lineNumber
-              });
-            }
-          }
-          
-          return uncovered;
-        }
-
-        // Generate test suggestions
-        function generateTestSuggestions(uncovered) {
-          const suggestions = [];
-          
-          // Group by file
-          const byFile = {};
-          uncovered.forEach(item => {
-            if (!byFile[item.file]) {
-              byFile[item.file] = [];
-            }
-            byFile[item.file].push(item.line);
-          });
-
-          // Generate suggestions for each file
-          Object.keys(byFile).forEach(file => {
-            if (file.includes('src/stores/') && file.endsWith('.js')) {
-              const lines = byFile[file];
-              suggestions.push({
-                file: file,
-                uncoveredLines: lines,
-                testFile: file.replace('src/stores/', 'src/tests/stores/').replace('.js', '.test.js')
-              });
-            }
-          });
-
-          return suggestions;
-        }
-
-        const uncovered = findUncoveredCode();
-        const suggestions = generateTestSuggestions(uncovered);
+    #     console.log('Uncovered code found:', uncovered.length, 'lines');
+    #     console.log('Suggestions:', suggestions.length, 'files need tests');
         
-        console.log('Uncovered code found:', uncovered.length, 'lines');
-        console.log('Suggestions:', suggestions.length, 'files need tests');
+    #     // Write suggestions to file
+    #     fs.writeFileSync('test-suggestions.json', JSON.stringify(suggestions, null, 2));
         
-        // Write suggestions to file
-        fs.writeFileSync('test-suggestions.json', JSON.stringify(suggestions, null, 2));
+    #     console.log('Test suggestions written to test-suggestions.json');
+    #     EOF
+
+    #     # Run the test generation script
+    #     node generate-tests.js
+
+    #     # If we have suggestions, use AI to generate actual tests
+    #     if [ -f "test-suggestions.json" ] && [ -s "test-suggestions.json" ]; then
+    #       echo "Found test suggestions, generating actual tests..."
+          
+    #       # For each suggestion, generate a test file
+    #       cat > generate-actual-tests.js << 'EOF'
+    #     const fs = require('fs');
+    #     const { execSync } = require('child_process');
+
+    #     const suggestions = JSON.parse(fs.readFileSync('test-suggestions.json', 'utf8'));
         
-        console.log('Test suggestions written to test-suggestions.json');
-        EOF
-
-        # Run the test generation script
-        node generate-tests.js
-
-        # If we have suggestions, use AI to generate actual tests
-        if [ -f "test-suggestions.json" ] && [ -s "test-suggestions.json" ]; then
-          echo "Found test suggestions, generating actual tests..."
+    #     suggestions.forEach(suggestion => {
+    #       const storeFile = suggestion.file;
+    #       const testFile = suggestion.testFile;
           
-          # For each suggestion, generate a test file
-          cat > generate-actual-tests.js << 'EOF'
-        const fs = require('fs');
-        const { execSync } = require('child_process');
-
-        const suggestions = JSON.parse(fs.readFileSync('test-suggestions.json', 'utf8'));
-        
-        suggestions.forEach(suggestion => {
-          const storeFile = suggestion.file;
-          const testFile = suggestion.testFile;
+    #       console.log(`Generating tests for ${storeFile}`);
           
-          console.log(`Generating tests for ${storeFile}`);
-          
-          // Read the store file to understand what needs testing
-          if (fs.existsSync(storeFile)) {
-            const storeContent = fs.readFileSync(storeFile, 'utf8');
+    #       // Read the store file to understand what needs testing
+    #       if (fs.existsSync(storeFile)) {
+    #         const storeContent = fs.readFileSync(storeFile, 'utf8');
             
-            // Basic test template
-            const testTemplate = `import { describe, it, expect, vi, beforeEach } from 'vitest';
-        import { renderHook, act } from '@testing-library/react';
+    #         // Basic test template
+    #         const testTemplate = `import { describe, it, expect, vi, beforeEach } from 'vitest';
+    #     import { renderHook, act } from '@testing-library/react';
         
-        // Import the store (adjust import path as needed)
-        import { use${storeFile.split('/').pop().replace('.js', '')} } from '${storeFile.replace('src/', '../../')}';
+    #     // Import the store (adjust import path as needed)
+    #     import { use${storeFile.split('/').pop().replace('.js', '')} } from '${storeFile.replace('src/', '../../')}';
         
-        describe('${storeFile.split('/').pop().replace('.js', '')} Store', () => {
-          beforeEach(() => {
-            vi.clearAllMocks();
-          });
+    #     describe('${storeFile.split('/').pop().replace('.js', '')} Store', () => {
+    #       beforeEach(() => {
+    #         vi.clearAllMocks();
+    #       });
           
-          // TODO: Add tests for uncovered lines: ${suggestion.uncoveredLines.join(', ')}
-          it('should handle uncovered functionality', () => {
-            // This test needs to be implemented based on the uncovered code
-            expect(true).toBe(true);
-          });
-        });`;
+    #       // TODO: Add tests for uncovered lines: ${suggestion.uncoveredLines.join(', ')}
+    #       it('should handle uncovered functionality', () => {
+    #         // This test needs to be implemented based on the uncovered code
+    #         expect(true).toBe(true);
+    #       });
+    #     });`;
             
-            // Check if test file already exists
-            if (!fs.existsSync(testFile)) {
-              fs.writeFileSync(testFile, testTemplate);
-              console.log(`Created test file: ${testFile}`);
-            } else {
-              console.log(`Test file already exists: ${testFile}`);
-            }
-          }
-        });
-        EOF
+    #         // Check if test file already exists
+    #         if (!fs.existsSync(testFile)) {
+    #           fs.writeFileSync(testFile, testTemplate);
+    #           console.log(`Created test file: ${testFile}`);
+    #         } else {
+    #           console.log(`Test file already exists: ${testFile}`);
+    #         }
+    #       }
+    #     });
+    #     EOF
 
-          node generate-actual-tests.js
-        fi
+    #       node generate-actual-tests.js
+    #     fi
 
-    - name: Run Tests to Verify Coverage Improvement
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
-      working-directory: ./chrome-extension
-      run: |
-        echo "Running tests to verify coverage improvement..."
+    # - name: Run Tests to Verify Coverage Improvement
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
+    #     steps.check-existing-pr.outputs.pr_exists == 'false'
+    #   working-directory: ./chrome-extension
+    #   run: |
+    #     echo "Running tests to verify coverage improvement..."
         
-        # Run the store tests with coverage
-        npm run test:stores:coverage
+    #     # Run the store tests with coverage
+    #     npm run test:stores:coverage
         
-        # Check if coverage improved
-        if [ -f "coverage/lcov.info" ]; then
-          COVERAGE_DATA=$(grep -A 1 "LF:" coverage/lcov.info | tail -n +2 | awk '{print $2}' | tr -d '%')
-          NEW_LINES_COVERED=$(echo "$COVERAGE_DATA" | head -1)
-          NEW_FUNCTIONS_COVERED=$(echo "$COVERAGE_DATA" | sed -n '2p')
-          NEW_BRANCHES_COVERED=$(echo "$COVERAGE_DATA" | sed -n '3p')
+    #     # Check if coverage improved
+    #     if [ -f "coverage/lcov.info" ]; then
+    #       COVERAGE_DATA=$(grep -A 1 "LF:" coverage/lcov.info | tail -n +2 | awk '{print $2}' | tr -d '%')
+    #       NEW_LINES_COVERED=$(echo "$COVERAGE_DATA" | head -1)
+    #       NEW_FUNCTIONS_COVERED=$(echo "$COVERAGE_DATA" | sed -n '2p')
+    #       NEW_BRANCHES_COVERED=$(echo "$COVERAGE_DATA" | sed -n '3p')
           
-          echo "New coverage: Lines: $NEW_LINES_COVERED%, Functions: $NEW_FUNCTIONS_COVERED%, Branches: $NEW_BRANCHES_COVERED%"
+    #       echo "New coverage: Lines: $NEW_LINES_COVERED%, Functions: $NEW_FUNCTIONS_COVERED%, Branches: $NEW_BRANCHES_COVERED%"
           
-          # Check if we've reached 100% coverage
-          if [ "$NEW_LINES_COVERED" -eq 100 ] && [ "$NEW_FUNCTIONS_COVERED" -eq 100 ] && [ "$NEW_BRANCHES_COVERED" -eq 100 ]; then
-            echo "coverage_improved=true" >> $GITHUB_ENV
-            echo "coverage_complete=true" >> $GITHUB_ENV
-          else
-            echo "coverage_improved=false" >> $GITHUB_ENV
-            echo "coverage_complete=false" >> $GITHUB_ENV
-          fi
-        else
-          echo "coverage_improved=false" >> $GITHUB_ENV
-          echo "coverage_complete=false" >> $GITHUB_ENV
-        fi
+    #       # Check if we've reached 100% coverage
+    #       if [ "$NEW_LINES_COVERED" -eq 100 ] && [ "$NEW_FUNCTIONS_COVERED" -eq 100 ] && [ "$NEW_BRANCHES_COVERED" -eq 100 ]; then
+    #         echo "coverage_improved=true" >> $GITHUB_ENV
+    #         echo "coverage_complete=true" >> $GITHUB_ENV
+    #       else
+    #         echo "coverage_improved=false" >> $GITHUB_ENV
+    #         echo "coverage_complete=false" >> $GITHUB_ENV
+    #       fi
+    #     else
+    #       echo "coverage_improved=false" >> $GITHUB_ENV
+    #       echo "coverage_complete=false" >> $GITHUB_ENV
+    #     fi
 
-    - name: Commit and Push Changes
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
-      run: |
-        echo "Committing and pushing changes..."
+    # - name: Commit and Push Changes
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
+    #     steps.check-existing-pr.outputs.pr_exists == 'false'
+    #   run: |
+    #     echo "Committing and pushing changes..."
         
-        # Add all changes
-        git add .
+    #     # Add all changes
+    #     git add .
         
-        # Check if there are changes to commit
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-          echo "has_changes=false" >> $GITHUB_ENV
-        else
-          echo "has_changes=true" >> $GITHUB_ENV
+    #     # Check if there are changes to commit
+    #     if git diff --staged --quiet; then
+    #       echo "No changes to commit"
+    #       echo "has_changes=false" >> $GITHUB_ENV
+    #     else
+    #       echo "has_changes=true" >> $GITHUB_ENV
           
-          # Commit the changes
-          git commit -m "feat: improve store test coverage
+    #       # Commit the changes
+    #       git commit -m "feat: improve store test coverage
 
-          - Added additional tests to increase coverage
-          - Generated tests for uncovered code paths
-          - Current coverage: Lines: ${{ steps.coverage-analysis.outputs.lines_coverage }}% → ${{ env.NEW_LINES_COVERED || steps.coverage-analysis.outputs.lines_coverage }}%
+    #       - Added additional tests to increase coverage
+    #       - Generated tests for uncovered code paths
+    #       - Current coverage: Lines: ${{ steps.coverage-analysis.outputs.lines_coverage }}% → ${{ env.NEW_LINES_COVERED || steps.coverage-analysis.outputs.lines_coverage }}%
           
-          This PR aims to reach 100% test coverage for store tests."
+    #       This PR aims to reach 100% test coverage for store tests."
           
-          # Push the branch
-          git push origin "${{ env.branch_name }}"
+    #       # Push the branch
+    #       git push origin "${{ env.branch_name }}"
           
-          echo "Pushed branch: ${{ env.branch_name }}"
-        fi
+    #       echo "Pushed branch: ${{ env.branch_name }}"
+    #     fi
 
-    - name: Create Pull Request
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false' &&
-        env.has_changes == 'true'
-      run: |
-        echo "Creating pull request for coverage improvements..."
+    # - name: Create Pull Request
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
+    #     steps.check-existing-pr.outputs.pr_exists == 'false' &&
+    #     env.has_changes == 'true'
+    #   run: |
+    #     echo "Creating pull request for coverage improvements..."
         
-        # Create the PR
-        gh pr create \
-          --title "🚀 Improve Store Test Coverage to 100%" \
-          --body "## Coverage Improvement
+    #     # Create the PR
+    #     gh pr create \
+    #       --title "🚀 Improve Store Test Coverage to 100%" \
+    #       --body "## Coverage Improvement
 
-          This PR automatically improves store test coverage to reach 100%.
+    #       This PR automatically improves store test coverage to reach 100%.
 
-          ### Current Coverage Status
-          - **Lines**: ${{ steps.coverage-analysis.outputs.lines_coverage }}% → ${{ env.NEW_LINES_COVERED || steps.coverage-analysis.outputs.lines_coverage }}%
-          - **Functions**: ${{ steps.coverage-analysis.outputs.functions_coverage }}% → ${{ env.NEW_FUNCTIONS_COVERED || steps.coverage-analysis.outputs.functions_coverage }}%
-          - **Branches**: ${{ steps.coverage-analysis.outputs.branches_coverage }}% → ${{ env.NEW_BRANCHES_COVERED || steps.coverage-analysis.outputs.branches_coverage }}%
+    #       ### Current Coverage Status
+    #       - **Lines**: ${{ steps.coverage-analysis.outputs.lines_coverage }}% → ${{ env.NEW_LINES_COVERED || steps.coverage-analysis.outputs.lines_coverage }}%
+    #       - **Functions**: ${{ steps.coverage-analysis.outputs.functions_coverage }}% → ${{ env.NEW_FUNCTIONS_COVERED || steps.coverage-analysis.outputs.functions_coverage }}%
+    #       - **Branches**: ${{ steps.coverage-analysis.outputs.branches_coverage }}% → ${{ env.NEW_BRANCHES_COVERED || steps.coverage-analysis.outputs.branches_coverage }}%
 
-          ### Changes Made
-          - Added additional unit tests for uncovered code paths
-          - Generated tests based on coverage analysis
-          - Ensured all tests pass before creating this PR
+    #       ### Changes Made
+    #       - Added additional unit tests for uncovered code paths
+    #       - Generated tests based on coverage analysis
+    #       - Ensured all tests pass before creating this PR
 
-          ### Verification
-          - ✅ All store tests pass
-          - ✅ Coverage improved
-          - ✅ No breaking changes
+    #       ### Verification
+    #       - ✅ All store tests pass
+    #       - ✅ Coverage improved
+    #       - ✅ No breaking changes
 
-          This PR was automatically generated by the Coverage Enforcer workflow." \
-          --base master \
-          --head "${{ env.branch_name }}" \
-          --label "coverage,automated,tests"
+    #       This PR was automatically generated by the Coverage Enforcer workflow." \
+    #       --base master \
+    #       --head "${{ env.branch_name }}" \
+    #       --label "coverage,automated,tests"
 
-    - name: Comment on Existing PR
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'true'
-      run: |
-        echo "Commenting on existing coverage PR..."
+    # - name: Comment on Existing PR
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
+    #     steps.check-existing-pr.outputs.pr_exists == 'true'
+    #   run: |
+    #     echo "Commenting on existing coverage PR..."
         
-        # Update existing PR with current coverage status
-        gh pr comment "${{ steps.check-existing-pr.outputs.existing_pr }}" \
-          --body "📊 **Coverage Update**
+    #     # Update existing PR with current coverage status
+    #     gh pr comment "${{ steps.check-existing-pr.outputs.existing_pr }}" \
+    #       --body "📊 **Coverage Update**
 
-          Current store test coverage status:
-          - **Lines**: ${{ steps.coverage-analysis.outputs.lines_coverage }}%
-          - **Functions**: ${{ steps.coverage-analysis.outputs.functions_coverage }}%
-          - **Branches**: ${{ steps.coverage-analysis.outputs.branches_coverage }}%
+    #       Current store test coverage status:
+    #       - **Lines**: ${{ steps.coverage-analysis.outputs.lines_coverage }}%
+    #       - **Functions**: ${{ steps.coverage-analysis.outputs.functions_coverage }}%
+    #       - **Branches**: ${{ steps.coverage-analysis.outputs.branches_coverage }}%
 
-          ⚠️ Coverage is still below 100%. Additional tests may be needed.
+    #       ⚠️ Coverage is still below 100%. Additional tests may be needed.
 
-          _This comment was automatically generated by the Coverage Enforcer workflow._"
+    #       _This comment was automatically generated by the Coverage Enforcer workflow._"
 
-    - name: Success Notification
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'true'
-      run: |
-        echo "🎉 Store test coverage is at 100%!"
-        echo "No action needed - all tests are fully covered."
+    # - name: Success Notification
+    #   if: |
+    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
+    #     steps.coverage-analysis.outputs.coverage_sufficient == 'true'
+    #   run: |
+    #     echo "🎉 Store test coverage is at 100%!"
+    #     echo "No action needed - all tests are fully covered."
 
-    - name: Upload Coverage Report
-      if: always() && steps.coverage-analysis.outputs.coverage_available == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-analysis-report
-        path: |
-          chrome-extension/coverage-report.md
-          chrome-extension/test-suggestions.json
-        retention-days: 7
+    # - name: Upload Coverage Report
+    #   if: always() && steps.coverage-analysis.outputs.coverage_available == 'true'
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: coverage-analysis-report
+    #     path: |
+    #       chrome-extension/coverage-report.md
+    #       chrome-extension/test-suggestions.json
+    #     retention-days: 7

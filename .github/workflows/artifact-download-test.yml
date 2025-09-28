@@ -82,7 +82,7 @@ jobs:
         
         echo "download-path=$DOWNLOAD_PATH" >> $GITHUB_OUTPUT
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
-        echo "run-id=$RUN_ID" >> $GITHUB_ENV
+        echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
         echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_ENV
         echo "download_path=$DOWNLOAD_PATH" >> $GITHUB_ENV
         
@@ -90,6 +90,12 @@ jobs:
         echo "  - Run ID: $RUN_ID"
         echo "  - Artifact: $ARTIFACT_NAME"
         echo "  - Download path: $DOWNLOAD_PATH"
+        
+        # Verify environment variables are set correctly
+        echo "🔍 Environment variables verification:"
+        echo "  - RUN_ID env var: '$RUN_ID'"
+        echo "  - artifact_name env var: '$ARTIFACT_NAME'"
+        echo "  - download_path env var: '$DOWNLOAD_PATH'"
 
     - name: Print Pipeline Information
       run: |

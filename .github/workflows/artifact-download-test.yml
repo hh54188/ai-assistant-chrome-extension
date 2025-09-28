@@ -235,9 +235,10 @@ jobs:
       id: download
       uses: actions/download-artifact@v4
       with:
-        name: ${{ env.artifact_name }}
+        # name: ${{ env.artifact_name }}
         path: ${{ env.download_path }}
         run-id: ${{ env.RUN_ID }}
+        artifact-ids: '4125169361'
         repository: ${{ github.repository }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 

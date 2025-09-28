@@ -66,6 +66,8 @@ jobs:
         name: stores-coverage-report
         path: ./coverage/
         run-id: ${{ env.RUN_ID }}
+        repository: ${{ github.repository }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Verify Coverage Artifact
       run: |

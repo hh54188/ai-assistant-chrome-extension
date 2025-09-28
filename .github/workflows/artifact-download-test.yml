@@ -1,0 +1,191 @@
+name: Artifact Download Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      run-id:
+        description: 'Workflow run ID to download coverage artifacts from'
+        required: true
+        default: '18072644387'
+        type: string
+      artifact-name:
+        description: 'Name of the artifact to download'
+        required: true
+        default: 'stores-coverage-report'
+        type: string
+      download-path:
+        description: 'Path where to download the artifact'
+        required: true
+        default: './coverage/'
+        type: string
+  workflow_call:
+    inputs:
+      run-id:
+        description: 'Workflow run ID to download coverage artifacts from'
+        required: true
+        type: string
+      artifact-name:
+        description: 'Name of the artifact to download'
+        required: false
+        default: 'stores-coverage-report'
+        type: string
+      download-path:
+        description: 'Path where to download the artifact'
+        required: false
+        default: './coverage/'
+        type: string
+    outputs:
+      artifact-downloaded:
+        description: 'Whether the artifact was successfully downloaded'
+        value: ${{ jobs.download-artifact.outputs.success }}
+      download-path:
+        description: 'Path where the artifact was downloaded'
+        value: ${{ jobs.download-artifact.outputs.download-path }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  download-artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      success: ${{ steps.download.outcome == 'success' }}
+      download-path: ${{ steps.set-outputs.outputs.download-path }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set output values
+      id: set-outputs
+      run: |
+        # Determine the artifact name and download path based on trigger type
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          ARTIFACT_NAME="${{ github.event.inputs.artifact-name }}"
+          DOWNLOAD_PATH="${{ github.event.inputs.download-path }}"
+        else
+          ARTIFACT_NAME="${{ inputs.artifact-name }}"
+          DOWNLOAD_PATH="${{ inputs.download-path }}"
+        fi
+        
+        # Ensure we have the run ID
+        RUN_ID="${{ github.event.inputs.run-id || inputs.run-id }}"
+        
+        if [ -z "$RUN_ID" ]; then
+          echo "❌ Workflow run ID is missing"
+          exit 1
+        fi
+        
+        echo "download-path=$DOWNLOAD_PATH" >> $GITHUB_OUTPUT
+        echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        echo "run-id=$RUN_ID" >> $GITHUB_ENV
+        echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_ENV
+        echo "download_path=$DOWNLOAD_PATH" >> $GITHUB_ENV
+        
+        echo "✅ Configuration set:"
+        echo "  - Run ID: $RUN_ID"
+        echo "  - Artifact: $ARTIFACT_NAME"
+        echo "  - Download path: $DOWNLOAD_PATH"
+
+    - name: Print Pipeline Information
+      run: |
+        echo "🔍 Pipeline Run Information:"
+        echo "================================"
+        echo "📋 Current Workflow Details:"
+        echo "  - Workflow Name: ${{ github.workflow }}"
+        echo "  - Workflow Run ID: ${{ github.run_id }}"
+        echo "  - Workflow Run Number: ${{ github.run_number }}"
+        echo "  - Workflow Run Attempt: ${{ github.run_attempt }}"
+        echo "  - Event Name: ${{ github.event_name }}"
+        echo "  - Event Type: ${{ github.event.action || 'N/A' }}"
+        echo ""
+        echo "🏗️ Repository Information:"
+        echo "  - Repository: ${{ github.repository }}"
+        echo "  - Repository Owner: ${{ github.repository_owner }}"
+        echo "  - Ref: ${{ github.ref }}"
+        echo "  - Ref Name: ${{ github.ref_name }}"
+        echo "  - Ref Type: ${{ github.ref_type }}"
+        echo "  - SHA: ${{ github.sha }}"
+        echo "  - Head Ref: ${{ github.head_ref || 'N/A' }}"
+        echo "  - Base Ref: ${{ github.base_ref || 'N/A' }}"
+        echo ""
+        echo "🎯 Target Run Information:"
+        echo "  - Target Run ID: ${{ env.RUN_ID }}"
+        echo "  - Target Artifact: ${{ env.artifact_name }}"
+        echo "  - Download Path: ${{ env.download_path }}"
+        echo ""
+        echo "👤 Actor Information:"
+        echo "  - Actor: ${{ github.actor }}"
+        echo "  - Triggered By: ${{ github.triggering_actor || github.actor }}"
+        echo ""
+        echo "🕐 Timing Information:"
+        echo "  - Workflow Started: ${{ github.workflow_run.created_at || 'N/A' }}"
+        echo "  - Current Time: $(date -u '+%Y-%m-%m-%dT%H:%M:%SZ')"
+        echo "================================"
+
+    - name: Download Coverage Artifacts
+      id: download
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.artifact_name }}
+        path: ${{ env.download_path }}
+        run-id: ${{ env.RUN_ID }}
+        repository: ${{ github.repository }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Verify Coverage Artifact
+      run: |
+        DOWNLOAD_PATH="${{ env.download_path }}"
+        echo "Verifying artifact at: $DOWNLOAD_PATH"
+        
+        if [ ! -d "$DOWNLOAD_PATH" ]; then
+          echo "❌ Download path does not exist: $DOWNLOAD_PATH"
+          exit 1
+        fi
+        
+        echo "📁 Contents of download path:"
+        ls -la "$DOWNLOAD_PATH" || echo "Directory is empty"
+        
+        # Check for common coverage artifact files
+        if [ -f "$DOWNLOAD_PATH/lcov-report/index.html" ]; then
+          echo "✅ Found lcov-report/index.html"
+        fi
+        
+        if [ -f "$DOWNLOAD_PATH/lcov.info" ]; then
+          echo "✅ Found lcov.info"
+        fi
+        
+        if [ -f "$DOWNLOAD_PATH/coverage-final.json" ]; then
+          echo "✅ Found coverage-final.json"
+        fi
+        
+        # If none of the expected files exist, check what we actually have
+        if [ ! -f "$DOWNLOAD_PATH/lcov-report/index.html" ] && [ ! -f "$DOWNLOAD_PATH/lcov.info" ] && [ ! -f "$DOWNLOAD_PATH/coverage-final.json" ]; then
+          echo "⚠️  No standard coverage files found, but artifact was downloaded"
+          echo "Files present:"
+          find "$DOWNLOAD_PATH" -type f | head -10
+        fi
+        
+        echo "✅ Artifact verification completed"
+
+    - name: Display Artifact Information
+      run: |
+        DOWNLOAD_PATH="${{ env.download_path }}"
+        echo "📊 Artifact Download Summary:"
+        echo "  - Artifact name: ${{ env.artifact_name }}"
+        echo "  - Run ID: ${{ env.RUN_ID }}"
+        echo "  - Download path: $DOWNLOAD_PATH"
+        echo "  - Repository: ${{ github.repository }}"
+        echo "  - Download status: ${{ steps.download.outcome }}"
+        echo ""
+        echo "📁 Downloaded files:"
+        if [ -d "$DOWNLOAD_PATH" ]; then
+          du -sh "$DOWNLOAD_PATH" 2>/dev/null || echo "Could not calculate size"
+          find "$DOWNLOAD_PATH" -type f | wc -l | xargs echo "Total files:"
+        else
+          echo "Download path does not exist"
+        fi

@@ -91,75 +91,195 @@ jobs:
         echo "  - Artifact: $ARTIFACT_NAME"
         echo "  - Download path: $DOWNLOAD_PATH"
 
-    # - name: Print Pipeline Information
-    #   run: |
-    #     echo "🔍 Pipeline Run Information:"
-    #     echo "================================"
-    #     echo "📋 Current Workflow Details:"
-    #     echo "  - Workflow Name: ${{ github.workflow }}"
-    #     echo "  - Workflow Run ID: ${{ github.run_id }}"
-    #     echo "  - Workflow Run Number: ${{ github.run_number }}"
-    #     echo "  - Workflow Run Attempt: ${{ github.run_attempt }}"
-    #     echo "  - Event Name: ${{ github.event_name }}"
-    #     echo "  - Event Type: ${{ github.event.action || 'N/A' }}"
-    #     echo "  - Workflow File: ${{ github.workflow_ref }}"
-    #     echo "  - Job Name: ${{ github.job }}"
-    #     echo "  - Step Name: ${{ github.step }}"
-    #     echo ""
-    #     echo "🏗️ Repository Information:"
-    #     echo "  - Repository: ${{ github.repository }}"
-    #     echo "  - Repository Owner: ${{ github.repository_owner }}"
-    #     echo "  - Ref: ${{ github.ref }}"
-    #     echo "  - Ref Name: ${{ github.ref_name }}"
-    #     echo "  - Ref Type: ${{ github.ref_type }}"
-    #     echo "  - SHA: ${{ github.sha }}"
-    #     echo "  - Head Ref: ${{ github.head_ref || 'N/A' }}"
-    #     echo "  - Base Ref: ${{ github.base_ref || 'N/A' }}"
-    #     echo "  - Repository URL: https://github.com/${{ github.repository }}"
-    #     echo "  - Commit URL: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-    #     echo ""
-    #     echo "🎯 Target Run Information:"
-    #     echo "  - Target Run ID: ${{ env.RUN_ID }}"
-    #     echo "  - Target Artifact: ${{ env.artifact_name }}"
-    #     echo "  - Download Path: ${{ env.download_path }}"
-    #     echo "  - Target Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}"
-    #     echo ""
-    #     echo "👤 Actor Information:"
-    #     echo "  - Actor: ${{ github.actor }}"
-    #     echo "  - Triggered By: ${{ github.triggering_actor || github.actor }}"
-    #     echo "  - Actor ID: ${{ github.actor_id }}"
-    #     echo ""
-    #     echo "🕐 Timing Information:"
-    #     echo "  - Workflow Started: ${{ github.workflow_run.created_at || 'N/A' }}"
-    #     echo "  - Current Time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-    #     echo "  - Timezone: UTC"
-    #     echo ""
-    #     echo "🌐 Environment Information:"
-    #     echo "  - Runner OS: ${{ runner.os }}"
-    #     echo "  - Runner Name: ${{ runner.name }}"
-    #     echo "  - Runner Arch: ${{ runner.arch }}"
-    #     echo "  - Runner Temp: ${{ runner.temp }}"
-    #     echo "  - Runner Tool Cache: ${{ runner.tool_cache }}"
-    #     echo "  - Runner Workspace: ${{ runner.workspace }}"
-    #     echo ""
-    #     echo "📊 Event Payload Information:"
-    #     echo "  - Event Path: ${{ github.event_path }}"
-    #     echo "  - Event Name: ${{ github.event_name }}"
-    #     echo "  - Event Action: ${{ github.event.action || 'N/A' }}"
-    #     echo ""
-    #     echo "🔗 URLs and Links:"
-    #     echo "  - Workflow Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-    #     echo "  - Repository URL: https://github.com/${{ github.repository }}"
-    #     echo "  - Commit URL: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-    #     echo "  - Branch URL: https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}"
-    #     echo "  - Target Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}"
-    #     echo ""
-    #     echo "📝 Additional Context:"
-    #     echo "  - Server URL: ${{ github.server_url }}"
-    #     echo "  - API URL: ${{ github.api_url }}"
-    #     echo "  - GraphQL URL: ${{ github.graphql_url }}"
-    #     echo "  - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN != '' && 'Present' || 'Not Present' }}"
-    #     echo "================================"
+    - name: Print Pipeline Information
+      run: |
+        echo "🔍 Pipeline Run Information:"
+        echo "================================"
+        echo "📋 Current Workflow Details:"
+        echo "  - Workflow Name: ${{ github.workflow }}"
+        echo "  - Workflow Run ID: ${{ github.run_id }}"
+        echo "  - Workflow Run Number: ${{ github.run_number }}"
+        echo "  - Workflow Run Attempt: ${{ github.run_attempt }}"
+        echo "  - Event Name: ${{ github.event_name }}"
+        echo "  - Event Type: ${{ github.event.action || 'N/A' }}"
+        echo "  - Workflow File: ${{ github.workflow_ref }}"
+        echo "  - Job Name: ${{ github.job }}"
+        echo "  - Step Name: ${{ github.step }}"
+        echo ""
+        echo "🏗️ Repository Information:"
+        echo "  - Repository: ${{ github.repository }}"
+        echo "  - Repository Owner: ${{ github.repository_owner }}"
+        echo "  - Ref: ${{ github.ref }}"
+        echo "  - Ref Name: ${{ github.ref_name }}"
+        echo "  - Ref Type: ${{ github.ref_type }}"
+        echo "  - SHA: ${{ github.sha }}"
+        echo "  - Head Ref: ${{ github.head_ref || 'N/A' }}"
+        echo "  - Base Ref: ${{ github.base_ref || 'N/A' }}"
+        echo "  - Repository URL: https://github.com/${{ github.repository }}"
+        echo "  - Commit URL: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+        echo ""
+        echo "🎯 Target Run Information:"
+        echo "  - Target Run ID: ${{ env.RUN_ID }}"
+        echo "  - Target Artifact: ${{ env.artifact_name }}"
+        echo "  - Download Path: ${{ env.download_path }}"
+        echo "  - Target Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}"
+        echo ""
+        echo "👤 Actor Information:"
+        echo "  - Actor: ${{ github.actor }}"
+        echo "  - Triggered By: ${{ github.triggering_actor || github.actor }}"
+        echo "  - Actor ID: ${{ github.actor_id }}"
+        echo ""
+        echo "🕐 Timing Information:"
+        echo "  - Workflow Started: ${{ github.workflow_run.created_at || 'N/A' }}"
+        echo "  - Current Time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        echo "  - Timezone: UTC"
+        echo ""
+        echo "🌐 Environment Information:"
+        echo "  - Runner OS: ${{ runner.os }}"
+        echo "  - Runner Name: ${{ runner.name }}"
+        echo "  - Runner Arch: ${{ runner.arch }}"
+        echo "  - Runner Temp: ${{ runner.temp }}"
+        echo "  - Runner Tool Cache: ${{ runner.tool_cache }}"
+        echo "  - Runner Workspace: ${{ runner.workspace }}"
+        echo ""
+        echo "📊 Event Payload Information:"
+        echo "  - Event Path: ${{ github.event_path }}"
+        echo "  - Event Name: ${{ github.event_name }}"
+        echo "  - Event Action: ${{ github.event.action || 'N/A' }}"
+        echo ""
+        echo "🔗 URLs and Links:"
+        echo "  - Workflow Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo "  - Repository URL: https://github.com/${{ github.repository }}"
+        echo "  - Commit URL: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+        echo "  - Branch URL: https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}"
+        echo "  - Target Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}"
+        echo ""
+        echo "📝 Additional Context:"
+        echo "  - Server URL: ${{ github.server_url }}"
+        echo "  - API URL: ${{ github.api_url }}"
+        echo "  - GraphQL URL: ${{ github.graphql_url }}"
+        echo "  - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN != '' && 'Present' || 'Not Present' }}"
+        echo "================================"
+
+    - name: Verify Run ID and Artifact Existence
+      run: |
+        echo "🔍 Verifying Run ID and Artifact Existence:"
+        echo "============================================"
+        
+        # Check if RUN_ID is valid
+        if [ -z "${{ env.RUN_ID }}" ] || [ "${{ env.RUN_ID }}" = "null" ] || [ "${{ env.RUN_ID }}" = "NaN" ]; then
+          echo "❌ RUN_ID is invalid: '${{ env.RUN_ID }}'"
+          exit 1
+        fi
+        
+        echo "✅ RUN_ID appears valid: ${{ env.RUN_ID }}"
+        
+        # Verify the run exists and get its details
+        echo "🔍 Checking if run ID ${{ env.RUN_ID }} exists..."
+        
+        RUN_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}")
+        
+        RUN_STATUS=$(echo "$RUN_RESPONSE" | jq -r '.status // "unknown"')
+        RUN_CONCLUSION=$(echo "$RUN_RESPONSE" | jq -r '.conclusion // "unknown"')
+        RUN_NAME=$(echo "$RUN_RESPONSE" | jq -r '.name // "unknown"')
+        RUN_CREATED=$(echo "$RUN_RESPONSE" | jq -r '.created_at // "unknown"')
+        
+        if [ "$RUN_STATUS" = "null" ] || [ "$RUN_STATUS" = "unknown" ]; then
+          echo "❌ Run ID ${{ env.RUN_ID }} does not exist or is not accessible"
+          echo "Response: $RUN_RESPONSE"
+          exit 1
+        fi
+        
+        echo "✅ Run found:"
+        echo "  - Name: $RUN_NAME"
+        echo "  - Status: $RUN_STATUS"
+        echo "  - Conclusion: $RUN_CONCLUSION"
+        echo "  - Created: $RUN_CREATED"
+        
+        # Get workflow and job information
+        WORKFLOW_ID=$(echo "$RUN_RESPONSE" | jq -r '.workflow_id // "unknown"')
+        WORKFLOW_URL=$(echo "$RUN_RESPONSE" | jq -r '.workflow_url // "unknown"')
+        HEAD_BRANCH=$(echo "$RUN_RESPONSE" | jq -r '.head_branch // "unknown"')
+        HEAD_SHA=$(echo "$RUN_RESPONSE" | jq -r '.head_sha // "unknown"')
+        
+        echo "📋 Pipeline details:"
+        echo "  - Workflow ID: $WORKFLOW_ID"
+        echo "  - Workflow URL: $WORKFLOW_URL"
+        echo "  - Branch: $HEAD_BRANCH"
+        echo "  - Commit SHA: $HEAD_SHA"
+        
+        # Get jobs for this run to see what produced artifacts
+        echo "🔍 Fetching jobs for run ${{ env.RUN_ID }}..."
+        JOBS_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}/jobs")
+        
+        JOBS_COUNT=$(echo "$JOBS_RESPONSE" | jq -r '.total_count // 0')
+        echo "📋 Found $JOBS_COUNT job(s) in this run:"
+        
+        if [ "$JOBS_COUNT" -gt 0 ]; then
+          echo "$JOBS_RESPONSE" | jq -r '.jobs[] | "  - Job: \(.name), Status: \(.status), Conclusion: \(.conclusion), Steps: \(.steps | length)"'
+        fi
+        
+        # Check if the run has completed successfully
+        if [ "$RUN_STATUS" != "completed" ]; then
+          echo "⚠️  Run is not completed (status: $RUN_STATUS). Artifacts may not be available yet."
+        fi
+        
+        # Get list of artifacts for this run
+        echo "🔍 Fetching artifacts for run ${{ env.RUN_ID }}..."
+        
+        ARTIFACTS_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ env.RUN_ID }}/artifacts")
+        
+        ARTIFACTS_COUNT=$(echo "$ARTIFACTS_RESPONSE" | jq -r '.total_count // 0')
+        
+        if [ "$ARTIFACTS_COUNT" = "0" ]; then
+          echo "❌ No artifacts found for run ${{ env.RUN_ID }}"
+          echo "Response: $ARTIFACTS_RESPONSE"
+          exit 1
+        fi
+        
+        echo "✅ Found $ARTIFACTS_COUNT artifact(s):"
+        
+        # List all artifacts with detailed information
+        echo "📦 All artifacts in run ${{ env.RUN_ID }}:"
+        echo "$ARTIFACTS_RESPONSE" | jq -r '.artifacts[] | "  - Name: \(.name)"'
+        echo ""
+        echo "📋 Detailed artifact information:"
+        echo "$ARTIFACTS_RESPONSE" | jq -r '.artifacts[] | "  - Name: \(.name), ID: \(.id), Size: \(.size_in_bytes) bytes, Created: \(.created_at), Expires: \(.expires_at)"'
+        
+        # Also show the raw JSON for debugging
+        echo ""
+        echo "🔍 Raw artifacts response (for debugging):"
+        echo "$ARTIFACTS_RESPONSE" | jq '.'
+        
+        # Check if our specific artifact exists
+        TARGET_ARTIFACT_EXISTS=$(echo "$ARTIFACTS_RESPONSE" | jq -r --arg name "${{ env.artifact_name }}" '.artifacts[] | select(.name == $name) | .name // empty')
+        
+        if [ -z "$TARGET_ARTIFACT_EXISTS" ]; then
+          echo "❌ Target artifact '${{ env.artifact_name }}' not found in run ${{ env.RUN_ID }}"
+          echo "Available artifacts:"
+          echo "$ARTIFACTS_RESPONSE" | jq -r '.artifacts[] | "  - \(.name)"'
+          exit 1
+        fi
+        
+        echo "✅ Target artifact '${{ env.artifact_name }}' found!"
+        
+        # Get detailed info about the target artifact
+        TARGET_ARTIFACT_INFO=$(echo "$ARTIFACTS_RESPONSE" | jq -r --arg name "${{ env.artifact_name }}" '.artifacts[] | select(.name == $name)')
+        TARGET_ARTIFACT_ID=$(echo "$TARGET_ARTIFACT_INFO" | jq -r '.id')
+        TARGET_ARTIFACT_SIZE=$(echo "$TARGET_ARTIFACT_INFO" | jq -r '.size_in_bytes')
+        TARGET_ARTIFACT_CREATED=$(echo "$TARGET_ARTIFACT_INFO" | jq -r '.created_at')
+        
+        echo "📦 Target artifact details:"
+        echo "  - Name: ${{ env.artifact_name }}"
+        echo "  - ID: $TARGET_ARTIFACT_ID"
+        echo "  - Size: $TARGET_ARTIFACT_SIZE bytes"
+        echo "  - Created: $TARGET_ARTIFACT_CREATED"
+        echo "  - Download URL: https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$TARGET_ARTIFACT_ID/zip"
+        
+        echo "============================================"
 
     # - name: Fetch Target Run Details via API
     #   id: fetch-run-details
@@ -235,12 +355,12 @@ jobs:
       id: download
       uses: actions/download-artifact@v4
       with:
-        # name: ${{ env.artifact_name }}
+        name: ${{ env.artifact_name }}
         path: ${{ env.download_path }}
         run-id: ${{ env.RUN_ID }}
-        artifact-ids: '4125169361'
         repository: ${{ github.repository }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
 
     - name: Verify Coverage Artifact
       run: |

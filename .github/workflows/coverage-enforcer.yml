@@ -174,12 +174,30 @@ jobs:
           echo "Parsing lcov.info..."
           
           # Extract raw coverage counts from lcov.info (sum across all records)
-          LINES_FOUND=$(grep "^LF:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
-          LINES_HIT=$(grep "^LH:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
-          FUNCTIONS_FOUND=$(grep "^FNF:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
-          FUNCTIONS_HIT=$(grep "^FNH:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
-          BRANCHES_FOUND=$(grep "^BRF:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
-          BRANCHES_HIT=$(grep "^BRH:" ../coverage/lcov.info | awk '{sum += $2} END {print sum+0}')
+          # Use a simple approach that works reliably in GitHub Actions
+          LINES_FOUND=0
+          LINES_HIT=0
+          FUNCTIONS_FOUND=0
+          FUNCTIONS_HIT=0
+          BRANCHES_FOUND=0
+          BRANCHES_HIT=0
+          
+          # Sum up all coverage data
+          while IFS= read -r line; do
+            if [[ $line =~ ^LF:([0-9]+) ]]; then
+              LINES_FOUND=$((LINES_FOUND + ${BASH_REMATCH[1]}))
+            elif [[ $line =~ ^LH:([0-9]+) ]]; then
+              LINES_HIT=$((LINES_HIT + ${BASH_REMATCH[1]}))
+            elif [[ $line =~ ^FNF:([0-9]+) ]]; then
+              FUNCTIONS_FOUND=$((FUNCTIONS_FOUND + ${BASH_REMATCH[1]}))
+            elif [[ $line =~ ^FNH:([0-9]+) ]]; then
+              FUNCTIONS_HIT=$((FUNCTIONS_HIT + ${BASH_REMATCH[1]}))
+            elif [[ $line =~ ^BRF:([0-9]+) ]]; then
+              BRANCHES_FOUND=$((BRANCHES_FOUND + ${BASH_REMATCH[1]}))
+            elif [[ $line =~ ^BRH:([0-9]+) ]]; then
+              BRANCHES_HIT=$((BRANCHES_HIT + ${BASH_REMATCH[1]}))
+            fi
+          done < ../coverage/lcov.info
           
           # Calculate percentages
           if [ "$LINES_FOUND" -gt 0 ]; then

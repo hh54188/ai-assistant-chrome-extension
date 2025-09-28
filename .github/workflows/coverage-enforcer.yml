@@ -2,6 +2,11 @@ name: Store Coverage Enforcer
 
 on:
   workflow_dispatch:
+    inputs:
+      run-id:
+        description: 'Workflow run ID to download coverage artifacts from'
+        required: true
+        type: string
   workflow_run:
     workflows: [CI Pipeline]
     types: [completed]
@@ -16,8 +21,9 @@ permissions:
 jobs:
   check-coverage:
     if: >-
-      ${{ github.event.workflow_run.conclusion == 'success' && 
-          github.event.workflow_run.name == 'CI Pipeline' }}
+      ${{ github.event_name == 'workflow_dispatch' || 
+          (github.event.workflow_run.conclusion == 'success' && 
+           github.event.workflow_run.name == 'CI Pipeline') }}
     runs-on: ubuntu-latest
     
     steps:
@@ -34,19 +40,32 @@ jobs:
 
     - name: Verify Workflow Run ID
       run: |
-        if [ -z "${{ github.event.workflow_run.id }}" ]; then
-          echo "❌ Workflow run ID is missing"
-          echo "This workflow must be triggered by a workflow_run event"
+        # Determine the workflow run ID based on trigger type
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          RUN_ID="${{ github.event.inputs.run-id }}"
+          echo "✅ Manual trigger - Using provided run ID: $RUN_ID"
+        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          echo "✅ Automatic trigger - Using workflow run ID: $RUN_ID"
+        else
+          echo "❌ Unsupported trigger type: ${{ github.event_name }}"
           exit 1
         fi
-        echo "✅ Workflow run ID: ${{ github.event.workflow_run.id }}"
+        
+        if [ -z "$RUN_ID" ]; then
+          echo "❌ Workflow run ID is missing"
+          exit 1
+        fi
+        
+        echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+        echo "✅ Workflow run ID: $RUN_ID"
 
     - name: Download Coverage Artifacts
       uses: actions/download-artifact@v4
       with:
         name: stores-coverage-report
         path: ./coverage/
-        run-id: ${{ github.event.workflow_run.id }}
+        run-id: ${{ env.RUN_ID }}
 
     - name: Verify Coverage Artifact
       run: |

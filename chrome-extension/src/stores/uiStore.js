@@ -25,6 +25,7 @@ export const useUIStore = create(
         forceConfigModalVisible: false,
         currentSelection: null,
         selectedModels: [],
+        testModalVisible: false,
         
         // ==================== UI Layout States ====================
         isExpanded: false,
@@ -79,6 +80,10 @@ export const useUIStore = create(
         
         setForceConfigModalVisible: (visible) => set((state) => {
             state.forceConfigModalVisible = visible;
+        }),
+        
+        setTestModalVisible: (visible) => set((state) => {
+            state.testModalVisible = visible;
         }),
         
         setCurrentSelection: (selection) => set((state) => {
@@ -169,6 +174,7 @@ export const useUIStore = create(
             state.settingsModalVisible = false;
             state.helpModalVisible = false;
             state.forceConfigModalVisible = false;
+            state.testModalVisible = false;
             state.currentSelection = null;
             state.selectedModels = [];
             state.isScreenshotMode = false;

@@ -265,31 +265,10 @@ jobs:
           echo "Coverage needs improvement - proceeding with coverage enhancement steps."
         fi
 
-    - name: Check for Existing Coverage PR
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      id: check-existing-pr
-      run: |
-        echo "Checking for existing coverage improvement PRs..."
-        
-        # Check if there's already a PR for coverage improvement
-        EXISTING_PR=$(gh pr list --state open --label "coverage" --json number --jq '.[0].number' || echo "")
-        
-        if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
-          echo "Found existing coverage PR: #$EXISTING_PR"
-          echo "pr_exists=true" >> $GITHUB_OUTPUT
-          echo "existing_pr=$EXISTING_PR" >> $GITHUB_OUTPUT
-        else
-          echo "No existing coverage PR found"
-          echo "pr_exists=false" >> $GITHUB_OUTPUT
-        fi
-
     - name: Create Coverage Improvement Branch
       if: |
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
+        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
         echo "Creating coverage improvement branch..."
         
@@ -302,8 +281,7 @@ jobs:
     - name: Analyze Uncovered Code for 100% Coverage
       if: |
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
+        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       working-directory: ./chrome-extension
       run: |
         echo "🔍 Analyzing uncovered code to generate natural language summary..."
@@ -450,8 +428,7 @@ jobs:
     - name: Install Cursor CLI
       if: |
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
+        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
         curl https://cursor.com/install -fsS | bash
         echo "$HOME/.cursor/bin" >> $GITHUB_PATH
@@ -459,8 +436,7 @@ jobs:
     - name: Configure git for cursor-agent
       if: |
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
+        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
         git config user.name "Coverage Bot"
         git config user.email "coverage-bot@github.com"
@@ -468,8 +444,7 @@ jobs:
     - name: Generate Tests for 100% Coverage using Cursor Agent
       if: |
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-        steps.check-existing-pr.outputs.pr_exists == 'false'
+        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       working-directory: ./chrome-extension
       env:
         CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
@@ -489,7 +464,7 @@ jobs:
         # Requirements:
         1) Read the 'uncovered-analysis.json' file to understand what needs testing
         2) For each file with uncovered lines, generate complete test files
-        3) Use Vitest and @testing-library/react testing frameworks
+        3) Refer to the existing test files for patterns and best practices
         4) Cover ALL uncovered lines mentioned in the analysis
         5) Test every function, method, and code path in the store
         6) Use proper mocking for external dependencies and browser APIs
@@ -499,208 +474,13 @@ jobs:
         10) Import statements should be correct relative to test file location
         11) Tests should be well-documented with descriptive names
         12) Focus on achieving 100% line, function, and branch coverage
-
-        # Test Patterns to Follow:
-        - Use describe blocks for grouping related tests
-        - Use it or test for individual test cases
-        - Use beforeEach for setup and cleanup
-        - Use vi.fn() for mocking functions
-        - Use renderHook from @testing-library/react for testing hooks
-        - Use act for state updates
-        - Use expect for assertions
-        - Mock browser APIs like chrome.storage, chrome.tabs, etc.
-
-        # Process:
-        1) Read uncovered-analysis.json to get the list of files and uncovered lines
-        2) For each file, read the source code to understand what needs testing
-        3) Generate comprehensive test files that cover all uncovered lines
-        4) Save test files to the appropriate test directory structure
-        5) Ensure all tests follow the established patterns and best practices
+        13) You are not allowed to create new files, only modify existing ones
 
         # Output:
         - Generate complete test files for all uncovered code
         - Ensure 100% coverage is achieved
-        - All tests should be production-ready and follow best practices
-        " --force --model "gpt-4" --output-format=text
+        - Pushed commits to the coverage-improvement branch.
+        - Create a compare link from the coverage-improvement branch to the main branch.
+        " --force  --output-format=text
 
-    # - name: Run Tests to Verify Coverage Improvement
-    #   if: |
-    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
-    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-    #     steps.check-existing-pr.outputs.pr_exists == 'false'
-    #   working-directory: ./chrome-extension
-    #   run: |
-    #     echo "Running tests to verify coverage improvement..."
-        
-    #     # Run the store tests with coverage
-    #     npm run test:stores:coverage
-        
-    #     # Check if coverage improved
-    #     if [ -f "coverage/lcov.info" ]; then
-    #       # Use the same correct parsing logic as the main analysis
-    #       NEW_LINES_FOUND=0
-    #       NEW_LINES_HIT=0
-    #       NEW_FUNCTIONS_FOUND=0
-    #       NEW_FUNCTIONS_HIT=0
-    #       NEW_BRANCHES_FOUND=0
-    #       NEW_BRANCHES_HIT=0
-    #       
-    #       # Sum up all coverage data
-    #       while IFS= read -r line; do
-    #         if [[ $line =~ ^LF:([0-9]+) ]]; then
-    #           NEW_LINES_FOUND=$((NEW_LINES_FOUND + ${BASH_REMATCH[1]}))
-    #         elif [[ $line =~ ^LH:([0-9]+) ]]; then
-    #           NEW_LINES_HIT=$((NEW_LINES_HIT + ${BASH_REMATCH[1]}))
-    #         elif [[ $line =~ ^FNF:([0-9]+) ]]; then
-    #           NEW_FUNCTIONS_FOUND=$((NEW_FUNCTIONS_FOUND + ${BASH_REMATCH[1]}))
-    #         elif [[ $line =~ ^FNH:([0-9]+) ]]; then
-    #           NEW_FUNCTIONS_HIT=$((NEW_FUNCTIONS_HIT + ${BASH_REMATCH[1]}))
-    #         elif [[ $line =~ ^BRF:([0-9]+) ]]; then
-    #           NEW_BRANCHES_FOUND=$((NEW_BRANCHES_FOUND + ${BASH_REMATCH[1]}))
-    #         elif [[ $line =~ ^BRH:([0-9]+) ]]; then
-    #           NEW_BRANCHES_HIT=$((NEW_BRANCHES_HIT + ${BASH_REMATCH[1]}))
-    #         fi
-    #       done < coverage/lcov.info
-    #       
-    #       # Calculate percentages
-    #       if [ "$NEW_LINES_FOUND" -gt 0 ]; then
-    #         NEW_LINES_COVERED=$((NEW_LINES_HIT * 100 / NEW_LINES_FOUND))
-    #       else
-    #         NEW_LINES_COVERED=0
-    #       fi
-    #       
-    #       if [ "$NEW_FUNCTIONS_FOUND" -gt 0 ]; then
-    #         NEW_FUNCTIONS_COVERED=$((NEW_FUNCTIONS_HIT * 100 / NEW_FUNCTIONS_FOUND))
-    #       else
-    #         NEW_FUNCTIONS_COVERED=0
-    #       fi
-    #       
-    #       if [ "$NEW_BRANCHES_FOUND" -gt 0 ]; then
-    #         NEW_BRANCHES_COVERED=$((NEW_BRANCHES_HIT * 100 / NEW_BRANCHES_FOUND))
-    #       else
-    #         NEW_BRANCHES_COVERED=0
-    #       fi
-          
-    #       echo "New coverage: Lines: $NEW_LINES_COVERED%, Functions: $NEW_FUNCTIONS_COVERED%, Branches: $NEW_BRANCHES_COVERED%"
-          
-    #       # Check if we've reached 100% coverage
-    #       if [ "$NEW_LINES_COVERED" -eq 100 ] && [ "$NEW_FUNCTIONS_COVERED" -eq 100 ] && [ "$NEW_BRANCHES_COVERED" -eq 100 ]; then
-    #         echo "coverage_improved=true" >> $GITHUB_ENV
-    #         echo "coverage_complete=true" >> $GITHUB_ENV
-    #       else
-    #         echo "coverage_improved=false" >> $GITHUB_ENV
-    #         echo "coverage_complete=false" >> $GITHUB_ENV
-    #       fi
-    #     else
-    #       echo "coverage_improved=false" >> $GITHUB_ENV
-    #       echo "coverage_complete=false" >> $GITHUB_ENV
-    #     fi
-
-    # - name: Commit and Push Changes
-    #   if: |
-    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
-    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-    #     steps.check-existing-pr.outputs.pr_exists == 'false'
-    #   run: |
-    #     echo "Committing and pushing changes..."
-        
-    #     # Add all changes
-    #     git add .
-        
-    #     # Check if there are changes to commit
-    #     if git diff --staged --quiet; then
-    #       echo "No changes to commit"
-    #       echo "has_changes=false" >> $GITHUB_ENV
-    #     else
-    #       echo "has_changes=true" >> $GITHUB_ENV
-          
-    #       # Commit the changes
-    #       git commit -m "feat: improve store test coverage
-
-    #       - Added additional tests to increase coverage
-    #       - Generated tests for uncovered code paths
-    #       - Current coverage: Lines: ${{ steps.coverage-analysis.outputs.lines_coverage }}% → ${{ env.NEW_LINES_COVERED || steps.coverage-analysis.outputs.lines_coverage }}%
-          
-    #       This PR aims to reach 100% test coverage for store tests."
-          
-    #       # Push the branch
-    #       git push origin "${{ env.branch_name }}"
-          
-    #       echo "Pushed branch: ${{ env.branch_name }}"
-    #     fi
-
-    # - name: Create Pull Request
-    #   if: |
-    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
-    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-    #     steps.check-existing-pr.outputs.pr_exists == 'false' &&
-    #     env.has_changes == 'true'
-    #   run: |
-    #     echo "Creating pull request for coverage improvements..."
-        
-    #     # Create the PR
-    #     gh pr create \
-    #       --title "🚀 Improve Store Test Coverage to 100%" \
-    #       --body "## Coverage Improvement
-
-    #       This PR automatically improves store test coverage to reach 100%.
-
-    #       ### Current Coverage Status
-    #       - **Lines**: ${{ steps.coverage-analysis.outputs.lines_coverage }}% → ${{ env.NEW_LINES_COVERED || steps.coverage-analysis.outputs.lines_coverage }}%
-    #       - **Functions**: ${{ steps.coverage-analysis.outputs.functions_coverage }}% → ${{ env.NEW_FUNCTIONS_COVERED || steps.coverage-analysis.outputs.functions_coverage }}%
-    #       - **Branches**: ${{ steps.coverage-analysis.outputs.branches_coverage }}% → ${{ env.NEW_BRANCHES_COVERED || steps.coverage-analysis.outputs.branches_coverage }}%
-
-    #       ### Changes Made
-    #       - Added additional unit tests for uncovered code paths
-    #       - Generated tests based on coverage analysis
-    #       - Ensured all tests pass before creating this PR
-
-    #       ### Verification
-    #       - ✅ All store tests pass
-    #       - ✅ Coverage improved
-    #       - ✅ No breaking changes
-
-    #       This PR was automatically generated by the Coverage Enforcer workflow." \
-    #       --base master \
-    #       --head "${{ env.branch_name }}" \
-    #       --label "coverage,automated,tests"
-
-    # - name: Comment on Existing PR
-    #   if: |
-    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
-    #     steps.coverage-analysis.outputs.coverage_sufficient == 'false' &&
-    #     steps.check-existing-pr.outputs.pr_exists == 'true'
-    #   run: |
-    #     echo "Commenting on existing coverage PR..."
-        
-    #     # Update existing PR with current coverage status
-    #     gh pr comment "${{ steps.check-existing-pr.outputs.existing_pr }}" \
-    #       --body "📊 **Coverage Update**
-
-    #       Current store test coverage status:
-    #       - **Lines**: ${{ steps.coverage-analysis.outputs.lines_coverage }}%
-    #       - **Functions**: ${{ steps.coverage-analysis.outputs.functions_coverage }}%
-    #       - **Branches**: ${{ steps.coverage-analysis.outputs.branches_coverage }}%
-
-    #       ⚠️ Coverage is still below 100%. Additional tests may be needed.
-
-    #       _This comment was automatically generated by the Coverage Enforcer workflow._"
-
-    # - name: Success Notification
-    #   if: |
-    #     steps.coverage-analysis.outputs.coverage_available == 'true' && 
-    #     steps.coverage-analysis.outputs.coverage_sufficient == 'true'
-    #   run: |
-    #     echo "🎉 Store test coverage is at 100%!"
-    #     echo "No action needed - all tests are fully covered."
-
-    # - name: Upload Coverage Report
-    #   if: always() && steps.coverage-analysis.outputs.coverage_available == 'true'
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: coverage-analysis-report
-    #     path: |
-    #       chrome-extension/coverage-report.md
-    #       chrome-extension/test-suggestions.json
-    #     retention-days: 7
 

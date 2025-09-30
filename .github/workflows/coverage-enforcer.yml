@@ -288,8 +288,8 @@ jobs:
         
         # Create a script to analyze uncovered code and generate natural language summary
         cat > analyze-uncovered-code.js << 'EOF'
-        const fs = require('fs');
-        const path = require('path');
+        import fs from 'fs';
+        import path from 'path';
 
         // Read lcov.info to find uncovered lines with detailed analysis
         function findUncoveredCode() {

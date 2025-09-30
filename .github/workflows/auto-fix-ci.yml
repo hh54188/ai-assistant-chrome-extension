@@ -4,6 +4,12 @@ on:
   workflow_run:
     workflows: [CI Pipeline]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      workflow_run_id:
+        description: 'Failed workflow run ID to fix'
+        required: true
+        type: string
 
 permissions:
   contents: write      # ✅ Push branches, create commits
@@ -14,7 +20,8 @@ permissions:
 jobs:
   attempt-fix:
     if: >-
-      ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name != 'Fix CI Failures' }}
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name != 'Fix CI Failures') ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -39,48 +46,56 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_PREFIX: ci-fix
         run: |
+          # Determine workflow run ID based on trigger type
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            WORKFLOW_RUN_ID="${{ github.event.inputs.workflow_run_id }}"
+          else
+            WORKFLOW_RUN_ID="${{ github.event.workflow_run.id }}"
+          fi
+          
           cursor-agent -p "You are operating in a GitHub Actions runner.
 
-          The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests, but you must not create or edit PRs directly.
+          The GitHub CLI is available as \`gh\` and authenticated via \`GH_TOKEN\`. Git is available. You have write access to repository contents and can comment on pull requests, but you must not create or edit PRs directly.
 
           # Context:
           - Repo: ${{ github.repository }}
           - Owner: ${{ github.repository_owner }}
-          - Workflow Run ID: ${{ github.event.workflow_run.id }}
-          - Workflow Run URL: ${{ github.event.workflow_run.html_url }}
+          - Workflow Run ID: \${WORKFLOW_RUN_ID}
           - Fix Branch Prefix: ${{ env.BRANCH_PREFIX }}
 
           # Goal:
-          - Implement an end-to-end CI fix flow driven by the failing PR, creating a separate persistent fix branch and proposing a quick-create PR back into the original PR's branch.
+          - Fix the CI failure by identifying the failing workflow, branch, and making targeted fixes. Handle both PR-based and direct branch workflow runs.
 
           # Requirements:
-          1) Identify the PR associated with the failed workflow run and determine its base and head branches. Let HEAD_REF be the PR's head branch (the contributor/origin branch).
-          2) Maintain a persistent fix branch for this PR head using the Fix Branch Prefix from Context. Create it if missing, update it otherwise, and push changes to origin.
-          3) Attempt to resolve the CI failure by making minimal, targeted edits consistent with the repo's style. Keep changes scoped and safe.
-          4) You do NOT have permission to create PRs. Instead, post or update a single natural-language PR comment (1–2 sentences) that briefly explains the CI fix and includes an inline compare link to quick-create a PR.
+          1) Identify the workflow run details using \`gh run view \${WORKFLOW_RUN_ID}\` to get:
+             - The branch that triggered the workflow
+             - The workflow name and file
+             - The specific job that failed
+             - Any associated PR (if exists)
+          2) Determine the target branch for fixes:
+             - If associated with a PR: use the PR's head branch
+             - If direct branch run: use the branch that triggered the workflow
+          3) Create or update a persistent fix branch using the Fix Branch Prefix + branch name
+          4) Attempt to resolve the CI failure by making minimal, targeted edits consistent with the repo's style
+          5) If associated with a PR: post a comment with fix details and compare link
+          6) If not PR-related: create a fix branch and provide instructions for manual review
 
           # Inputs and conventions:
-          - Use `gh api`, `gh run view`, `gh pr view`, `gh pr diff`, `gh pr list`, `gh run download`, and git commands as needed to discover the failing PR and branches.
-          - Avoid duplicate comments; if a previous bot comment exists, update it instead of posting a new one.
-          - If no actionable fix is possible, make no changes and post no comment.
-
-          # Deliverables when updates occur:
-          - Pushed commits to the persistent fix branch for this PR head.
-          - A single natural-language PR comment on the original PR that includes the inline compare link above.
-
-          # Requirements:
-          1) Identify the PR associated with the failed workflow run and determine its base and head branches.
-          2) Maintain a persistent fix branch for this PR head using the Fix Branch Prefix.
-          3) Attempt to resolve the CI failure by making minimal, targeted edits.
-          4) Create a verification branch that merges the original PR branch with your fix branch.
-          5) Run the specific CI job that failed on this verification branch to confirm the fix works.
-          6) Only if verification passes, post the compare link. If verification fails, iterate on the fix, 3 times at most. If after 3 iterations, the verification still fails, post no comment.
+          - Use \`gh run view\`, \`gh run download\`, \`gh pr view\`, \`gh pr list\`, and git commands as needed
+          - For PR-related runs: avoid duplicate comments; update existing bot comments instead
+          - For non-PR runs: create descriptive commit messages and branch names
+          - If no actionable fix is possible, make no changes and post no comment
 
           # Verification Process:
-          - Create verification branch: git checkout -b verify-fix-{PR_NUMBER} {PR_BRANCH}
+          - Create verification branch: git checkout -b verify-fix-\${WORKFLOW_RUN_ID} {TARGET_BRANCH}
           - Merge your fix: git merge {CI_FIX_BRANCH}
-          - Push verification branch: git push origin verify-fix-{PR_NUMBER}
-          - Trigger the same CI workflow that failed: gh api repos/{REPO}/actions/workflows/ci-pipeline.yml/dispatches --field ref=verify-fix-{PR_NUMBER}
+          - Push verification branch: git push origin verify-fix-\${WORKFLOW_RUN_ID}
+          - Trigger the same CI workflow that failed using the workflow file name from the original run
           - Wait for CI completion and check results
           - Only proceed with compare link if CI passes on verification branch
+
+          # Deliverables:
+          - Pushed commits to the persistent fix branch
+          - For PR runs: A single natural-language PR comment with compare link
+          - For non-PR runs: A descriptive commit message with fix details
           " --force --model "$MODEL" --output-format=text

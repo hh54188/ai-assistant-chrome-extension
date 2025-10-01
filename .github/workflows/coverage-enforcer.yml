@@ -453,7 +453,7 @@ jobs:
       run: |
         cursor-agent -p "You are operating in a GitHub Actions runner to generate comprehensive stores related test coverage.
         
-        The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests and create PRs.
+        The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN` environment variable. Git is available. You have write access to repository contents and can comment on pull requests and create PRs.
 
         # Context:
         - Current coverage is below 100% and needs improvement

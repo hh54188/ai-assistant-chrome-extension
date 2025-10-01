@@ -491,7 +491,7 @@ jobs:
         - Modify existing test files for all uncovered code
         - Ensure 100% coverage is achieved
         - Pushed commits to the coverage-improvement branch.
-        - Create a ready for review PR from the coverage-improvement branch to the main branch.
+        - Create a draft PR from the coverage-improvement branch to the main branch.
         " --force --model "$MODEL" --output-format=text
 
 

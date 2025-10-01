@@ -448,13 +448,16 @@ jobs:
       working-directory: ./chrome-extension
       env:
         CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        MODEL: gpt-4
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        MODEL: gpt-5
       run: |
-        cursor-agent -p "You are operating in a GitHub Actions runner to generate comprehensive test coverage.
+        cursor-agent -p "You are operating in a GitHub Actions runner to generate comprehensive stores related test coverage.
+        
+        The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests and create PRs.
 
         # Context:
         - Current coverage is below 100% and needs improvement
+        - You can use "npm run test:stores:coverage" to re-generate coverage report for stores again.
         - Uncovered code analysis has been generated and saved to 'uncovered-analysis.json'
         - Natural language description saved to 'uncovered-description.md'
         - Target: Achieve 100% test coverage for store files
@@ -478,10 +481,10 @@ jobs:
         13) You are not allowed to create new files, only modify existing ones
 
         # Output:
-        - Generate complete test files for all uncovered code
+        - Modify existing test files for all uncovered code
         - Ensure 100% coverage is achieved
         - Pushed commits to the coverage-improvement branch.
-        - Create a compare link from the coverage-improvement branch to the main branch.
+        - Create a ready for review PR from the coverage-improvement branch to the main branch.
         " --force --model "$MODEL" --output-format=text
 
 

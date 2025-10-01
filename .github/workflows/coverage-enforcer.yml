@@ -483,9 +483,5 @@ jobs:
         - Pushed commits to the coverage-improvement branch.
         - Create a compare link from the coverage-improvement branch to the main branch.
         " --force --model "$MODEL" --output-format=text
-        
-        # Ensure all background processes are terminated
-        jobs -p | xargs -r kill 2>/dev/null || true
-        wait 2>/dev/null || true
 
 

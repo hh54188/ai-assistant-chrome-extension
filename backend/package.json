@@ -16,7 +16,7 @@
     "@mendable/firecrawl-js": "^1.29.3",
     "@modelcontextprotocol/sdk": "^1.17.2",
     "@notionhq/client": "^4.0.2",
-    "compression": "^1.7.4",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
     "dotenv": "^16.3.1",

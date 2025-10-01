@@ -449,6 +449,7 @@ jobs:
       env:
         CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MODEL: gpt-4
       run: |
         cursor-agent -p "You are operating in a GitHub Actions runner to generate comprehensive test coverage.
 
@@ -481,6 +482,10 @@ jobs:
         - Ensure 100% coverage is achieved
         - Pushed commits to the coverage-improvement branch.
         - Create a compare link from the coverage-improvement branch to the main branch.
-        " --force  --output-format=text
+        " --force --model "$MODEL" --output-format=text
+        
+        # Ensure all background processes are terminated
+        jobs -p | xargs -r kill 2>/dev/null || true
+        wait 2>/dev/null || true
 
 

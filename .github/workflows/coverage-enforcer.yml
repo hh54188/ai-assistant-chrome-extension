@@ -1,497 +1,96 @@
 name: Store Coverage Enforcer
 
 on:
-  workflow_dispatch:
-    inputs:
-      run-id:
-        description: 'Workflow run ID to download coverage artifacts from'
-        default: '18072644387'
-        required: true
-        type: string
   workflow_run:
-    workflows: [CI Pipeline]
+    workflows: ["CI Pipeline"]
     types: [completed]
-
-permissions:
-  contents: write      # Push branches, create commits
-  pull-requests: write # Create and manage PRs
-  actions: write       # Trigger workflows
-  checks: write        # Create/update check runs
-  issues: write        # Create issues for tracking
+    branches: [master]
 
 jobs:
-  check-coverage:
-    if: >-
-      ${{ github.event_name == 'workflow_dispatch' || 
-          (github.event.workflow_run.conclusion == 'success' && 
-           github.event.workflow_run.name == 'CI Pipeline') }}
+  coverage-enforcer:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      checks: write
+      issues: write
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Configure git identity
-      run: |
-        git config user.name "Coverage Bot"
-        git config user.email "coverage-bot@github.com"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: chrome-extension/package-lock.json
 
-    - name: Verify Workflow Run ID
-      run: |
-        # Determine the workflow run ID based on trigger type
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          RUN_ID="${{ github.event.inputs.run-id }}"
-          echo "✅ Manual trigger - Using provided run ID: $RUN_ID"
-        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-          RUN_ID="${{ github.event.workflow_run.id }}"
-          echo "✅ Automatic trigger - Using workflow run ID: $RUN_ID"
-        else
-          echo "❌ Unsupported trigger type: ${{ github.event_name }}"
-          exit 1
-        fi
-        
-        # Additional fallback logic for workflow_dispatch
-        if [ -z "$RUN_ID" ] && [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          # Try alternative input names
-          RUN_ID="${{ github.event.inputs.run_id || github.event.inputs.runId || github.event.inputs.run-id }}"
-          echo "🔄 Trying alternative input names: $RUN_ID"
-        fi
-        
-        if [ -z "$RUN_ID" ]; then
-          echo "❌ Workflow run ID is missing"
-          echo "Event name: ${{ github.event_name }}"
-          echo "Available inputs: ${{ toJSON(github.event.inputs) }}"
-          exit 1
-        fi
-        
-        echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-        echo "✅ Workflow run ID set: $RUN_ID"
-        
-        # Verify environment variables are set correctly
-        echo "🔍 Environment variables verification:"
-        echo "  - RUN_ID env var: '$RUN_ID'"
+      - name: Install dependencies
+        working-directory: ./chrome-extension
+        run: npm ci
 
-    - name: Download Coverage Artifacts
-      uses: actions/download-artifact@v5
-      with:
-        name: stores-coverage-report
-        path: ./coverage/
-        run-id: ${{ env.RUN_ID }}
-        repository: ${{ github.repository }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage
 
-    - name: Verify Coverage Artifact
-      run: |
-        echo "🔍 Verifying downloaded coverage artifact..."
-        echo "=========================================="
-        
-        # Check if coverage directory exists
-        if [ ! -d "./coverage" ]; then
-          echo "❌ Coverage directory not found: ./coverage/"
-          echo "This indicates the artifact download failed."
-          echo "Please check the previous step for download errors."
-          exit 1
-        fi
-        
-        echo "✅ Coverage directory found: ./coverage/"
-        
-        # List contents of coverage directory
-        echo "📁 Contents of coverage directory:"
-        ls -la ./coverage/
-        
-        # Check for expected files
-        EXPECTED_FILES=(
-          "lcov-report/index.html"
-          "lcov.info"
-          "coverage-final.json"
-        )
-        
-        MISSING_FILES=()
-        for file in "${EXPECTED_FILES[@]}"; do
-          if [ ! -f "./coverage/$file" ]; then
-            MISSING_FILES+=("$file")
-          else
-            echo "✅ Found: $file"
-          fi
-        done
-        
-        # Check if any critical files are missing
-        if [ ${#MISSING_FILES[@]} -gt 0 ]; then
-          echo "⚠️  Some expected files are missing:"
-          for file in "${MISSING_FILES[@]}"; do
-            echo "  - $file"
-          done
-          
-          # Check if we have at least the HTML report
-          if [ ! -f "./coverage/lcov-report/index.html" ]; then
-            echo "❌ Critical file missing: lcov-report/index.html"
-            echo "This file is required for coverage analysis."
-            exit 1
-          fi
-        fi
-        
-        # Check file sizes to ensure they're not empty
-        echo "📊 File sizes:"
-        find ./coverage -type f -exec ls -lh {} \; | head -10
-        
-        echo "✅ Coverage artifact verification completed successfully"
-        echo "=========================================="
+      - name: Analyze Coverage Data
+        id: analyze-coverage
+        run: |
+          echo "🔍 Analyzing coverage data..."
+          node scripts/analyze-coverage-data.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: chrome-extension/package-lock.json
+      - name: Analyze Uncovered Code for 100% Coverage
+        id: analyze-uncovered
+        if: steps.analyze-coverage.outputs.coverage-below-100 == 'true'
+        run: |
+          echo "🧪 Analyzing uncovered code for 100% coverage..."
+          node scripts/analyze-uncovered-code.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
 
-    - name: Install Chrome Extension dependencies
-      working-directory: ./chrome-extension
-      run: npm ci
+      - name: Generate additional tests
+        id: generate-tests
+        if: steps.analyze-uncovered.outputs.has-uncovered-code == 'true'
+        run: |
+          echo "🤖 Generating additional tests..."
+          node scripts/generate-tests.js
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
 
-    - name: Install Coverage Analysis Tools
-      run: |
-        npm install -g @vitest/coverage-v8
-        npm install -g nyc
+      - name: Run tests to verify coverage improvement
+        if: steps.generate-tests.outputs.tests-generated == 'true'
+        working-directory: ./chrome-extension
+        run: |
+          echo "✅ Running tests to verify coverage improvement..."
+          npm run test:stores:coverage
 
-    - name: Analyze Coverage Data
-      id: coverage-analysis
-      working-directory: ./chrome-extension
-      run: |
-        echo "Analyzing coverage data from artifact..."
-        
-        # Verify coverage data exists (should already be verified in previous step)
-        if [ ! -d "../coverage" ] || [ ! -f "../coverage/lcov-report/index.html" ]; then
-          echo "❌ Coverage data is missing - this should not happen after verification step"
-          echo "coverage_available=false" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+      - name: Create Pull Request
+        if: steps.generate-tests.outputs.tests-generated == 'true'
+        run: |
+          echo "📝 Creating pull request..."
+          node scripts/create-coverage-pr.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
 
-        # Parse coverage summary from lcov.info if available
-        if [ -f "../coverage/lcov.info" ]; then
-          echo "Parsing lcov.info..."
-          
-          # Extract raw coverage counts from lcov.info (sum across all records)
-          # Use a simple approach that works reliably in GitHub Actions
-          LINES_FOUND=0
-          LINES_HIT=0
-          FUNCTIONS_FOUND=0
-          FUNCTIONS_HIT=0
-          BRANCHES_FOUND=0
-          BRANCHES_HIT=0
-          
-          # Sum up all coverage data
-          while IFS= read -r line; do
-            if [[ $line =~ ^LF:([0-9]+) ]]; then
-              LINES_FOUND=$((LINES_FOUND + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^LH:([0-9]+) ]]; then
-              LINES_HIT=$((LINES_HIT + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^FNF:([0-9]+) ]]; then
-              FUNCTIONS_FOUND=$((FUNCTIONS_FOUND + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^FNH:([0-9]+) ]]; then
-              FUNCTIONS_HIT=$((FUNCTIONS_HIT + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^BRF:([0-9]+) ]]; then
-              BRANCHES_FOUND=$((BRANCHES_FOUND + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^BRH:([0-9]+) ]]; then
-              BRANCHES_HIT=$((BRANCHES_HIT + ${BASH_REMATCH[1]}))
-            fi
-          done < ../coverage/lcov.info
-          
-          # Calculate percentages
-          if [ "$LINES_FOUND" -gt 0 ]; then
-            LINES_COVERED=$((LINES_HIT * 100 / LINES_FOUND))
-          else
-            LINES_COVERED=0
-          fi
-          
-          if [ "$FUNCTIONS_FOUND" -gt 0 ]; then
-            FUNCTIONS_COVERED=$((FUNCTIONS_HIT * 100 / FUNCTIONS_FOUND))
-          else
-            FUNCTIONS_COVERED=0
-          fi
-          
-          if [ "$BRANCHES_FOUND" -gt 0 ]; then
-            BRANCHES_COVERED=$((BRANCHES_HIT * 100 / BRANCHES_FOUND))
-          else
-            BRANCHES_COVERED=0
-          fi
-          
-          echo "Lines: $LINES_HIT/$LINES_FOUND ($LINES_COVERED%)"
-          echo "Functions: $FUNCTIONS_HIT/$FUNCTIONS_FOUND ($FUNCTIONS_COVERED%)"
-          echo "Branches: $BRANCHES_HIT/$BRANCHES_FOUND ($BRANCHES_COVERED%)"
-          
-          echo "lines_coverage=$LINES_COVERED" >> $GITHUB_OUTPUT
-          echo "functions_coverage=$FUNCTIONS_COVERED" >> $GITHUB_OUTPUT
-          echo "branches_coverage=$BRANCHES_COVERED" >> $GITHUB_OUTPUT
-          echo "coverage_available=true" >> $GITHUB_OUTPUT
-          
-          # Check if any coverage is below 100%
-          if [ "$LINES_COVERED" -lt 100 ] || [ "$FUNCTIONS_COVERED" -lt 100 ] || [ "$BRANCHES_COVERED" -lt 100 ]; then
-            echo "coverage_sufficient=false" >> $GITHUB_OUTPUT
-            echo "Coverage is insufficient - Lines: $LINES_COVERED%, Functions: $FUNCTIONS_COVERED%, Branches: $BRANCHES_COVERED%"
-          else
-            echo "coverage_sufficient=true" >> $GITHUB_OUTPUT
-            echo "Coverage is sufficient at 100%"
-          fi
-        else
-          echo "❌ No lcov.info found in coverage artifact"
-          echo "coverage_available=false" >> $GITHUB_OUTPUT
-          exit 1
-        fi
-
-    - name: Check Coverage and Exit if 100%
-      if: steps.coverage-analysis.outputs.coverage_available == 'true'
-      run: |
-        echo "Checking if test coverage is 100%..."
-        
-        LINES_COVERED="${{ steps.coverage-analysis.outputs.lines_coverage }}"
-        FUNCTIONS_COVERED="${{ steps.coverage-analysis.outputs.functions_coverage }}"
-        BRANCHES_COVERED="${{ steps.coverage-analysis.outputs.branches_coverage }}"
-        
-        echo "Current coverage:"
-        echo "  Lines: $LINES_COVERED%"
-        echo "  Functions: $FUNCTIONS_COVERED%"
-        echo "  Branches: $BRANCHES_COVERED%"
-        
-        # Check if all coverage metrics are 100%
-        if [ "$LINES_COVERED" -eq 100 ] && [ "$FUNCTIONS_COVERED" -eq 100 ] && [ "$BRANCHES_COVERED" -eq 100 ]; then
-          echo "🎉 Test coverage is 100%! Exiting pipeline successfully."
-          echo "All coverage metrics are at 100% - no further action needed."
-          exit 0
-        else
-          echo "⚠️ Test coverage is not 100% - continuing with pipeline..."
-          echo "Coverage needs improvement - proceeding with coverage enhancement steps."
-        fi
-
-    - name: Create Coverage Improvement Branch
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      run: |
-        echo "Creating coverage improvement branch..."
-        
-        # Create a new branch for coverage improvements
-        BRANCH_NAME="coverage-improvement-$(date +%Y%m%d-%H%M%S)"
-        git checkout -b "$BRANCH_NAME"
-        echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
-        echo "Created branch: $BRANCH_NAME"
-
-    - name: Analyze Uncovered Code for 100% Coverage
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      working-directory: ./chrome-extension
-      run: |
-        echo "🔍 Analyzing uncovered code to generate natural language summary..."
-        
-        # Create a script to analyze uncovered code and generate natural language summary
-        cat > analyze-uncovered-code.js << 'EOF'
-        import fs from 'fs';
-        import path from 'path';
-
-        // Read lcov.info to find uncovered lines with detailed analysis
-        function findUncoveredCode() {
-          const lcovPath = '../coverage/lcov.info';
-          if (!fs.existsSync(lcovPath)) {
-            console.log('No coverage file found');
-            return [];
-          }
-
-          const lcovContent = fs.readFileSync(lcovPath, 'utf8');
-          const uncovered = [];
-          
-          let currentFile = '';
-          const lines = lcovContent.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('SF:')) {
-              currentFile = line.substring(3).trim();
-            } else if (line.startsWith('DA:') && line.includes(',0')) {
-              const parts = line.substring(3).split(',');
-              const lineNumber = parseInt(parts[0]);
-              uncovered.push({
-                file: currentFile,
-                line: lineNumber
-              });
-            }
-          }
-          
-          return uncovered;
-        }
-
-        // Get code context around uncovered lines for better understanding
-        function getCodeContext(filePath, uncoveredLines) {
-          if (!fs.existsSync(filePath)) {
-            return null;
-          }
-          
-          const content = fs.readFileSync(filePath, 'utf8');
-          const lines = content.split('\n');
-          
-          const context = {};
-          uncoveredLines.forEach(lineNum => {
-            const start = Math.max(0, lineNum - 3);
-            const end = Math.min(lines.length, lineNum + 3);
-            context[lineNum] = {
-              lineNumber: lineNum,
-              code: lines[lineNum - 1] || '',
-              context: lines.slice(start, end).map((line, idx) => ({
-                lineNumber: start + idx + 1,
-                code: line,
-                isTarget: start + idx + 1 === lineNum
-              }))
-            };
-          });
-          
-          return {
-            filePath,
-            content,
-            context
-          };
-        }
-
-        // Generate detailed uncovered code analysis
-        function generateUncoveredAnalysis(uncovered) {
-          const analysis = [];
-          
-          // Group by file
-          const byFile = {};
-          uncovered.forEach(item => {
-            if (!byFile[item.file]) {
-              byFile[item.file] = [];
-            }
-            byFile[item.file].push(item.line);
-          });
-
-          // Generate detailed analysis for each file
-          Object.keys(byFile).forEach(file => {
-            if (file.includes('src/stores/') && file.endsWith('.js')) {
-              const lines = byFile[file].sort((a, b) => a - b);
-              const codeContext = getCodeContext(file, lines);
-              
-              if (codeContext) {
-                analysis.push({
-                  sourceFile: file,
-                  testFile: file.replace('src/stores/', 'src/tests/stores/').replace('.js', '.test.js'),
-                  uncoveredLines: lines,
-                  codeContext: codeContext,
-                  totalUncoveredLines: lines.length
-                });
-              }
-            }
-          });
-
-          return analysis;
-        }
-
-        // Generate natural language description of uncovered code
-        function generateNaturalLanguageDescription(analysis) {
-          let description = "# Uncovered Code Analysis for 100% Test Coverage\n\n";
-          description += "The following files have uncovered code that needs tests to reach 100% coverage:\n\n";
-          
-          analysis.forEach(item => {
-            description += `## ${item.sourceFile}\n`;
-            description += `- **Test file**: \`${item.testFile}\`\n`;
-            description += `- **Uncovered lines**: ${item.uncoveredLines.join(', ')}\n`;
-            description += `- **Total uncovered lines**: ${item.totalUncoveredLines}\n\n`;
-            
-            // Add code context for each uncovered line
-            description += "### Code context for uncovered lines:\n";
-            Object.entries(item.codeContext.context).forEach(([lineNum, context]) => {
-              description += `- **Line ${lineNum}**: \`${context.code.trim()}\`\n`;
-            });
-            description += "\n";
-          });
-          
-          return description;
-        }
-
-        const uncovered = findUncoveredCode();
-        const analysis = generateUncoveredAnalysis(uncovered);
-        const description = generateNaturalLanguageDescription(analysis);
-        
-        console.log('Uncovered code found:', uncovered.length, 'lines');
-        console.log('Files needing tests:', analysis.length);
-        
-        // Write detailed analysis to files
-        fs.writeFileSync('uncovered-analysis.json', JSON.stringify(analysis, null, 2));
-        fs.writeFileSync('uncovered-description.md', description);
-        
-        console.log('Analysis written to uncovered-analysis.json and uncovered-description.md');
-        EOF
-
-        # Run the coverage analysis script
-        node analyze-uncovered-code.js
-
-    - name: Install Cursor CLI
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      run: |
-        curl https://cursor.com/install -fsS | bash
-        echo "$HOME/.cursor/bin" >> $GITHUB_PATH
-
-    - name: Configure git for cursor-agent
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      run: |
-        git config user.name "Coverage Bot"
-        git config user.email "coverage-bot@github.com"
-
-    - name: Authenticate GitHub CLI
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      run: |
-        echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
-        gh auth status
-
-    - name: Generate Tests for 100% Coverage using Cursor Agent
-      if: |
-        steps.coverage-analysis.outputs.coverage_available == 'true' && 
-        steps.coverage-analysis.outputs.coverage_sufficient == 'false'
-      working-directory: ./chrome-extension
-      env:
-        CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-        MODEL: gpt-5
-      run: |
-        cursor-agent -p "You are operating in a GitHub Actions runner to generate comprehensive stores related test coverage.
-        
-        The GitHub CLI is available as `gh` and is properly authenticated. Git is available. You have write access to repository contents and can comment on pull requests and create PRs.
-
-        # Context:
-        - Current coverage is below 100% and needs improvement
-        - You can use "npm run test:stores:coverage" to re-generate coverage report for stores again.
-        - Uncovered code analysis has been generated and saved to 'uncovered-analysis.json'
-        - Natural language description saved to 'uncovered-description.md'
-        - Target: Achieve 100% test coverage for store files
-
-        # Goal:
-        Generate comprehensive unit tests for all uncovered code to achieve 100% test coverage.
-
-        # Requirements:
-        1) Read the 'uncovered-analysis.json' file to understand what needs testing
-        2) For each file with uncovered lines, generate complete test files
-        3) Refer to the existing test files for patterns and best practices
-        4) Cover ALL uncovered lines mentioned in the analysis
-        5) Test every function, method, and code path in the store
-        6) Use proper mocking for external dependencies and browser APIs
-        7) Test both happy path and edge cases for each uncovered line
-        8) Ensure tests are realistic, meaningful, and production-ready
-        9) Use existing test patterns from the project
-        10) Import statements should be correct relative to test file location
-        11) Tests should be well-documented with descriptive names
-        12) Focus on achieving 100% line, function, and branch coverage
-        13) You are not allowed to create new files, only modify existing ones
-
-        # Output:
-        - Modify existing test files for all uncovered code
-        - Ensure 100% coverage is achieved
-        - Pushed commits to the coverage-improvement branch.
-        - Create a draft PR from the coverage-improvement branch to the main branch.
-        " --force --model "$MODEL" --output-format=text
-
-
+      - name: Upload coverage analysis report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-analysis-report
+          path: |
+            coverage/
+            coverage-analysis.json
+            test-suggestions.json

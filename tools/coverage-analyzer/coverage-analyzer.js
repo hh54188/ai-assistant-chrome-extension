@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 // Read lcov.info to find uncovered lines with detailed analysis
 function findUncoveredCode() {

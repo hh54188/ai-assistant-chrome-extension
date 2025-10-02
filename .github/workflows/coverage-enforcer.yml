@@ -160,84 +160,42 @@ jobs:
       id: coverage-analysis
       working-directory: ./chrome-extension
       run: |
-        echo "Analyzing coverage data from artifact..."
+        echo "Analyzing coverage data from artifact using Node.js script..."
         
-        # Verify coverage data exists (should already be verified in previous step)
-        if [ ! -d "../coverage" ] || [ ! -f "../coverage/lcov-report/index.html" ]; then
-          echo "❌ Coverage data is missing - this should not happen after verification step"
-          echo "coverage_available=false" >> $GITHUB_OUTPUT
-          exit 1
-        fi
-
-        # Parse coverage summary from lcov.info if available
-        if [ -f "../coverage/lcov.info" ]; then
-          echo "Parsing lcov.info..."
+        # Run the Node.js coverage summary script
+        # The script will output the coverage results and exit with appropriate code
+        if node ../tools/coverage-analyzer/coverage-summary.js ../coverage > coverage-results.env 2>&1; then
+          echo "✅ Coverage analysis completed successfully"
           
-          # Extract raw coverage counts from lcov.info (sum across all records)
-          # Use a simple approach that works reliably in GitHub Actions
-          LINES_FOUND=0
-          LINES_HIT=0
-          FUNCTIONS_FOUND=0
-          FUNCTIONS_HIT=0
-          BRANCHES_FOUND=0
-          BRANCHES_HIT=0
+          # Source the results from the Node.js script
+          # Filter out non-variable lines and source the variables
+          grep -E '^[A-Z_]+=' coverage-results.env > coverage-vars.env
+          source coverage-vars.env
           
-          # Sum up all coverage data
-          while IFS= read -r line; do
-            if [[ $line =~ ^LF:([0-9]+) ]]; then
-              LINES_FOUND=$((LINES_FOUND + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^LH:([0-9]+) ]]; then
-              LINES_HIT=$((LINES_HIT + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^FNF:([0-9]+) ]]; then
-              FUNCTIONS_FOUND=$((FUNCTIONS_FOUND + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^FNH:([0-9]+) ]]; then
-              FUNCTIONS_HIT=$((FUNCTIONS_HIT + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^BRF:([0-9]+) ]]; then
-              BRANCHES_FOUND=$((BRANCHES_FOUND + ${BASH_REMATCH[1]}))
-            elif [[ $line =~ ^BRH:([0-9]+) ]]; then
-              BRANCHES_HIT=$((BRANCHES_HIT + ${BASH_REMATCH[1]}))
-            fi
-          done < ../coverage/lcov.info
-          
-          # Calculate percentages
-          if [ "$LINES_FOUND" -gt 0 ]; then
-            LINES_COVERED=$((LINES_HIT * 100 / LINES_FOUND))
-          else
-            LINES_COVERED=0
-          fi
-          
-          if [ "$FUNCTIONS_FOUND" -gt 0 ]; then
-            FUNCTIONS_COVERED=$((FUNCTIONS_HIT * 100 / FUNCTIONS_FOUND))
-          else
-            FUNCTIONS_COVERED=0
-          fi
-          
-          if [ "$BRANCHES_FOUND" -gt 0 ]; then
-            BRANCHES_COVERED=$((BRANCHES_HIT * 100 / BRANCHES_FOUND))
-          else
-            BRANCHES_COVERED=0
-          fi
-          
-          echo "Lines: $LINES_HIT/$LINES_FOUND ($LINES_COVERED%)"
-          echo "Functions: $FUNCTIONS_HIT/$FUNCTIONS_FOUND ($FUNCTIONS_COVERED%)"
-          echo "Branches: $BRANCHES_HIT/$BRANCHES_FOUND ($BRANCHES_COVERED%)"
-          
+          # Output the results to GitHub Actions step outputs
           echo "lines_coverage=$LINES_COVERED" >> $GITHUB_OUTPUT
           echo "functions_coverage=$FUNCTIONS_COVERED" >> $GITHUB_OUTPUT
           echo "branches_coverage=$BRANCHES_COVERED" >> $GITHUB_OUTPUT
-          echo "coverage_available=true" >> $GITHUB_OUTPUT
+          echo "coverage_available=$COVERAGE_AVAILABLE" >> $GITHUB_OUTPUT
+          echo "coverage_sufficient=$COVERAGE_SUFFICIENT" >> $GITHUB_OUTPUT
           
-          # Check if any coverage is below 100%
-          if [ "$LINES_COVERED" -lt 100 ] || [ "$FUNCTIONS_COVERED" -lt 100 ] || [ "$BRANCHES_COVERED" -lt 100 ]; then
-            echo "coverage_sufficient=false" >> $GITHUB_OUTPUT
-            echo "Coverage is insufficient - Lines: $LINES_COVERED%, Functions: $FUNCTIONS_COVERED%, Branches: $BRANCHES_COVERED%"
-          else
-            echo "coverage_sufficient=true" >> $GITHUB_OUTPUT
-            echo "Coverage is sufficient at 100%"
-          fi
+          echo "📊 Coverage Summary:"
+          echo "  Lines: $LINES_COVERED%"
+          echo "  Functions: $FUNCTIONS_COVERED%"
+          echo "  Branches: $BRANCHES_COVERED%"
+          echo "  Available: $COVERAGE_AVAILABLE"
+          echo "  Sufficient: $COVERAGE_SUFFICIENT"
         else
-          echo "❌ No lcov.info found in coverage artifact"
+          echo "❌ Coverage analysis failed"
           echo "coverage_available=false" >> $GITHUB_OUTPUT
+          echo "coverage_sufficient=false" >> $GITHUB_OUTPUT
+          echo "lines_coverage=0" >> $GITHUB_OUTPUT
+          echo "functions_coverage=0" >> $GITHUB_OUTPUT
+          echo "branches_coverage=0" >> $GITHUB_OUTPUT
+          
+          # Show the error output for debugging
+          echo "Error output:"
+          cat coverage-results.env
           exit 1
         fi
 
@@ -356,6 +314,7 @@ jobs:
         - Ensure 100% coverage is achieved
         - Pushed commits to the coverage-improvement branch.
         - Create a draft PR from the coverage-improvement branch to the main branch.
+        - Describe what you observed and what you did to improve the coverage in detail in the PR description.
         " --force --model "$MODEL" --output-format=text
 
 

@@ -208,6 +208,27 @@ describe('UIStore', () => {
       });
     });
 
+    describe('setTestModalVisible', () => {
+      it('should show test modal', () => {
+        const { setTestModalVisible } = useUIStore.getState();
+
+        setTestModalVisible(true);
+
+        const state = useUIStore.getState();
+        expect(state.testModalVisible).toBe(true);
+      });
+
+      it('should hide test modal', () => {
+        const { setTestModalVisible } = useUIStore.getState();
+
+        setTestModalVisible(true);
+        setTestModalVisible(false);
+
+        const state = useUIStore.getState();
+        expect(state.testModalVisible).toBe(false);
+      });
+    });
+
     describe('setCurrentSelection', () => {
       it('should update current selection', () => {
         const { setCurrentSelection } = useUIStore.getState();

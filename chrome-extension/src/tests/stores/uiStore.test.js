@@ -208,6 +208,23 @@ describe('UIStore', () => {
       });
     });
 
+    describe('setTestModalVisible', () => {
+      it('should show test modal', () => {
+        const { setTestModalVisible } = useUIStore.getState();
+        setTestModalVisible(true);
+        const state = useUIStore.getState();
+        expect(state.testModalVisible).toBe(true);
+      });
+
+      it('should hide test modal', () => {
+        const { setTestModalVisible } = useUIStore.getState();
+        setTestModalVisible(true);
+        setTestModalVisible(false);
+        const state = useUIStore.getState();
+        expect(state.testModalVisible).toBe(false);
+      });
+    });
+
     describe('setCurrentSelection', () => {
       it('should update current selection', () => {
         const { setCurrentSelection } = useUIStore.getState();
@@ -620,6 +637,7 @@ describe('UIStore', () => {
           setSettingsModalVisible,
           setHelpModalVisible,
           setForceConfigModalVisible,
+          setTestModalVisible,
           setCurrentSelection,
           addSelectedModel,
           setIsScreenshotMode,
@@ -640,6 +658,7 @@ describe('UIStore', () => {
         setSettingsModalVisible(true);
         setHelpModalVisible(true);
         setForceConfigModalVisible(true);
+        setTestModalVisible(true);
         setCurrentSelection({ text: 'test' });
         addSelectedModel('gpt-4');
         setIsScreenshotMode(true);
@@ -662,6 +681,7 @@ describe('UIStore', () => {
         expect(state.settingsModalVisible).toBe(false);
         expect(state.helpModalVisible).toBe(false);
         expect(state.forceConfigModalVisible).toBe(false);
+        expect(state.testModalVisible).toBe(false);
         expect(state.currentSelection).toBe(null);
         expect(state.selectedModels).toEqual([]);
         expect(state.isScreenshotMode).toBe(false);

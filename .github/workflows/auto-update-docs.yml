@@ -2,7 +2,7 @@ name: Update Docs
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ branch-not-exist ]
     types: [closed]
 
 permissions:

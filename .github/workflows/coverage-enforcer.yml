@@ -1,12 +1,13 @@
 name: Store Coverage Enforcer
 
 on:
-  workflow_dispatch:
-    inputs:
-      run-id:
-        description: 'Workflow run ID to download coverage artifacts from'
-        required: true
-        type: string
+  ## For debug purposes only
+  # workflow_dispatch:
+  #   inputs:
+  #     run-id:
+  #       description: 'Workflow run ID to download coverage artifacts from'
+  #       required: true
+  #       type: string
   workflow_run:
     workflows: [CI Pipeline]
     types: [completed]
@@ -32,6 +33,74 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install GitHub CLI
+      if: github.event_name == 'workflow_run'
+      run: |
+        # Install GitHub CLI
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh -y
+        
+        # Verify installation
+        gh --version
+
+    - name: Check if PR contains src/ folder changes and exit if not
+      id: check-src-changes
+      if: github.event_name == 'workflow_run'
+      run: |
+        echo "🔍 Checking if this PR contains changes to src/ folder..."
+        
+        # Get the pull request number from the workflow run
+        PR_NUMBER=$(echo "${{ github.event.workflow_run.pull_requests[0].number }}" || echo "")
+        
+        if [ -z "$PR_NUMBER" ]; then
+          echo "⚠️ No pull request found for this workflow run"
+          echo "This might be a push to main branch or manual trigger"
+          echo "Continuing with workflow execution..."
+          echo "src_changes=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        echo "📋 Pull request number: $PR_NUMBER"
+        
+        # Get the list of changed files in the PR
+        echo "📁 Fetching changed files in PR #$PR_NUMBER..."
+        
+        # Use GitHub CLI to get changed files
+        CHANGED_FILES=$(gh pr diff $PR_NUMBER --name-only 2>/dev/null || echo "")
+        
+        if [ -z "$CHANGED_FILES" ]; then
+          echo "⚠️ Could not fetch changed files for PR #$PR_NUMBER"
+          echo "This might be due to permissions or PR not found"
+          echo "Continuing with workflow execution to be safe..."
+          echo "src_changes=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        echo "📝 Changed files in PR #$PR_NUMBER:"
+        echo "$CHANGED_FILES"
+        
+        # Check if any changed file is in the src/ folder (chrome-extension/src/)
+        SRC_CHANGES=$(echo "$CHANGED_FILES" | grep -E '^chrome-extension/src/' || echo "")
+        
+        if [ -n "$SRC_CHANGES" ]; then
+          echo "✅ Found changes in src/ folder:"
+          echo "$SRC_CHANGES"
+          echo "Continuing with coverage analysis..."
+          echo "src_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ No changes found in src/ folder"
+          echo "⏭️ Coverage Enforcer workflow skipped"
+          echo "This PR does not contain changes to files in the chrome-extension/src/ folder"
+          echo "Only changes to application code trigger coverage analysis"
+          echo "Changed files in this PR are likely documentation or configuration files"
+          echo "src_changes=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Configure git identity
       run: |
@@ -315,5 +384,4 @@ jobs:
         - Create a draft PR from the coverage-improvement branch to the main branch.
         - Describe what you observed and what you did to improve the coverage in detail in the PR description.
         " --force --model "$MODEL" --output-format=text
-
 

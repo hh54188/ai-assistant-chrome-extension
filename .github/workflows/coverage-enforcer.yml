@@ -46,41 +46,62 @@ jobs:
         # Verify installation
         gh --version
 
-    - name: Check if PR contains src/ folder changes and exit if not
+    - name: Check if committed files contain src/ folder changes and exit if not
       id: check-src-changes
-      if: github.event_name == 'workflow_run'
       run: |
-        echo "🔍 Checking if this PR contains changes to src/ folder..."
+        echo "🔍 Checking if this commit contains changes to src/ folder..."
         
-        # Get the pull request number from the workflow run
+        # Get the pull request number from the workflow run (if available)
         PR_NUMBER=$(echo "${{ github.event.workflow_run.pull_requests[0].number }}" || echo "")
         
-        if [ -z "$PR_NUMBER" ]; then
+        if [ -n "$PR_NUMBER" ]; then
+          echo "📋 Pull request number: $PR_NUMBER"
+          
+          # For PRs, get the diff between the PR branch and target branch
+          echo "📁 Fetching changed files in PR #$PR_NUMBER..."
+          CHANGED_FILES=$(gh pr diff $PR_NUMBER --name-only 2>/dev/null || echo "")
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "⚠️ Could not fetch changed files for PR #$PR_NUMBER"
+            echo "This might be due to permissions or PR not found"
+            echo "Continuing with workflow execution to be safe..."
+            echo "src_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "📝 Changed files in PR #$PR_NUMBER:"
+          echo "$CHANGED_FILES"
+        else
           echo "⚠️ No pull request found for this workflow run"
           echo "This might be a push to main branch or manual trigger"
-          echo "Continuing with workflow execution..."
-          echo "src_changes=true" >> $GITHUB_OUTPUT
-          exit 0
+          echo "Checking committed files using git diff..."
+          
+          # For pushes or manual triggers, get the diff between commits
+          # Get the head commit of the workflow run
+          HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+          BASE_SHA="${{ github.event.workflow_run.head_commit.id }}"
+          
+          # Try to get the previous commit to compare against
+          PREV_SHA=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          
+          if [ -n "$PREV_SHA" ] && [ "$PREV_SHA" != "0000000000000000000000000000000000000000" ]; then
+            echo "📁 Comparing with previous commit: $PREV_SHA"
+            CHANGED_FILES=$(git diff --name-only $PREV_SHA HEAD || echo "")
+          else
+            echo "📁 First commit or no previous commit found, checking all files"
+            CHANGED_FILES=$(git ls-files || echo "")
+          fi
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "⚠️ Could not determine changed files"
+            echo "Continuing with workflow execution to be safe..."
+            echo "src_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "📝 Changed files in this commit:"
+          echo "$CHANGED_FILES"
         fi
-        
-        echo "📋 Pull request number: $PR_NUMBER"
-        
-        # Get the list of changed files in the PR
-        echo "📁 Fetching changed files in PR #$PR_NUMBER..."
-        
-        # Use GitHub CLI to get changed files
-        CHANGED_FILES=$(gh pr diff $PR_NUMBER --name-only 2>/dev/null || echo "")
-        
-        if [ -z "$CHANGED_FILES" ]; then
-          echo "⚠️ Could not fetch changed files for PR #$PR_NUMBER"
-          echo "This might be due to permissions or PR not found"
-          echo "Continuing with workflow execution to be safe..."
-          echo "src_changes=true" >> $GITHUB_OUTPUT
-          exit 0
-        fi
-        
-        echo "📝 Changed files in PR #$PR_NUMBER:"
-        echo "$CHANGED_FILES"
         
         # Check if any changed file is in the src/ folder (chrome-extension/src/)
         SRC_CHANGES=$(echo "$CHANGED_FILES" | grep -E '^chrome-extension/src/' || echo "")
@@ -93,9 +114,9 @@ jobs:
         else
           echo "❌ No changes found in src/ folder"
           echo "⏭️ Coverage Enforcer workflow skipped"
-          echo "This PR does not contain changes to files in the chrome-extension/src/ folder"
+          echo "This commit does not contain changes to files in the chrome-extension/src/ folder"
           echo "Only changes to application code trigger coverage analysis"
-          echo "Changed files in this PR are likely documentation or configuration files"
+          echo "Changed files in this commit are likely documentation or configuration files"
           echo "src_changes=false" >> $GITHUB_OUTPUT
           exit 0
         fi

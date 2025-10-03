@@ -5,7 +5,6 @@ on:
     inputs:
       run-id:
         description: 'Workflow run ID to download coverage artifacts from'
-        default: '18072644387'
         required: true
         type: string
   workflow_run:

@@ -2,7 +2,7 @@ name: Update Docs
 
 on:
   pull_request:
-    branches: [ branch-not-exist ]
+    branches: [ master ]
     types: [closed]
 
 permissions:
@@ -11,13 +11,15 @@ permissions:
 
 jobs:
   auto-docs:
+    # github.event.pull_request.merged == true - Only runs when PR is merged (not just closed)
     # !startsWith(github.head_ref, 'docs/') - This is a logical condition that checks if the pull request's head branch does NOT start with "docs/"
-    # ✅ Runs: PR from branch feature/new-auth → Documentation will be auto-updated
-    # ✅ Runs: PR from branch bugfix/login-issue → Documentation will be auto-updated
+    # ✅ Runs: PR from branch feature/new-auth is merged → Documentation will be auto-updated
+    # ✅ Runs: PR from branch bugfix/login-issue is merged → Documentation will be auto-updated
     # ❌ Skips: PR from branch docs/api-update → No auto-update (avoids circular updates)
     # ❌ Skips: PR from branch docs/readme-fix → No auto-update
+    # ❌ Skips: PR is closed without merging → No auto-update
     name: Auto Update Docs
-    if: ${{ !startsWith(github.head_ref, 'docs/') }}
+    if: ${{ github.event.pull_request.merged == true && !startsWith(github.head_ref, 'docs/') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -34,6 +36,12 @@ jobs:
         run: |
           git config user.name "Cursor Agent"
           git config user.email "cursoragent@cursor.com"
+
+      
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
+          gh auth status
 
       - name: Update docs
         env:

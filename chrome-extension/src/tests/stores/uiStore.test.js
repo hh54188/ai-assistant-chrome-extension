@@ -115,6 +115,32 @@ describe('UIStore', () => {
   });
 
   describe('Modal State Management', () => {
+    describe('setTestModalVisible', () => {
+      it('should show and hide test modal correctly', () => {
+        const { setTestModalVisible } = useUIStore.getState();
+
+        // default should be false
+        expect(useUIStore.getState().testModalVisible).toBe(false);
+
+        setTestModalVisible(true);
+        expect(useUIStore.getState().testModalVisible).toBe(true);
+
+        setTestModalVisible(false);
+        expect(useUIStore.getState().testModalVisible).toBe(false);
+      });
+
+      it('should be idempotent when setting same value', () => {
+        const { setTestModalVisible } = useUIStore.getState();
+
+        setTestModalVisible(false);
+        const first = useUIStore.getState().testModalVisible;
+        setTestModalVisible(false);
+        const second = useUIStore.getState().testModalVisible;
+
+        expect(first).toBe(false);
+        expect(second).toBe(false);
+      });
+    });
     describe('setReferenceModalVisible', () => {
       it('should show reference modal', () => {
         const { setReferenceModalVisible } = useUIStore.getState();

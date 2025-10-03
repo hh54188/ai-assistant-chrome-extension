@@ -66,7 +66,6 @@ jobs:
             echo "This might be due to permissions or PR not found"
             echo "Continuing with workflow execution to be safe..."
             echo "src_changes=true" >> $GITHUB_OUTPUT
-            exit 0
           fi
           
           echo "📝 Changed files in PR #$PR_NUMBER:"
@@ -96,7 +95,6 @@ jobs:
             echo "⚠️ Could not determine changed files"
             echo "Continuing with workflow execution to be safe..."
             echo "src_changes=true" >> $GITHUB_OUTPUT
-            exit 0
           fi
           
           echo "📝 Changed files in this commit:"
@@ -113,22 +111,23 @@ jobs:
           echo "src_changes=true" >> $GITHUB_OUTPUT
         else
           echo "❌ No changes found in src/ folder"
-          echo "⏭️ Coverage Enforcer workflow skipped"
+          echo "⏭️ Coverage Enforcer workflow will be skipped"
           echo "This commit does not contain changes to files in the chrome-extension/src/ folder"
           echo "Only changes to application code trigger coverage analysis"
           echo "Changed files in this commit are likely documentation or configuration files"
           echo "src_changes=false" >> $GITHUB_OUTPUT
-          exit 0
         fi
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Configure git identity
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       run: |
         git config user.name "Coverage Bot"
         git config user.email "coverage-bot@github.com"
 
     - name: Verify Workflow Run ID
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       run: |
         # Determine the workflow run ID based on trigger type
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -164,6 +163,7 @@ jobs:
         echo "  - RUN_ID env var: '$RUN_ID'"
 
     - name: Download Coverage Artifacts
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       uses: actions/download-artifact@v5
       with:
         name: stores-coverage-report
@@ -173,6 +173,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Verify Coverage Artifact
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       run: |
         echo "🔍 Verifying downloaded coverage artifact..."
         echo "=========================================="
@@ -230,6 +231,7 @@ jobs:
         echo "=========================================="
 
     - name: Install Node.js
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -237,15 +239,18 @@ jobs:
         cache-dependency-path: chrome-extension/package-lock.json
 
     - name: Install Chrome Extension dependencies
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       working-directory: ./chrome-extension
       run: npm ci
 
     - name: Install Coverage Analysis Tools
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       run: |
         npm install -g @vitest/coverage-v8
         npm install -g nyc
 
     - name: Analyze Coverage Data
+      if: steps.check-src-changes.outputs.src_changes == 'true'
       id: coverage-analysis
       working-directory: ./chrome-extension
       run: |
@@ -289,7 +294,9 @@ jobs:
         fi
 
     - name: Check Coverage and Exit if 100%
-      if: steps.coverage-analysis.outputs.coverage_available == 'true'
+      if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
+        steps.coverage-analysis.outputs.coverage_available == 'true'
       run: |
         echo "Checking if test coverage is 100%..."
         
@@ -314,6 +321,7 @@ jobs:
 
     - name: Create Coverage Improvement Branch
       if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
         steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
@@ -327,6 +335,7 @@ jobs:
 
     - name: Analyze Uncovered Code for 100% Coverage
       if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
         steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       working-directory: ./chrome-extension
@@ -338,6 +347,7 @@ jobs:
 
     - name: Install Cursor CLI
       if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
         steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
@@ -346,6 +356,7 @@ jobs:
 
     - name: Configure git for cursor-agent
       if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
         steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
@@ -354,6 +365,7 @@ jobs:
 
     - name: Authenticate GitHub CLI
       if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
         steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       run: |
@@ -362,6 +374,7 @@ jobs:
 
     - name: Generate Tests for 100% Coverage using Cursor Agent
       if: |
+        steps.check-src-changes.outputs.src_changes == 'true' && 
         steps.coverage-analysis.outputs.coverage_available == 'true' && 
         steps.coverage-analysis.outputs.coverage_sufficient == 'false'
       working-directory: ./chrome-extension

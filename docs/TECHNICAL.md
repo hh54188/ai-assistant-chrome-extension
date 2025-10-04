@@ -20,219 +20,43 @@ power-apps/
 
 ## 🚀 Development Setup
 
-### Prerequisites
-
-- **Node.js** (v16 or higher)
-- **npm** or **yarn**
-- **Chrome browser** (for extension)
-
-### GitHub Actions CI/CD
-
-For automated testing and deployment, see the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md).
-
-The project includes three main workflows:
-- **CI Pipeline**: Main testing and build verification
-- **Auto Fix CI**: Automatic CI failure resolution
-- **Store Coverage Enforcer**: Automatic test coverage improvement to 100%
-
-### Backend Development
-
-```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Copy environment template
-cp env.example .env
-
-# Edit .env with your API keys
-# Start the server
-npm run dev
-```
-
-The backend server will start on `http://localhost:3001`
-
-### Chrome Extension Development
-
-```bash
-cd chrome-extension
-
-# Install dependencies
-npm install
-
-# Copy environment template
-cp env.example .env
-
-# Edit .env with your settings
-# Build the extension
-npm run build:extension
-```
+For comprehensive setup instructions, see:
+- [Environment Setup Guide](./ENVIRONMENT_SETUP.md) - Complete environment configuration
+- [GitHub Actions Setup Guide](./GITHUB_ACTIONS_SETUP.md) - CI/CD pipeline configuration
+- [Backend Development Guide](./development/backend/BASIC_README.md) - Backend setup and configuration
+- [Chrome Extension Development Guide](./development/frontend/BASIC_README.md) - Extension setup and building
 
 ## ⚙️ Advanced Configuration
 
-### Backend Environment Variables
-
-Create a `.env` file in the `backend/` directory:
-
-```env
-# Required API Keys
-OPENAI_API_KEY=sk-your-actual-openai-key-here
-GEMINI_API_KEY=AIza-your-actual-gemini-key-here
-NOTION_API_KEY=ntn_your-actual-notion-key-here
-FIRECRAWL_API_KEY=fc-your-actual-firecrawl-key-here
-
-# Server Configuration
-PORT=3001
-NODE_ENV=development
-
-# CORS Configuration
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-```
-
-### Chrome Extension Environment Variables
-
-Create a `.env` file in the `chrome-extension/` directory:
-
-```env
-# App Configuration
-VITE_APP_NAME=AI Copilot
-VITE_API_BASE_URL=http://localhost:3001
-VITE_DEFAULT_MODEL=gemini-2.5-flash
-
-# Development Settings
-VITE_DEBUG_MODE=true
-```
+For detailed configuration instructions, see:
+- [Backend Environment Setup](./development/backend/BASIC_README.md) - Complete backend configuration guide
+- [Chrome Extension Environment Setup](./development/frontend/ENVIRONMENT.md) - Extension configuration guide
 
 ## 🔌 API Reference
 
-### Backend API Endpoints
-
-The backend provides RESTful APIs:
-
-- `GET /health` - Health check
-- `POST /api/chat/stream` - Stream chat responses
-- `GET /api/chat/models` - Get available AI models
-- `POST /api/chat/non-stream` - Non-streaming chat responses
-
-### MCP Tools
-
-The system includes built-in MCP tools:
-- **check-creator**: Get project creator information
-- **get-project-info**: Get comprehensive project details
+For comprehensive API documentation, see:
+- [Backend API Documentation](./development/backend/BASIC_README.md) - Complete API endpoints and usage
+- [MCP Integration Guide](./mcp/MCP_INTEGRATION_README.md) - Model Context Protocol tools and integration
 
 ## 🧪 Testing
 
-### Backend Tests
-
-```bash
-cd backend
-
-# Test MCP integration
-npm run test-mcp
-
-# Test specific MCP servers
-node tests/test-notion-article-correction-mcp.js
-node tests/test-openai-cost-mcp.js
-node tests/test-web-page-summary-for-firecrawl-mcp.js
-```
-
-### Chrome Extension Tests
-
-```bash
-cd chrome-extension
-
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific test suites
-npm run test:stores
-npm run test:components
-```
+For comprehensive testing documentation, see:
+- [Backend Testing Guide](./development/backend/BASIC_README.md) - Backend testing procedures and MCP integration tests
+- [Chrome Extension Testing Guide](./development/frontend/TESTS_README.md) - Extension testing, coverage, and E2E testing
+- [E2E Testing Complete Guide](./testing/E2E_TESTING_COMPLETE_GUIDE.md) - End-to-end testing procedures
 
 ## 🛠️ Available Scripts
 
-### Backend Scripts
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm run mcp-server` - Start MCP server manually
-- `npm run test-mcp` - Test MCP integration
-- `npm run demo-mcp` - Run MCP usage examples
-
-### Chrome Extension Scripts
-- `npm run dev` - Start Vite development server
-- `npm run build` - Build React application
-- `npm run build:extension` - Build complete Chrome extension
-- `npm test` - Run test suite
-- `npm run lint` - Lint code
-
-## 🔧 Development Commands
-
-### Backend Development
-
-```bash
-cd backend
-
-# Development with auto-reload
-npm run dev
-
-# Start MCP server manually (if needed)
-npm run mcp-server
-
-# Run example MCP usage
-npm run demo-mcp
-```
-
-### Chrome Extension Development
-
-```bash
-cd chrome-extension
-
-# Development mode
-npm run dev
-
-# Build for production
-npm run build
-
-# Build extension package
-npm run build:extension
-
-# Lint code
-npm run lint
-```
+For detailed script documentation and development commands, see:
+- [Backend Development Guide](./development/backend/BASIC_README.md) - Backend scripts and development commands
+- [Chrome Extension Development Guide](./development/frontend/BASIC_README.md) - Extension scripts and build commands
 
 ## 🐛 Troubleshooting
 
-### Common Issues
-
-**Backend won't start:**
-- Check that all required environment variables are set in `.env`
-- Verify API keys are valid and have sufficient credits
-- Ensure port 3001 is not in use
-
-**Chrome extension not loading:**
-- Make sure the extension is built: `npm run build:extension`
-- Check that Developer Mode is enabled in Chrome
-- Verify the `dist` folder contains all necessary files
-
-**CORS errors:**
-- Verify `ALLOWED_ORIGINS` in backend `.env` includes your frontend URL
-- Check that backend is running on the expected port
-
-**API key errors:**
-- Ensure API keys are correctly formatted (no extra spaces/quotes)
-- Verify API keys have sufficient credits and are not expired
-- Check API key permissions and rate limits
-
-### Debug Mode
-
-Enable debug logging:
-
-**Backend:** Set `NODE_ENV=development` in `.env`
-**Chrome Extension:** Set `VITE_DEBUG_MODE=true` in `.env`
+For comprehensive troubleshooting guides, see:
+- [Environment Setup Guide](./ENVIRONMENT_SETUP.md) - Common setup issues and solutions
+- [Backend Development Guide](./development/backend/BASIC_README.md) - Backend troubleshooting and debug mode
+- [Chrome Extension Development Guide](./development/frontend/BASIC_README.md) - Extension troubleshooting and debugging
 
 ## 📚 Complete Documentation Index
 
@@ -242,16 +66,14 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Environment Setup Guide](./ENVIRONMENT_SETUP.md) - Comprehensive setup instructions
 
 ### 🤖 Backend Documentation
-- [Backend README](./backend/BACKEND_README.md) - Backend development guide
-- [Backend Environment Setup](./backend/BACKEND_ENVIRONMENT_SETUP.md) - Backend-specific configuration
-- [Chat Sessions](./backend/CHAT_SESSIONS_README.md) - Session management system
+- [Backend README](./development/backend/BASIC_README.md) - Backend development guide
+- [Chat Sessions](./development/backend/CHAT_SESSIONS_README.md) - Session management system
 
-### 🌐 Chrome Extension Documentation
-- [Chrome Extension README](./extension/CHROME_EXTENSION_README.md) - Extension development guide
-- [Chrome Extension Environment](./extension/CHROME_EXTENSION_ENVIRONMENT.md) - Extension configuration
-- [Chrome Extension Tests](./extension/CHROME_EXTENSION_TESTS_README.md) - Testing documentation
-- [Chrome Extension Stores](./extension/CHROME_EXTENSION_STORES_README.md) - State management documentation
-- [ForceConfigModal Component](./ForceConfigModal.README.md) - Force configuration modal documentation
+### 🌐 Frontend Documentation
+- [Chrome Extension README](./development/frontend/BASIC_README.md) - Extension development guide
+- [Chrome Extension Environment](./development/frontend/ENVIRONMENT.md) - Extension configuration
+- [Chrome Extension Tests](./development/frontend/TESTS_README.md) - Testing documentation
+- [Chrome Extension Stores](./development/frontend/STORES_README.md) - State management documentation
 
 ### 🔌 MCP (Model Context Protocol) Documentation
 - [MCP Integration Guide](./mcp/MCP_INTEGRATION_README.md) - Model Context Protocol setup and usage
@@ -267,12 +89,7 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Settings Management](./features/SETTINGS_README.md) - Extension settings and preferences
 - [Coverage Enforcer](./features/COVERAGE_ENFORCER_README.md) - Automatic test coverage improvement workflow
 - [Fake Stream Debug Tool](./features/FAKE_STREAM_DEBUG_README.md) - Simulate and debug streaming responses
-
-### 🔧 Development & Maintenance
-- [Migration Complete](./development/MIGRATION_COMPLETE.md) - Migration documentation
-- [State Refactor Improvement](./development/STATE_REFACTOR_IMPROVEMENT.md) - State management improvements
-
-
+- [AI Test Generation Example](./features/AI_TEST_GENERATION_EXAMPLE.md) - AI-powered test generation examples
 
 ## 🤝 Contributing
 

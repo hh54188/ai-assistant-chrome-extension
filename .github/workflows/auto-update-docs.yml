@@ -152,7 +152,7 @@ jobs:
             echo "$CHANGED_FILES"
             
             # Check if there are any significant changes that might require doc updates
-            SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | grep -E '\.(js|jsx|ts|tsx|json|md|yml|yaml)$' | grep -v -E '^docs/' | grep -v -E '^\.github/' || echo "")
+            SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | grep -E '\.(js|jsx|ts|tsx|json|md|yml|yaml)$' | grep -v -E '^docs/' || echo "")
             
             if [ -n "$SIGNIFICANT_CHANGES" ]; then
               echo "✅ Found significant changes that may require documentation updates:"

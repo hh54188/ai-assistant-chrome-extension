@@ -1,5 +1,9 @@
 # 🚀 AI Assistant Chrome Extension
 
+[![Introduction Video](https://img.youtube.com/vi/VyPQvJeSp9w/0.jpg)](https://youtu.be/VyPQvJeSp9w)
+
+> **📺 Watch the Introduction Video** - Click the thumbnail above to see the extension in action!
+
 An AI-powered assistant that works directly in your browser. Chat with AI models, capture screenshots, and use advanced features like Multi-Model Mode for comparing multiple AI responses.
 
 **I built this app because I was frustrated by other apps charging $20 per month for similar features. My Cursor subscription also costs about $20 per month, but with it, I feel I can create a new app with the same functionality every month—each time with a different twist. Why pay so much for something I can build myself?**

@@ -30,6 +30,10 @@ The main CI pipeline that runs on every push and pull request to the master bran
 - Pull requests to master branch
 - Manual workflow dispatch
 
+**Skip Conditions:**
+- Jobs will be skipped if commit messages contain `[skip ci]` or `[no ci]`
+- Useful for documentation updates, minor fixes, or work-in-progress commits
+
 **Artifacts Generated:**
 - `stores-coverage-report`: Coverage analysis and HTML reports
 - `e2e-test-screenshots`: Screenshots from E2E test runs
@@ -281,6 +285,8 @@ You can monitor workflow runs in the GitHub Actions tab of your repository:
 
 14. **Self-Triggering Prevention**: Workflows exclude runs created by `cursoragent` to prevent infinite loops.
 
+15. **CI Pipeline Skipped**: If the CI pipeline is being skipped unexpectedly, check if your commit message contains `[skip ci]` or `[no ci]`. Remove these tags to run the pipeline.
+
 ### Debug Information
 
 The workflows include extensive logging and debugging information:
@@ -343,6 +349,8 @@ The workflows include extensive logging and debugging information:
 13. **Monitor Self-Triggering Prevention**: Be aware that workflows exclude cursoragent runs to prevent loops.
 
 14. **Use Manual Triggers**: Leverage workflow_dispatch for testing and debugging specific workflow runs.
+
+15. **Use Skip Patterns**: Use `[skip ci]` or `[no ci]` in commit messages for documentation updates, minor fixes, or work-in-progress commits to avoid unnecessary CI runs.
 
 ## Future Enhancements
 

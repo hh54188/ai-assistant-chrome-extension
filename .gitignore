@@ -10,3 +10,6 @@ temp
 *.zip
 .DS_Store
 coverage/
+.venv
+__pycache__
+settings.json

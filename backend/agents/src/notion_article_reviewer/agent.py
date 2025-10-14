@@ -1,5 +1,7 @@
 
 from google.adk.agents.llm_agent import Agent
+import dotenv
+dotenv.load_dotenv()
 
 def get_project_creator() -> dict:
     """Returns the creator's information of the project."""
@@ -11,8 +13,8 @@ def get_project_creator() -> dict:
     }
 
 root_agent = Agent(
-    model='gemini-2.5-flash',
-    name='creator_checker_agent',
+    model='gemini-2.5-pro',
+    name='notion_article_reviewer_agent',
     description="Tells the creator's information of the project.",
     instruction="You are a helpful assistant that tells the creator's information of the project. Use the 'get_project_creator' tool for this purpose.",
     tools=[get_project_creator],

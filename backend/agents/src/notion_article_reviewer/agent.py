@@ -5,10 +5,46 @@ dotenv.load_dotenv()
 from notion_client import AsyncClient
 import asyncio
 import json
+from typing import TypedDict
 
 notion = AsyncClient(auth=os.getenv("NOTION_API_KEY"))
 
-async def validate_page_exist(page_id):
+class BlockTextMap(TypedDict):
+    id: str
+    text: str
+
+async def validate_page_exist(page_id: str) -> bool:
+    """
+    Validates whether a Notion page exists and is accessible.
+    
+    This function checks if a given Notion page ID corresponds to an existing and 
+    accessible page by attempting to retrieve it through the Notion API. This is 
+    typically used as a validation step before performing operations on a page.
+    
+    Args:
+        page_id (str): The unique identifier of the Notion page to validate.
+            This should be a valid Notion page ID (e.g., "2270cda410a68005b731fec98ea8500a").
+            The ID can be found in the page URL or obtained through the Notion API.
+    
+    Returns:
+        bool: True if the page exists and is accessible, False if the page is not 
+            found, inaccessible, or an error occurs during retrieval.
+    
+    Example:
+        >>> page_exists = await validate_page_exist("2270cda410a68005b731fec98ea8500a")
+        >>> if page_exists:
+        >>>     print("Page is valid and accessible")
+        >>> else:
+        >>>     print("Page not found or inaccessible")
+    
+    Note:
+        - The function requires a valid NOTION_API_KEY environment variable
+        - The Notion integration must have read permissions for the page
+        - Returns False for any errors including network issues, permission errors, 
+          or invalid page IDs
+        - Error messages are printed to console in Chinese
+        - This is a non-destructive operation that only reads page metadata
+    """
     try:
         await notion.pages.retrieve(page_id=page_id)
         return True
@@ -16,9 +52,85 @@ async def validate_page_exist(page_id):
         print(f"❌ 未找到页面内容或页面为空: {e}")
         return False
 
+async def add_comment(blockId: str, comment: str) -> bool:
+    """
+    Adds a text comment to a specific Notion block.
+    
+    This function creates a new comment attached to a Notion block using the Notion API.
+    Comments are useful for providing feedback, suggestions, or corrections on specific
+    parts of a Notion page without modifying the original content.
+    
+    Args:
+        blockId (str): The unique identifier of the Notion block to add the comment to.
+            This should be a valid Notion block ID (e.g., "abc123-def456-ghi789").
+        comment (str): The text content of the comment to be added.
+            This will be displayed as plain text in the Notion interface.
+    
+    Returns:
+        bool: True if the comment was successfully added, False if an error occurred.
+    
+    Example:
+        >>> success = await add_comment("abc123-def456", "Great point! Consider adding more examples.")
+        >>> if success:
+        >>>     print("Comment added successfully")
+    
+    Note:
+        - The function requires a valid NOTION_API_KEY environment variable
+        - The Notion integration must have comment permissions on the workspace
+        - The blockId must exist and be accessible by the integration
+        - Errors are caught and logged, returning False on failure
+    """
+    try:
+        await notion.comments.create(
+            parent={"block_id": blockId},
+            rich_text=[
+                {
+                    "type": "text",
+                    "text": {
+                        "content": comment
+                    }
+                }
+            ]
+        )
+        print(f"✅ 已为块 {blockId} 添加评论")
+        return True
+    except Exception as e:
+        print(f"❌ 添加评论失败 (块 {blockId}): {e.message}")
+        return False
 
-async def extract_text_from_blocks(block_id):
-    block_to_text_map = []
+async def extract_text_with_block_id(block_id: str) -> list[BlockTextMap]:
+    """
+    Recursively extracts text content from a Notion block and all its children blocks.
+    
+    This function retrieves all text content from various Notion block types including 
+    paragraphs, headings (h1, h2, h3), bulleted lists, numbered lists, and quotes. 
+    It automatically traverses nested blocks recursively to capture all content in 
+    the hierarchy.
+    
+    Args:
+        block_id (str): The ID of the Notion block or page to extract text from.
+            This can be either a page ID or a specific block ID.
+    
+    Returns:
+        list[BlockTextMap]: A list of dictionaries, each containing:
+            - id (str): The unique identifier of the block
+            - text (str): The plain text content extracted from the block
+    
+    Example:
+        >>> blocks = await extract_text_with_block_id("2270cda410a68005b731fec98ea8500a")
+        >>> print(blocks)
+        [
+            {"id": "abc123", "text": "This is a paragraph"},
+            {"id": "def456", "text": "This is a heading"}
+        ]
+    
+    Note:
+        - Empty blocks (blocks with no text content) are skipped
+        - Only text content is extracted; formatting and other properties are ignored
+        - The function processes up to 100 blocks per level (Notion API limit)
+        - Nested blocks are automatically included in the result
+    """
+    block_text_list: list[BlockTextMap] = []
     blockResult = await notion.blocks.children.list(
         block_id=block_id,
         page_size=100
@@ -43,51 +155,117 @@ async def extract_text_from_blocks(block_id):
             text_to_review = "".join([rt.get("plain_text", "") for rt in block.get("quote").get("rich_text")])
         
         if text_to_review:
-            block_to_text_map.append({
+            block_text_list.append({
                 "id": block.get("id"),
                 "text": text_to_review
             })
         
         if block.get("has_children"):
-            block_to_text_map.extend(await extract_text_from_blocks(block.get("id")))
+            block_text_list.extend(await extract_text_with_block_id(block.get("id")))
 
-    return block_to_text_map
+    return block_text_list
 
 
-async def get_article_content(page_id):
-    block_to_text_map = await extract_text_from_blocks(page_id)
-    print(json.dumps(block_to_text_map, indent=2, ensure_ascii=False))
-    return block_to_text_map
+# async def get_article_content(page_id) -> list[BlockTextMap]:
+#     block_text_list = await extract_text_with_block_id(page_id)
+#     print(json.dumps(block_text_list, indent=2, ensure_ascii=False))
+#     return block_text_list
     
 
-asyncio.run(get_article_content(page_id="2270cda410a68005b731fec98ea8500a"))
-
-
-
-
-
+# asyncio.run(get_article_content(page_id="2270cda410a68005b731fec98ea8500a"))
 
 # artileContent = await notion.pages.retrieve("AI-2270cda410a68005b731fec98ea8500a")
 # print(artileContent)
 
-# from google.adk.agents.llm_agent import Agent
-# import dotenv
-# dotenv.load_dotenv()
+from google.adk.agents.llm_agent import Agent
 
-# def get_project_creator() -> dict:
-#     """Returns the creator's information of the project."""
-#     return {
-#         "name": "Li Guangyi",
-#         "website": "https://www.v2think.com",
-#         "github": "https://github.com/hh54188",
-#         "email": "liguangyi08@gmail.com",
-#     }
 
-# root_agent = Agent(
-#     model='gemini-2.5-pro',
-#     name='notion_article_reviewer_agent',
-#     description="Tells the creator's information of the project.",
-#     instruction="You are a helpful assistant that tells the creator's information of the project. Use the 'get_project_creator' tool for this purpose.",
-#     tools=[get_project_creator],
-# )
+root_agent = Agent(
+    model='gemini-2.5-pro',
+    name='notion_article_reviewer_agent',
+    description="A professional content reviewer and editorial assistant specialized in analyzing Notion articles. Your primary responsibility is to provide constructive feedback on written content by reviewing article structure, clarity, grammar, coherence, and overall quality. You deliver feedback by adding targeted comments directly to specific blocks within Notion pages.",
+    instruction="""ROLE AND PURPOSE:
+You are a professional content reviewer and editorial assistant specialized in analyzing Notion articles. Your primary responsibility is to provide constructive feedback on written content by reviewing article structure, clarity, grammar, coherence, and overall quality. You deliver feedback by adding targeted comments directly to specific blocks within Notion pages.
 
+WORKFLOW:
+When given a Notion page ID to review, follow this systematic approach:
+
+1. VALIDATION PHASE: First, use validate_page_exist(page_id) to verify the page exists and is accessible before proceeding.
+
+2. CONTENT EXTRACTION PHASE: Use extract_text_with_block_id(page_id) to retrieve all text content from the page. This will return a list of blocks, each containing:
+   - id: The unique block identifier
+   - text: The actual text content of that block
+
+3. ANALYSIS PHASE: Carefully review each block of text for:
+   - Grammar and spelling: Identify typos, grammatical errors, and punctuation issues
+   - Clarity: Flag unclear or ambiguous statements
+   - Structure: Note issues with logical flow, transitions, or organization
+   - Style: Suggest improvements for readability and tone consistency
+   - Accuracy: Point out factual inconsistencies or unsupported claims
+   - Completeness: Identify missing context or incomplete explanations
+
+4. FEEDBACK PHASE: For each issue identified, use add_comment(blockId, comment) to attach your feedback to the specific block where the issue occurs.
+
+COMMENT GUIDELINES:
+When generating comments, adhere to these principles:
+- Be Specific: Reference the exact text or issue you're addressing
+- Be Constructive: Offer solutions or suggestions, not just criticism
+- Be Concise: Keep comments focused and easy to understand
+- Be Professional: Maintain a respectful, helpful tone
+- Be Actionable: Provide clear guidance on how to improve
+
+Comment Structure Template:
+[Issue Type]: [Brief description of the problem]
+Suggestion: [Specific recommendation for improvement]
+
+Example Comments:
+- "Clarity: This sentence is difficult to parse due to its length. Suggestion: Break it into two sentences for better readability."
+- "Grammar: Subject-verb agreement error - 'The team are' should be 'The team is'."
+- "Structure: This paragraph introduces a new topic abruptly. Suggestion: Add a transition sentence connecting it to the previous section."
+
+TOOL USAGE REFERENCE:
+
+validate_page_exist(page_id: str) -> bool
+- Validates whether a Notion page exists and is accessible
+- Use this first to verify page accessibility before performing any operations
+- Returns True if page exists and is accessible, False otherwise
+- Required for validation phase before content extraction
+
+extract_text_with_block_id(block_id: str) -> list[BlockTextMap]
+- Retrieves all text content from the specified page or block
+- Returns a list of dictionaries with block IDs and text content
+- Can target specific blocks or entire pages
+- Automatically traverses nested blocks recursively
+
+add_comment(blockId: str, comment: str) -> bool
+- Adds your feedback comment to a specific block
+- Returns True on success, False on failure
+- Use the block ID obtained from the extraction phase
+- Comments are attached to blocks without modifying the original content
+
+QUALITY STANDARDS:
+- Prioritize high-impact issues (clarity, factual errors) over minor style preferences
+- Do not add comments to blocks with no issues
+- Limit comments to substantive feedback; avoid nitpicking
+- If a block has multiple issues, consider consolidating them into a single comprehensive comment
+- Maintain consistency in your review criteria throughout the entire article
+
+ERROR HANDLING:
+- If validate_page_exist() returns False, inform the user that the page cannot be accessed and stop the review process
+- If extract_text_with_block_id() returns an empty list or fails, inform the user that the page cannot be accessed or is empty
+- If add_comment() returns False, note that the comment could not be added and continue with other feedback
+- Handle edge cases gracefully and provide clear status updates
+
+OUTPUT FORMAT:
+Provide a summary after completing the review:
+
+Review Complete for Page [page_id]
+- Total blocks reviewed: [count]
+- Comments added: [count]
+- Issues identified: [brief categorization]
+- Overall assessment: [2-3 sentence summary]""",
+    tools=[validate_page_exist, add_comment, extract_text_with_block_id],
+)
+
+# Help me review an notion article and give me some feedabck, the article page_id was 2270cda410a68005b731fec98ea8500a
+# https://www.notion.so/AI-2270cda410a68005b731fec98ea8500a

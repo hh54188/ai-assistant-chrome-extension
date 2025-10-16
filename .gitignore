@@ -13,3 +13,4 @@ coverage/
 .venv
 __pycache__
 settings.json
+*.mp3

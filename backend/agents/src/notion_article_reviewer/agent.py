@@ -13,6 +13,31 @@ class BlockTextMap(TypedDict):
     id: str
     text: str
 
+async def extract_uuid_from_page_url(page_url: str) -> str:
+    """
+    Extracts the UUID from a Notion page URL.
+    
+    This function extracts the UUID from a given Notion page URL by parsing the URL and extracting the UUID.
+    Handles URLs with query strings and hash fragments by removing them before extraction.
+    
+    Args:
+        page_url (str): The URL of the Notion page to extract the UUID from.
+    Returns:
+        str: The UUID of the Notion page.
+    Example:
+        >>> extract_uuid_from_page_url("https://www.notion.so/DONE-E20-AI-23b0cda410a68001b52ad66e1ead92e8")
+        "23b0cda410a68001b52ad66e1ead92e8"
+        >>> extract_uuid_from_page_url("https://www.notion.so/DONE-E20-AI-23b0cda410a68001b52ad66e1ead92e8?v=123")
+        "23b0cda410a68001b52ad66e1ead92e8"
+        >>> extract_uuid_from_page_url("https://www.notion.so/DONE-E20-AI-23b0cda410a68001b52ad66e1ead92e8#section")
+        "23b0cda410a68001b52ad66e1ead92e8"
+    """
+    last_path_part = page_url.split("/")[-1]
+    # Remove query string and hash if they exist
+    last_path_part = last_path_part.split("?")[0].split("#")[0]
+    page_id = last_path_part.split("-")[-1]
+    return page_id
+
 async def validate_page_exist(page_id: str) -> bool:
     """
     Validates whether a Notion page exists and is accessible.
@@ -95,7 +120,7 @@ async def add_comment(blockId: str, comment: str) -> bool:
         print(f"✅ 已为块 {blockId} 添加评论")
         return True
     except Exception as e:
-        print(f"❌ 添加评论失败 (块 {blockId}): {e.message}")
+        print(f"❌ 添加评论失败 (块 {blockId}): {str(e)}")
         return False
 
 async def extract_text_with_block_id(block_id: str) -> list[BlockTextMap]:
@@ -166,16 +191,6 @@ async def extract_text_with_block_id(block_id: str) -> list[BlockTextMap]:
     return block_text_list
 
 
-# async def get_article_content(page_id) -> list[BlockTextMap]:
-#     block_text_list = await extract_text_with_block_id(page_id)
-#     print(json.dumps(block_text_list, indent=2, ensure_ascii=False))
-#     return block_text_list
-    
-
-# asyncio.run(get_article_content(page_id="2270cda410a68005b731fec98ea8500a"))
-
-# artileContent = await notion.pages.retrieve("AI-2270cda410a68005b731fec98ea8500a")
-# print(artileContent)
 
 from google.adk.agents.llm_agent import Agent
 
@@ -190,13 +205,15 @@ You are a professional content reviewer and editorial assistant specialized in a
 WORKFLOW:
 When given a Notion page ID to review, follow this systematic approach:
 
-1. VALIDATION PHASE: First, use validate_page_exist(page_id) to verify the page exists and is accessible before proceeding.
+1. PAGE URL PHASE: First, if the page_url is provided, use extract_uuid_from_page_url(page_url) to extract the UUID from the page URL. If the page_url is not provided, skip this step and stop the review process.
 
-2. CONTENT EXTRACTION PHASE: Use extract_text_with_block_id(page_id) to retrieve all text content from the page. This will return a list of blocks, each containing:
+2. VALIDATION PHASE: Use uuid extracted from the last step as page_id, then use validate_page_exist(page_id) to verify the page exists and is accessible before proceeding. If the page does not exist or is not accessible, stop the review process.
+
+3. CONTENT EXTRACTION PHASE: Use extract_text_with_block_id(page_id) to retrieve all text content from the page. This will return a list of blocks, each containing:
    - id: The unique block identifier
    - text: The actual text content of that block
 
-3. ANALYSIS PHASE: Carefully review each block of text for:
+4. ANALYSIS PHASE: Carefully review each block of text for:
    - Grammar and spelling: Identify typos, grammatical errors, and punctuation issues
    - Clarity: Flag unclear or ambiguous statements
    - Structure: Note issues with logical flow, transitions, or organization
@@ -204,7 +221,7 @@ When given a Notion page ID to review, follow this systematic approach:
    - Accuracy: Point out factual inconsistencies or unsupported claims
    - Completeness: Identify missing context or incomplete explanations
 
-4. FEEDBACK PHASE: For each issue identified, use add_comment(blockId, comment) to attach your feedback to the specific block where the issue occurs.
+5. FEEDBACK PHASE: For each issue identified, use add_comment(blockId, comment) to attach your feedback to the specific block where the issue occurs. One block may have multiple issues, you should add multiple comments to the block. If multiple comments need to be added to the same block, only add the next comment after the previous comment is added, which means added them one by one
 
 COMMENT GUIDELINES:
 When generating comments, adhere to these principles:
@@ -213,6 +230,7 @@ When generating comments, adhere to these principles:
 - Be Concise: Keep comments focused and easy to understand
 - Be Professional: Maintain a respectful, helpful tone
 - Be Actionable: Provide clear guidance on how to improve
+- Be Chinese: Use Chinese to comment
 
 Comment Structure Template:
 [Issue Type]: [Brief description of the problem]
@@ -224,6 +242,11 @@ Example Comments:
 - "Structure: This paragraph introduces a new topic abruptly. Suggestion: Add a transition sentence connecting it to the previous section."
 
 TOOL USAGE REFERENCE:
+
+extract_uuid_from_page_url(page_url: str) -> str
+- Extracts the UUID from a Notion page URL
+- Returns the UUID of the Notion page
+- Use this to extract the UUID from the page URL
 
 validate_page_exist(page_id: str) -> bool
 - Validates whether a Notion page exists and is accessible
@@ -264,8 +287,8 @@ Review Complete for Page [page_id]
 - Comments added: [count]
 - Issues identified: [brief categorization]
 - Overall assessment: [2-3 sentence summary]""",
-    tools=[validate_page_exist, add_comment, extract_text_with_block_id],
+    tools=[validate_page_exist, add_comment, extract_text_with_block_id, extract_uuid_from_page_url],
 )
 
-# Help me review an notion article and give me some feedabck, the article page_id was 2270cda410a68005b731fec98ea8500a
+# Help me review an notion article and give me some feedabck, the article url was https://www.notion.so/sample-28e0cda410a68093b7bdfe66fe03e643
 # https://www.notion.so/AI-2270cda410a68005b731fec98ea8500a

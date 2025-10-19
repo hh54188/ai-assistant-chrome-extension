@@ -290,5 +290,3 @@ Review Complete for Page [page_id]
     tools=[validate_page_exist, add_comment, extract_text_with_block_id, extract_uuid_from_page_url],
 )
 
-# Help me review an notion article and give me some feedabck, the article url was https://www.notion.so/sample-28e0cda410a68093b7bdfe66fe03e643
-# https://www.notion.so/AI-2270cda410a68005b731fec98ea8500a

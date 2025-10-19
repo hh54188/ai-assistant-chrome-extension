@@ -146,6 +146,3 @@ IMPORTANT NOTES:
 """,
     tools=[check_audio_file, transcribe_audio],
 )
-
-
-# C:\\Users\\ligunagyi\\Desktop\\side-projects\\ai-assistant-chrome-extension\\backend\\agents\\src\\podcast_shownotes_creator\\sample.mp3

@@ -65,11 +65,13 @@ jobs:
                * \`git fetch origin <headRefName>:<headRefName>\`
              - Use \`gh pr diff $PR_NUMBER\` to see the actual changes being reviewed
              - This helps you understand what changed and why reviewers are commenting
+             - Print the diff to the console.
 
           2) Fetch all inline review comments from the PR:
              - Use: \`gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/comments\`
              - This returns an array of comment objects with fields: id, body, path, line, user, created_at, html_url, in_reply_to_id
              - Filter out comments that already have replies (where in_reply_to_id is not null means it's a reply)
+             - Print the comments to the console.
 
           3) For each top-level inline comment (where in_reply_to_id is null), analyze with full context:
              - Read the file from the head branch to see the proposed changes: \`git show <headRefName>:<path>\`
@@ -89,6 +91,8 @@ jobs:
              - Suggest specific code improvements or alternatives when appropriate
              - Reference relevant documentation or best practices if applicable
              - If you disagree, explain why with technical reasoning
+             - You must reply each comment. If you agree with the comment, say so and explain why. If you don't agree, explain why with technical reasoning.
+             - Print the comment and your response to the console.
 
           5) Post a summary comment on the PR:
              - Use: \`gh pr comment $PR_NUMBER --body \"your summary\"\`
@@ -104,7 +108,6 @@ jobs:
           - Provide actionable, specific feedback with code examples when helpful
           - Avoid generic or vague responses
           - Only reply to comments that genuinely need expert input
-          - If a comment is already well-addressed, acknowledge it in the summary instead of replying
           - Consider the broader context of the PR when evaluating suggestions
           - Respect the original reviewer's intent while adding value
 

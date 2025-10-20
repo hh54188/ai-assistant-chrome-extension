@@ -1,0 +1,117 @@
+name: Review PR Comments
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review comments'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review-comments:
+    name: Review PR Comments with Cursor Agent
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Configure git
+        run: |
+          git config user.name "Cursor Agent"
+          git config user.email "cursoragent@cursor.com"
+
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
+          gh auth status
+
+      - name: Review PR Comments
+        env:
+          MODEL: gpt-5
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          cursor-agent -p "You are operating in a GitHub Actions runner with the task of reviewing inline PR comments.
+
+          The GitHub CLI is available as \`gh\` and authenticated via \`GH_TOKEN\` environment variable. Git is available. You have write access to pull request comments.
+
+          # Context:
+          - Repo: ${{ github.repository }}
+          - Owner: ${{ github.repository_owner }}
+          - PR Number: ${{ inputs.pr_number }}
+
+          # Goal:
+          - Review each inline review comment in the specified PR and provide thoughtful, technical feedback.
+
+          # Requirements:
+          1) Understand the PR branch context:
+             - Use: \`gh pr view $PR_NUMBER --json baseRefName,headRefName,headRefOid,baseRefOid\` to get branch info
+             - The PR is comparing: base branch (target) ← head branch (source with changes)
+             - Fetch both branches for full context:
+               * \`git fetch origin <baseRefName>:<baseRefName>\`
+               * \`git fetch origin <headRefName>:<headRefName>\`
+             - Use \`gh pr diff $PR_NUMBER\` to see the actual changes being reviewed
+             - This helps you understand what changed and why reviewers are commenting
+
+          2) Fetch all inline review comments from the PR:
+             - Use: \`gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/comments\`
+             - This returns an array of comment objects with fields: id, body, path, line, user, created_at, html_url, in_reply_to_id
+             - Filter out comments that already have replies (where in_reply_to_id is not null means it's a reply)
+
+          3) For each top-level inline comment (where in_reply_to_id is null), analyze with full context:
+             - Read the file from the head branch to see the proposed changes: \`git show <headRefName>:<path>\`
+             - Compare with the base branch version if needed: \`git show <baseRefName>:<path>\`
+             - Look at the specific line number mentioned in the comment
+             - Check the surrounding code context (before/after lines)
+             - Evaluate if the comment is a valid concern or suggestion
+             - Determine if the comment needs a response or if it's already addressed
+             - Check if there are existing replies to avoid duplicates
+             - Assess the technical merit and actionability of the suggestion
+             - Consider how the change fits into the broader codebase
+
+          4) Reply to comments that need feedback:
+             - Use: \`gh api repos/${{ github.repository }}/pulls/comments/{comment_id}/replies -f body=\"your response\"\`
+             - Be professional, constructive, and technical in your responses
+             - Acknowledge valid points and provide technical insights
+             - Suggest specific code improvements or alternatives when appropriate
+             - Reference relevant documentation or best practices if applicable
+             - If you disagree, explain why with technical reasoning
+
+          5) Post a summary comment on the PR:
+             - Use: \`gh pr comment $PR_NUMBER --body \"your summary\"\`
+             - Include:
+               * Total inline comments reviewed
+               * Number of comments that received responses
+               * Key technical themes or concerns identified
+               * Any critical issues that need immediate attention
+               * Overall assessment of the review feedback quality
+
+          # Guidelines:
+          - Focus on technical accuracy and code quality
+          - Provide actionable, specific feedback with code examples when helpful
+          - Avoid generic or vague responses
+          - Only reply to comments that genuinely need expert input
+          - If a comment is already well-addressed, acknowledge it in the summary instead of replying
+          - Consider the broader context of the PR when evaluating suggestions
+          - Respect the original reviewer's intent while adding value
+
+          # Important:
+          - Do not spam with unnecessary replies
+          - Skip comments that are simple acknowledgments or already resolved
+          - Ensure your feedback meaningfully contributes to code quality
+          - Be respectful to both the PR author and reviewers
+          " --force --model "$MODEL" --output-format=text
+

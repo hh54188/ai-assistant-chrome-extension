@@ -4,9 +4,6 @@ on:
   pull_request:
     branches: [ master ]
     types: [closed]
-  workflow_run:
-    workflows: [CI Pipeline]
-    types: [completed]
 
 permissions:
   contents: write
@@ -93,138 +90,138 @@ jobs:
           - Describe what you observed and what you did to update the docs in detail in the PR description.
           " --force --model "$MODEL" --output-format=text
 
-  ci-docs:
-    name: CI Pipeline Docs Update
-    if: >-
-      ${{ github.event_name == 'workflow_run' && 
-          github.event.workflow_run.conclusion == 'success' && 
-          github.event.workflow_run.name == 'CI Pipeline' && 
-          github.actor != 'cursoragent' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  # ci-docs:
+  #   name: CI Pipeline Docs Update
+  #   if: >-
+  #     ${{ github.event_name == 'workflow_run' && 
+  #         github.event.workflow_run.conclusion == 'success' && 
+  #         github.event.workflow_run.name == 'CI Pipeline' && 
+  #         github.actor != 'cursoragent' }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Install Cursor CLI
-        run: |
-          curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+  #     - name: Install Cursor CLI
+  #       run: |
+  #         curl https://cursor.com/install -fsS | bash
+  #         echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
-      - name: Configure git
-        run: |
-          git config user.name "Cursor Agent"
-          git config user.email "cursoragent@cursor.com"
+  #     - name: Configure git
+  #       run: |
+  #         git config user.name "Cursor Agent"
+  #         git config user.email "cursoragent@cursor.com"
 
-      - name: Authenticate GitHub CLI
-        run: |
-          echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
-          gh auth status
+  #     - name: Authenticate GitHub CLI
+  #       run: |
+  #         echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
+  #         gh auth status
 
-      - name: Detect Changed Files from CI Pipeline
-        id: detect-changes
-        run: |
-          echo "🔍 Detecting changed files from CI Pipeline trigger..."
+  #     - name: Detect Changed Files from CI Pipeline
+  #       id: detect-changes
+  #       run: |
+  #         echo "🔍 Detecting changed files from CI Pipeline trigger..."
           
-          # Get the head SHA from the workflow run
-          HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-          echo "📋 Workflow run head SHA: $HEAD_SHA"
+  #         # Get the head SHA from the workflow run
+  #         HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+  #         echo "📋 Workflow run head SHA: $HEAD_SHA"
           
-          # Get the previous commit to compare against
-          PREV_SHA=$(git rev-parse $HEAD_SHA~1 2>/dev/null || echo "")
+  #         # Get the previous commit to compare against
+  #         PREV_SHA=$(git rev-parse $HEAD_SHA~1 2>/dev/null || echo "")
           
-          if [ -n "$PREV_SHA" ] && [ "$PREV_SHA" != "0000000000000000000000000000000000000000" ]; then
-            echo "📁 Comparing with previous commit: $PREV_SHA"
-            CHANGED_FILES=$(git diff --name-only $PREV_SHA $HEAD_SHA || echo "")
-          else
-            echo "📁 First commit or no previous commit found, checking all files"
-            CHANGED_FILES=$(git ls-files || echo "")
-          fi
+  #         if [ -n "$PREV_SHA" ] && [ "$PREV_SHA" != "0000000000000000000000000000000000000000" ]; then
+  #           echo "📁 Comparing with previous commit: $PREV_SHA"
+  #           CHANGED_FILES=$(git diff --name-only $PREV_SHA $HEAD_SHA || echo "")
+  #         else
+  #           echo "📁 First commit or no previous commit found, checking all files"
+  #           CHANGED_FILES=$(git ls-files || echo "")
+  #         fi
           
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "⚠️ Could not determine changed files"
-            echo "Continuing with workflow execution to be safe..."
-            echo "changed_files=" >> $GITHUB_OUTPUT
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "📝 Changed files in this commit:"
-            echo "$CHANGED_FILES"
+  #         if [ -z "$CHANGED_FILES" ]; then
+  #           echo "⚠️ Could not determine changed files"
+  #           echo "Continuing with workflow execution to be safe..."
+  #           echo "changed_files=" >> $GITHUB_OUTPUT
+  #           echo "has_changes=true" >> $GITHUB_OUTPUT
+  #         else
+  #           echo "📝 Changed files in this commit:"
+  #           echo "$CHANGED_FILES"
             
-            # Check if there are any significant changes that might require doc updates
-            SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | grep -E '\.(js|jsx|ts|tsx|json|md|yml|yaml)$' | grep -v -E '^docs/' || echo "")
+  #           # Check if there are any significant changes that might require doc updates
+  #           SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | grep -E '\.(js|jsx|ts|tsx|json|md|yml|yaml)$' | grep -v -E '^docs/' || echo "")
             
-            if [ -n "$SIGNIFICANT_CHANGES" ]; then
-              echo "✅ Found significant changes that may require documentation updates:"
-              echo "$SIGNIFICANT_CHANGES"
-              echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-              echo "$SIGNIFICANT_CHANGES" >> $GITHUB_OUTPUT
-              echo "EOF" >> $GITHUB_OUTPUT
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-            else
-              echo "❌ No significant changes found that require documentation updates"
-              echo "⏭️ Documentation update will be skipped"
-              echo "changed_files=" >> $GITHUB_OUTPUT
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-            fi
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  #           if [ -n "$SIGNIFICANT_CHANGES" ]; then
+  #             echo "✅ Found significant changes that may require documentation updates:"
+  #             echo "$SIGNIFICANT_CHANGES"
+  #             echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+  #             echo "$SIGNIFICANT_CHANGES" >> $GITHUB_OUTPUT
+  #             echo "EOF" >> $GITHUB_OUTPUT
+  #             echo "has_changes=true" >> $GITHUB_OUTPUT
+  #           else
+  #             echo "❌ No significant changes found that require documentation updates"
+  #             echo "⏭️ Documentation update will be skipped"
+  #             echo "changed_files=" >> $GITHUB_OUTPUT
+  #             echo "has_changes=false" >> $GITHUB_OUTPUT
+  #           fi
+  #         fi
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Update docs from CI changes
-        if: steps.detect-changes.outputs.has_changes == 'true'
-        env:
-          MODEL: gpt-5
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BRANCH_PREFIX: ci-docs
-          CHANGED_FILES: ${{ steps.detect-changes.outputs.changed_files }}
-        run: |
-          cursor-agent -p "You are operating in a GitHub Actions runner triggered by CI Pipeline completion.
+  #     - name: Update docs from CI changes
+  #       if: steps.detect-changes.outputs.has_changes == 'true'
+  #       env:
+  #         MODEL: gpt-5
+  #         CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  #         BRANCH_PREFIX: ci-docs
+  #         CHANGED_FILES: ${{ steps.detect-changes.outputs.changed_files }}
+  #       run: |
+  #         cursor-agent -p "You are operating in a GitHub Actions runner triggered by CI Pipeline completion.
 
-          The GitHub CLI is available as \`gh\` and authenticated via \`GH_TOKEN\` environment variable. Git is available. You have write access to repository contents and can comment on pull requests, you can also create or edit PRs.
+  #         The GitHub CLI is available as \`gh\` and authenticated via \`GH_TOKEN\` environment variable. Git is available. You have write access to repository contents and can comment on pull requests, you can also create or edit PRs.
 
-          # Context:
-          - Repo: ${{ github.repository }}
-          - Owner: ${{ github.repository_owner }}
-          - Workflow Run ID: ${{ github.event.workflow_run.id }}
-          - Head SHA: ${{ github.event.workflow_run.head_sha }}
-          - Docs Branch Prefix: ${{ env.BRANCH_PREFIX }}
-          - Changed Files: ${{ env.CHANGED_FILES }}
+  #         # Context:
+  #         - Repo: ${{ github.repository }}
+  #         - Owner: ${{ github.repository_owner }}
+  #         - Workflow Run ID: ${{ github.event.workflow_run.id }}
+  #         - Head SHA: ${{ github.event.workflow_run.head_sha }}
+  #         - Docs Branch Prefix: ${{ env.BRANCH_PREFIX }}
+  #         - Changed Files: ${{ env.CHANGED_FILES }}
 
-          # Goal:
-          - Implement an end-to-end docs update flow driven by changes detected from the CI Pipeline completion.
+  #         # Goal:
+  #         - Implement an end-to-end docs update flow driven by changes detected from the CI Pipeline completion.
 
-          # Requirements:
-          1) Analyze the changed files from the CI pipeline trigger to determine what documentation needs updating.
-          2) Update only the relevant docs based on those changes, focusing on technical documentation, API references, and setup guides.
-          3) Maintain a persistent docs branch for CI-triggered updates using the Docs Branch Prefix from Context. Create it if missing, update it otherwise, and push changes to origin.
-          4) If you need to create a new doc, you must follow the same pattern as the existing docs and reference it in TECHNICAL.md.
-          5) Focus on updating documentation that reflects the actual code changes, such as:
-             - API endpoint changes
-             - Configuration changes
-             - New features or components
-             - Environment setup changes
-             - Testing procedures
+  #         # Requirements:
+  #         1) Analyze the changed files from the CI pipeline trigger to determine what documentation needs updating.
+  #         2) Update only the relevant docs based on those changes, focusing on technical documentation, API references, and setup guides.
+  #         3) Maintain a persistent docs branch for CI-triggered updates using the Docs Branch Prefix from Context. Create it if missing, update it otherwise, and push changes to origin.
+  #         4) If you need to create a new doc, you must follow the same pattern as the existing docs and reference it in TECHNICAL.md.
+  #         5) Focus on updating documentation that reflects the actual code changes, such as:
+  #            - API endpoint changes
+  #            - Configuration changes
+  #            - New features or components
+  #            - Environment setup changes
+  #            - Testing procedures
 
-          # Inputs and conventions:
-          - Use the CHANGED_FILES environment variable to understand what changed
-          - Keep changes minimal and consistent with repo style
-          - If no doc updates are necessary based on the changes, make no changes and exit gracefully
-          - Follow the existing documentation structure and patterns
-          - Ensure all new documentation is properly referenced in TECHNICAL.md
+  #         # Inputs and conventions:
+  #         - Use the CHANGED_FILES environment variable to understand what changed
+  #         - Keep changes minimal and consistent with repo style
+  #         - If no doc updates are necessary based on the changes, make no changes and exit gracefully
+  #         - Follow the existing documentation structure and patterns
+  #         - Ensure all new documentation is properly referenced in TECHNICAL.md
 
-          # Deliverables when updates occur:
-          - Pushed commits to the persistent docs branch for CI-triggered updates
-          - A single natural-language comment on the workflow run or create an issue describing the documentation updates
-          - Create a draft PR from the persistent docs branch to the main branch
-          - Describe what you observed and what you did to update the docs in detail in the PR description
-          - Ensure all new documentation files are properly referenced in TECHNICAL.md
+  #         # Deliverables when updates occur:
+  #         - Pushed commits to the persistent docs branch for CI-triggered updates
+  #         - A single natural-language comment on the workflow run or create an issue describing the documentation updates
+  #         - Create a draft PR from the persistent docs branch to the main branch
+  #         - Describe what you observed and what you did to update the docs in detail in the PR description
+  #         - Ensure all new documentation files are properly referenced in TECHNICAL.md
 
-          # Special considerations for CI-triggered updates:
-          - Focus on technical accuracy and completeness
-          - Update setup guides if configuration files changed
-          - Update API documentation if backend routes or services changed
-          - Update frontend documentation if React components or stores changed
-          - Update testing documentation if test files or procedures changed
-          " --force --model "$MODEL" --output-format=text
+  #         # Special considerations for CI-triggered updates:
+  #         - Focus on technical accuracy and completeness
+  #         - Update setup guides if configuration files changed
+  #         - Update API documentation if backend routes or services changed
+  #         - Update frontend documentation if React components or stores changed
+  #         - Update testing documentation if test files or procedures changed
+  #         " --force --model "$MODEL" --output-format=text

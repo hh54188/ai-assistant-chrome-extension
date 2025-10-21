@@ -20,20 +20,24 @@ const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
 console.log(`🔧 Environment detection: CI=${isCI}, GitHub Actions=${isGitHubActions}`);
 
 // Load environment variables based on environment
+let shouldSkip = false;
 if (isCI) {
   // In CI (GitHub Actions), use environment variables from process.env
   // These should be set as GitHub Actions secrets
   console.log('🏗️ Running in CI environment - using process.env variables');
-  
+
   // Validate that required environment variables are available
   const requiredVars = ['GEMINI_API_KEY'];
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
-  
+  const missingVars = requiredVars.filter((varName) => !process.env[varName]);
+
   if (missingVars.length > 0) {
-    throw new Error(`Missing required environment variables in CI: ${missingVars.join(', ')}. Please set these as GitHub Actions secrets.`);
+    // On external PRs (e.g., Dependabot), secrets are not available.
+    // Skip the E2E tests instead of failing the CI run.
+    shouldSkip = true;
+    console.warn(`Skipping E2E tests in CI: missing ${missingVars.join(', ')}.`);
+  } else {
+    console.log('✅ Required environment variables found in CI environment');
   }
-  
-  console.log('✅ Required environment variables found in CI environment');
 } else {
   // Running locally, try to load from .env file first, then fallback to process.env
   console.log('🏠 Running locally - attempting to load from .env file');
@@ -52,7 +56,7 @@ if (isCI) {
   }
 }
 
-describe('Chrome Extension E2E Tests', () => {
+describe.runIf(!shouldSkip)('Chrome Extension E2E Tests', () => {
   let browser;
   let page;
   let backendProcess;

@@ -82,6 +82,12 @@ This section provides a comprehensive index of all documentation files in the pr
 - [Notion MCP Server](./mcp/NOTION_MCP_README.md) - Notion article correction MCP server
 - [OpenAI Cost MCP Server](./mcp/OPENAI_COST_MCP_README.md) - OpenAI cost tracking MCP server
 
+### 🤖 AI Agents Documentation
+- [Agent Documentation Index](./agent/README.md) - Overview and setup for all AI agents
+- [Creator Checker Agent](./agent/creator_checker.md) - Project creator information agent
+- [Notion Article Reviewer Agent](./agent/notion_article_reviewer.md) - Automated content review for Notion articles
+- [Podcast Shownotes Creator Agent](./agent/podcast_shownotes_creator.md) - Audio transcription and shownotes generation
+
 ### ⚡ Features & Usage
 - [Turbo Mode Documentation](./features/TURBO_MODE_README.md) - Multi-model comparison feature
 - [Screenshot Capture Guide](./features/SCREENSHOT_README.md) - Screen capture functionality

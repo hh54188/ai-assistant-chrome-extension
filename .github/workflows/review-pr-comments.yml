@@ -58,11 +58,10 @@ jobs:
 
           # Requirements:
           1) Understand the PR branch context:
-             - Use: \`gh pr view $PR_NUMBER --json baseRefName,headRefName,headRefOid,baseRefOid\` to get branch info
+             - Use: \`gh pr view $PR_NUMBER --json baseRefName,headRefName,headRefOid\` to get branch info
              - The PR is comparing: base branch (target) ← head branch (source with changes)
-             - Fetch both branches for full context:
-               * \`git fetch origin <baseRefName>:<baseRefName>\`
-               * \`git fetch origin <headRefName>:<headRefName>\`
+             - The base beanch was the master branch you are staying right now. You can get the full context without fetching it.
+             - The head branch is the branch that is being compared to the base branch. You can fetch the head branch via \`git fetch origin <headRefName>:<headRefName>\`
              - Use \`gh pr diff $PR_NUMBER\` to see the actual changes being reviewed
              - This helps you understand what changed and why reviewers are commenting
              - Print the diff to the console.
@@ -85,7 +84,7 @@ jobs:
              - Consider how the change fits into the broader codebase
 
           4) Reply to comments that need feedback:
-             - Use: \`gh api repos/${{ github.repository }}/pulls/comments/{comment_id}/replies -f body=\"your response\"\`
+             - Use: \`gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/{comment_id}/replies -f body=\"your response\"\`
              - Be professional, constructive, and technical in your responses
              - Acknowledge valid points and provide technical insights
              - Suggest specific code improvements or alternatives when appropriate
@@ -95,7 +94,7 @@ jobs:
              - Print the comment and your response to the console.
 
           5) Post a summary comment on the PR:
-             - Use: \`gh pr comment $PR_NUMBER --body \"your summary\"\`
+             - Use: \`gh pr comment $PR_NUMBER --body $'your summary'\` (use $'...' syntax to support newlines like \n)
              - Include:
                * Total inline comments reviewed
                * Number of comments that received responses

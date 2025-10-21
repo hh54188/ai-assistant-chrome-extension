@@ -38,7 +38,7 @@ adk run podcast_shownotes_creator
 
 ### Query Example
 ```
-"Please create shownotes for this podcast: C:\Users\ligunagyi\Desktop\podcast\E22_v2.mp3"
+"Please create shownotes for this podcast: C:\Users\liguangyi\Desktop\podcast\E22_v2.mp3"
 ```
 
 ### Workflow

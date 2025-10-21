@@ -32,7 +32,7 @@ adk run podcast_shownotes_creator
   - Required: Yes
   - Format: Absolute file path
   - Supported formats: MP3, WAV, M4A, and other formats supported by Whisper
-  - Example: `C:\Users\username\Desktop\podcast_episode.mp3`
+  - Example: `C:\Users\username\Desktop\podcast_episode.mp3` (Windows) or `/Users/username/Desktop/podcast_episode.mp3` (macOS/Linux)
 
 ## Example Usage
 

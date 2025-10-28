@@ -19,6 +19,13 @@ const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
 
 console.log(`🔧 Environment detection: CI=${isCI}, GitHub Actions=${isGitHubActions}`);
 
+// In CI on external PRs, required secrets may be unavailable. When missing,
+// we skip E2E tests to keep CI green while still validating on trusted branches.
+const shouldSkipE2E = isCI && !process.env.GEMINI_API_KEY;
+if (shouldSkipE2E) {
+  console.log('🛑 Skipping E2E tests in CI: GEMINI_API_KEY not set.');
+}
+
 // Load environment variables based on environment
 if (isCI) {
   // In CI (GitHub Actions), use environment variables from process.env
@@ -30,10 +37,10 @@ if (isCI) {
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
   
   if (missingVars.length > 0) {
-    throw new Error(`Missing required environment variables in CI: ${missingVars.join(', ')}. Please set these as GitHub Actions secrets.`);
+    console.log(`⚠️ Missing required environment variables in CI: ${missingVars.join(', ')}. Tests will be skipped.`);
+  } else {
+    console.log('✅ Required environment variables found in CI environment');
   }
-  
-  console.log('✅ Required environment variables found in CI environment');
 } else {
   // Running locally, try to load from .env file first, then fallback to process.env
   console.log('🏠 Running locally - attempting to load from .env file');
@@ -52,7 +59,10 @@ if (isCI) {
   }
 }
 
-describe('Chrome Extension E2E Tests', () => {
+// Use conditional describe to skip entire suite when secrets are unavailable in CI
+const describeOrSkip = shouldSkipE2E ? describe.skip : describe;
+
+describeOrSkip('Chrome Extension E2E Tests', () => {
   let browser;
   let page;
   let backendProcess;

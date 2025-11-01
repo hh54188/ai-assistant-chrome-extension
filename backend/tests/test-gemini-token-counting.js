@@ -10,6 +10,8 @@ const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
 });
 
+console.log("Gemini API Key value: ", process.env.GEMINI_API_KEY);
+
 async function testGeminiTokenCounting() {
     console.log('🧮 Testing Gemini Token Counting...\n');
 

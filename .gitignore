@@ -14,6 +14,6 @@ coverage/
 __pycache__
 settings.json
 *.mp3
-**/_images/**/*.png
-**/_images/**/*.jpg
+**/images/**/*.png
+**/images/**/*.jpg
 **/_posts/*.md

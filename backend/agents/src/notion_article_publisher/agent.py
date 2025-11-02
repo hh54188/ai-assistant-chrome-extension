@@ -1,4 +1,7 @@
 import os
+import base64
+import pathlib
+import shutil
 import dotenv
 dotenv.load_dotenv()
 from .fileDownloader import download_image
@@ -9,6 +12,283 @@ import json
 from typing import TypedDict
 
 notion = AsyncClient(auth=os.getenv("NOTION_API_KEY"))
+
+from github import Github
+from github import Auth
+
+auth = Auth.Token(os.getenv("GITHUB_API_KEY"))
+g = Github(auth=auth)
+
+def create_github_file(file_content: str, file_path: str):
+    """
+    Creates a new file in the GitHub repository.
+    
+    This function uses the PyGithub library to create a new file in the
+    GitHub repository at https://github.com/hh54188/horace-jekyll-theme-v1.2.0
+    on the master branch.
+    
+    Args:
+        file_content (str): The content to write to the file.
+        file_path (str): The path to the file within the repository (e.g., "blog/_posts/new-post.md").
+    
+    Returns:
+        dict: A dictionary containing success status and result information.
+            - success (bool): Whether the operation was successful
+            - message (str): Success or error message
+            - commit (dict): Commit information if successful
+    
+    Example:
+        >>> result = create_github_file("# My Blog Post\\n\\nContent here...", "blog/_posts/2025-01-01-new-post.md")
+        >>> print(result)
+        {'success': True, 'message': 'File created successfully', 'commit': {...}}
+    
+    Note:
+        - Requires GITHUB_API_KEY environment variable to be set
+        - Folders are created automatically if they don't exist
+        - The file will be committed to the master branch
+    """
+    try:
+        # Get the repository
+        repo = g.get_repo("hh54188/horace-jekyll-theme-v1.2.0")
+        
+        # Create the file
+        result = repo.create_file(
+            path=file_path,
+            message=f"Create {file_path}",
+            content=file_content,
+            branch="master"
+        )
+        
+        return {
+            "success": True,
+            "message": "File created successfully",
+            "commit": {
+                "sha": result["commit"].sha,
+                "html_url": result["commit"].html_url
+            }
+        }
+    except Exception as e:
+        print(f"❌ Error creating GitHub file: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to create file: {str(e)}"
+        }
+
+def create_github_image(local_image_path: str, target_file_path: str):
+    """
+    Uploads an image file from local filesystem to the GitHub repository.
+    
+    This function reads a local image file, encodes it to base64, and uploads it
+    to the GitHub repository at https://github.com/hh54188/horace-jekyll-theme-v1.2.0
+    on the master branch.
+    
+    Args:
+        local_image_path (str): The local file path to the image to upload.
+        target_file_path (str): The path to the image file within the repository 
+            (e.g., "blog/images/my-image.jpg").
+    
+    Returns:
+        dict: A dictionary containing success status and result information.
+            - success (bool): Whether the operation was successful
+            - message (str): Success or error message
+            - commit (dict): Commit information if successful
+    
+    Example:
+        >>> result = create_github_image("./local/image.jpg", "blog/images/image.jpg")
+        >>> print(result)
+        {'success': True, 'message': 'Image created successfully', 'commit': {...}}
+    
+    Note:
+        - Requires GITHUB_API_KEY environment variable to be set
+        - Requires the local image file to exist
+        - Folders are created automatically if they don't exist
+        - The image will be committed to the master branch
+    """
+    try:
+        # Convert to absolute path if relative
+        if not os.path.isabs(local_image_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            local_image_path = os.path.join(script_dir, local_image_path)
+        
+        # Check if the file exists
+        if not os.path.exists(local_image_path):
+            error_msg = f"Local image file does not exist: {local_image_path}"
+            print(f"❌ Error creating GitHub image: {error_msg}")
+            return {
+                "success": False,
+                "message": error_msg
+            }
+        
+        # Check if it's a file (not a directory)
+        if not os.path.isfile(local_image_path):
+            error_msg = f"Path is not a file: {local_image_path}"
+            print(f"❌ Error creating GitHub image: {error_msg}")
+            return {
+                "success": False,
+                "message": error_msg
+            }
+        
+        # Read the local image file in binary mode
+        with open(local_image_path, 'rb') as image_file:
+            image_binary = image_file.read()
+        
+        # Encode the binary image to base64
+        image_base64 = base64.b64encode(image_binary).decode('utf-8')
+        
+        # Get the repository
+        repo = g.get_repo("hh54188/horace-jekyll-theme-v1.2.0")
+        
+        # Create the file
+        result = repo.create_file(
+            path=target_file_path,
+            message=f"Create {target_file_path}",
+            content=image_base64,
+            branch="master"
+        )
+        
+        return {
+            "success": True,
+            "message": "Image created successfully",
+            "commit": {
+                "sha": result["commit"].sha,
+                "html_url": result["commit"].html_url
+            }
+        }
+    except Exception as e:
+        print(f"❌ Error creating GitHub image: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to create image: {str(e)}"
+        }
+
+def upload_folder_to_github(local_folder_path: str, target_repo_path: str):
+    """
+    Uploads all files from a local folder to the GitHub repository.
+    
+    This function recursively reads all files from a local folder, encodes them to base64,
+    and uploads them to the GitHub repository at https://github.com/hh54188/horace-jekyll-theme-v1.2.0
+    on the master branch. The folder structure is preserved in the repository.
+    
+    Args:
+        local_folder_path (str): The local file path to the folder to upload (e.g., "./local/blog").
+        target_repo_path (str): The base path within the repository where files will be uploaded
+            (e.g., "blog"). Files will maintain their relative paths under this base path.
+    
+    Returns:
+        dict: A dictionary containing success status and result information.
+            - success (bool): Whether the operation was successful
+            - message (str): Success or error message
+            - files_uploaded (int): Number of files successfully uploaded
+            - files_failed (int): Number of files that failed to upload
+            - failed_files (list): List of file paths that failed to upload
+            - commits (list): List of commit information for successfully uploaded files
+    
+    Example:
+        >>> result = upload_folder_to_github("./local/blog", "blog")
+        >>> print(result)
+        {'success': True, 'message': 'Folder uploaded successfully', 'files_uploaded': 10, ...}
+    
+    Note:
+        - Requires GITHUB_API_KEY environment variable to be set
+        - Requires the local folder to exist
+        - Folders are created automatically if they don't exist
+        - All files will be committed to the master branch
+        - Ignores hidden files and directories (starting with .)
+        - Uses a single commit per file upload
+    """
+    try:
+        # Get the repository
+        repo = g.get_repo("hh54188/horace-jekyll-theme-v1.2.0")
+        
+        # Convert to pathlib.Path for easier handling
+        local_path = pathlib.Path(local_folder_path)
+        
+        if not local_path.exists():
+            return {
+                "success": False,
+                "message": f"Local folder does not exist: {local_folder_path}",
+                "files_uploaded": 0,
+                "files_failed": 0,
+                "failed_files": [],
+                "commits": []
+            }
+        
+        if not local_path.is_dir():
+            return {
+                "success": False,
+                "message": f"Path is not a directory: {local_folder_path}",
+                "files_uploaded": 0,
+                "files_failed": 0,
+                "failed_files": [],
+                "commits": []
+            }
+        
+        files_uploaded = 0
+        files_failed = 0
+        failed_files = []
+        commits = []
+        
+        # Recursively iterate through all files in the folder
+        for local_file_path in local_path.rglob('*'):
+            # Skip directories and hidden files
+            if local_file_path.is_dir() or local_file_path.name.startswith('.'):
+                continue
+            
+            try:
+                # Read the file in binary mode
+                with open(local_file_path, 'rb') as file:
+                    file_binary = file.read()
+                
+                # Encode the binary file to base64
+                file_base64 = base64.b64encode(file_binary).decode('utf-8')
+                
+                # Calculate the relative path from the local folder
+                relative_path = local_file_path.relative_to(local_path)
+                
+                # Construct the target path in the repository
+                target_file_path = str(pathlib.Path(target_repo_path) / relative_path).replace('\\', '/')
+                
+                # Create the file
+                result = repo.create_file(
+                    path=target_file_path,
+                    message=f"Upload {target_file_path}",
+                    content=file_base64,
+                    branch="master"
+                )
+                
+                files_uploaded += 1
+                commits.append({
+                    "sha": result["commit"].sha,
+                    "html_url": result["commit"].html_url,
+                    "file": target_file_path
+                })
+                
+                print(f"✓ Uploaded: {target_file_path}")
+                
+            except Exception as e:
+                files_failed += 1
+                failed_files.append(str(local_file_path))
+                print(f"❌ Error uploading {local_file_path}: {e}")
+        
+        return {
+            "success": True,
+            "message": f"Folder uploaded successfully: {files_uploaded} files uploaded, {files_failed} files failed",
+            "files_uploaded": files_uploaded,
+            "files_failed": files_failed,
+            "failed_files": failed_files,
+            "commits": commits
+        }
+        
+    except Exception as e:
+        print(f"❌ Error uploading folder to GitHub: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to upload folder: {str(e)}",
+            "files_uploaded": 0,
+            "files_failed": 0,
+            "failed_files": [],
+            "commits": []
+        }
 
 class BlockTextMap(TypedDict):
     id: str
@@ -455,6 +735,76 @@ def create_folder(folder_name: str):
     folder_path = os.path.join(script_dir, folder_name)
     os.makedirs(folder_path, exist_ok=True)
 
+
+def cleanup_blog_folders():
+    """
+    Deletes all markdown files in the blog/_posts folder and all folders in the blog/images folder.
+    
+    This function is useful for cleaning up old blog posts and images before publishing new content.
+    It deletes:
+    - All .md files in the blog/_posts directory
+    - All subdirectories in the blog/images directory
+    
+    Returns:
+        dict: A dictionary containing:
+            - success (bool): Whether the operation was successful
+            - message (str): Success or error message
+            - files_deleted (int): Number of markdown files deleted
+            - folders_deleted (int): Number of image folders deleted
+    
+    Example:
+        >>> result = cleanup_blog_folders()
+        >>> print(result)
+        {'success': True, 'message': 'Cleanup completed successfully', 'files_deleted': 5, 'folders_deleted': 3}
+    
+    Note:
+        - The .gitkeep file in blog/_posts is preserved
+        - The blog/images directory itself is preserved
+        - Individual files within blog/images subdirectories are deleted along with their folders
+    """
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        posts_dir = os.path.join(script_dir, "blog", "_posts")
+        images_dir = os.path.join(script_dir, "blog", "images")
+        
+        files_deleted = 0
+        folders_deleted = 0
+        
+        # Delete all markdown files in blog/_posts
+        if os.path.exists(posts_dir):
+            for file_name in os.listdir(posts_dir):
+                file_path = os.path.join(posts_dir, file_name)
+                # Only delete .md files, skip .gitkeep and other files
+                if file_name.endswith('.md') and os.path.isfile(file_path):
+                    os.remove(file_path)
+                    files_deleted += 1
+                    print(f"✓ Deleted: {file_path}")
+        
+        # Delete all folders in blog/images
+        if os.path.exists(images_dir):
+            for item_name in os.listdir(images_dir):
+                item_path = os.path.join(images_dir, item_name)
+                # Only delete directories, skip files
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+                    folders_deleted += 1
+                    print(f"✓ Deleted folder: {item_path}")
+        
+        return {
+            "success": True,
+            "message": f"Cleanup completed successfully",
+            "files_deleted": files_deleted,
+            "folders_deleted": folders_deleted
+        }
+    except Exception as e:
+        print(f"❌ Error cleaning up blog folders: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to cleanup blog folders: {str(e)}",
+            "files_deleted": 0,
+            "folders_deleted": 0
+        }
+
 from google.adk.agents.llm_agent import Agent
 
 root_agent = Agent(
@@ -466,6 +816,7 @@ You are a professional content publisher specialized in publishing Notion articl
 
 WORKFLOW:
 When given a Notion page ID to publish, follow this systematic approach:
+- Before do everything, you need to cleanup the blog folders first, the folders are `blog/_posts` and `blog/images`.
 - Convert the Notion article to markdown
 - Extract the title from Notion page
 - Generate the blog ID based on the title by the following rules:
@@ -479,13 +830,13 @@ When given a Notion page ID to publish, follow this systematic approach:
 - Download all images from the markdown content with the following steps:
     - Capture the image caption and url first. The images are in the markdown content, and the url is like this: ![caption](url).
     - Decide the file name: The file name should be the caption of the image in english in slug string. If the caption is empty, use incrementing number to name the file.
-    - Download the You need to download the images to the `blog/_images/[blog_id]` folder.
+    - Download the You need to download the images to the `blog/images/[blog_id]` folder.
     - Example:
         - Caption: "AI应用开发图书的封面"
         - File name: "ai-application-development-book-cover.jpg"
         - Caption: ""
         - File name: "1.jpg"
-    - After downloading the images, you need to update the markdown content to replace the image url with the new url. The new url is like this: `![caption](../_images/[blog_id]/[file_name])`
+    - After downloading the images, you need to update the markdown content to replace the image url with the new url. The new url is like this: `![caption](../images/[blog_id]/[file_name])`
         - Example:
             - Markdown content:
                 ```markdown
@@ -493,7 +844,7 @@ When given a Notion page ID to publish, follow this systematic approach:
                 ```
             - New markdown content:
                 ```markdown
-                ![AI应用开发图书的封面](../_images/2025-11-02-how-i-solve-the-writing-problems-of-ai-application-development-book/ai-application-development-book-cover.jpg)
+                ![AI应用开发图书的封面](../images/2025-11-02-how-i-solve-the-writing-problems-of-ai-application-development-book/ai-application-development-book-cover.jpg)
                 ```
     - Delete the last image tag from the markdown content.
 - Analyse the markdown content, and pick max 2 tags from the tag options I shared with you. Here are the tag options: 'ai', 'angular', 'architecture', 'backend', 'book', 'code', 'design', 'css', 'flux', 'frontend', 'interview', 'javascript', 'jquery', 'leadership', 'mobx', 'mvc', 'nodejs', 'other', 'performance', 'principle', 'react', 'redux', 'serverless', 'sql', 'vue', 'xss'
@@ -508,19 +859,34 @@ When given a Notion page ID to publish, follow this systematic approach:
     ```
 - Insert the meta info at the beginning of the markdown content.
 - Create a new file in the blog folder `blog/_posts` with the blog ID. The file name is the blog ID. Write the markdown content updated in the last step to the file.
+- Upload the file which created into the GitHub Jekyll blog repo, the repo is https://github.com/hh54188/horace-jekyll-theme-v1.2.0, and the targett path is `_posts/[blog_id].md`
+- Upload the images which downloaded in the prevous step into the GitHub Jekyll blog repo, the repo is https://github.com/hh54188/horace-jekyll-theme-v1.2.0, and the target path is `images/[blog_id]`
+- If the agent has successfully published all the blog content to GitHub, it should inform the user that the content has been successfully published to the GitHub repository.
 """,
     tools=[
         create_folder,
         create_file,
+        cleanup_blog_folders,
+        create_github_file,
+        create_github_image,
         download_image,
         extract_title_from_page,
         convert_to_markdown,
     ]
 )
 
+# Usage examples:
 # Help me publish the Notion article which ID was 2910cda410a6802ba735ddab8b768898
 # if __name__ == "__main__":
 #     asyncio.run(print_article_as_markdown("2910cda410a6802ba735ddab8b768898"))
+#
+# Test GitHub file creation:
+# result = create_github_file("# Test Post\n\nThis is a test.", "blog/_posts/test.md")
+# print(result)
+#
+# Test GitHub image upload:
+# result = create_github_image("./local/image.jpg", "blog/images/test.jpg")
+# print(result)
 
 # Write a function to analyse the markdown content, and pick max 2 tags from the tag options I shared with you. Here are the reuqirements:
 # - The function only accept the string markdown as parameters

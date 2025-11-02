@@ -147,6 +147,70 @@ async def extract_text_with_block_id(block_id: str) -> list[BlockTextMap]:
     return block_text_list
 
 
+def convert_rich_text_to_markdown(rich_text_list: list) -> str:
+    """
+    Converts Notion rich text objects to markdown with proper formatting.
+    
+    This function processes rich text annotations (bold, italic, code, strikethrough, underline)
+    and links, converting them to proper markdown syntax.
+    
+    Args:
+        rich_text_list: List of rich text objects from Notion API
+        
+    Returns:
+        str: Markdown formatted text
+        
+    Example:
+        >>> rich_text = [
+        ...     {"plain_text": "Hello", "annotations": {"bold": True}},
+        ...     {"plain_text": " world", "annotations": {"italic": True}},
+        ...     {"plain_text": "!", "annotations": {}, "href": "https://example.com"}
+        ... ]
+        >>> convert_rich_text_to_markdown(rich_text)
+        '**Hello** *world*[!](https://example.com)'
+    """
+    markdown_parts = []
+    for rt in rich_text_list:
+        text = rt.get("plain_text", "")
+        if not text:
+            continue
+            
+        annotations = rt.get("annotations", {})
+        href = rt.get("href")
+        
+        # Apply formatting in order: code, bold, italic, strikethrough, underline
+        # Note: Code formatting prevents other formatting, so handle separately
+        if annotations.get("code"):
+            text = f"`{text}`"
+        else:
+            # Handle bold and italic together for nested formatting
+            is_bold = annotations.get("bold", False)
+            is_italic = annotations.get("italic", False)
+            
+            # Combine bold and italic if both are present
+            if is_bold and is_italic:
+                text = f"***{text}***"
+            elif is_bold:
+                text = f"**{text}**"
+            elif is_italic:
+                text = f"*{text}*"
+            
+            if annotations.get("strikethrough"):
+                text = f"~~{text}~~"
+            if annotations.get("underline"):
+                # Markdown doesn't support underline, but HTML does
+                # We'll use HTML as a fallback
+                text = f"<u>{text}</u>"
+        
+        # Apply link if present (wraps the formatted text)
+        if href:
+            text = f"[{text}]({href})"
+            
+        markdown_parts.append(text)
+    
+    return "".join(markdown_parts)
+
+
 async def convert_to_markdown(block_id: str) -> str:
     """
     Recursively converts a Notion article to markdown format.
@@ -192,7 +256,7 @@ async def convert_to_markdown(block_id: str) -> str:
         if block_type == "paragraph":
             rich_text = block.get("paragraph", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed
                     if previous_block_type:
@@ -206,7 +270,7 @@ async def convert_to_markdown(block_id: str) -> str:
         elif block_type == "heading_1":
             rich_text = block.get("heading_1", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed
                     if previous_block_type and previous_block_type != block_type:
@@ -217,7 +281,7 @@ async def convert_to_markdown(block_id: str) -> str:
         elif block_type == "heading_2":
             rich_text = block.get("heading_2", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed
                     if previous_block_type and previous_block_type != block_type:
@@ -228,7 +292,7 @@ async def convert_to_markdown(block_id: str) -> str:
         elif block_type == "heading_3":
             rich_text = block.get("heading_3", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed
                     if previous_block_type and previous_block_type != block_type:
@@ -239,7 +303,7 @@ async def convert_to_markdown(block_id: str) -> str:
         elif block_type == "bulleted_list_item":
             rich_text = block.get("bulleted_list_item", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed (but not for consecutive list items)
                     if previous_block_type and previous_block_type != "bulleted_list_item":
@@ -250,7 +314,7 @@ async def convert_to_markdown(block_id: str) -> str:
         elif block_type == "numbered_list_item":
             rich_text = block.get("numbered_list_item", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed (but not for consecutive list items)
                     if previous_block_type and previous_block_type != "numbered_list_item":
@@ -261,7 +325,7 @@ async def convert_to_markdown(block_id: str) -> str:
         elif block_type == "quote":
             rich_text = block.get("quote", {}).get("rich_text", [])
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed
                     if previous_block_type and previous_block_type != block_type:
@@ -273,7 +337,7 @@ async def convert_to_markdown(block_id: str) -> str:
             image_block = block.get("image", {})
             caption = ""
             if image_block.get("caption"):
-                caption = "".join([rt.get("plain_text", "") for rt in image_block.get("caption", [])])
+                caption = convert_rich_text_to_markdown(image_block.get("caption", []))
             alt_text = caption if caption else "Image"
             
             # Extract image URL (can be from file or external)
@@ -301,7 +365,7 @@ async def convert_to_markdown(block_id: str) -> str:
             rich_text = block.get("code", {}).get("rich_text", [])
             language = block.get("code", {}).get("language", "")
             if len(rich_text) > 0:
-                text = "".join([rt.get("plain_text", "") for rt in rich_text])
+                text = convert_rich_text_to_markdown(rich_text)
                 if text:
                     # Add newline before current block if needed
                     if previous_block_type and previous_block_type != block_type:

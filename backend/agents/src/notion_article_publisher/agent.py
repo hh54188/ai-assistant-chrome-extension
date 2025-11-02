@@ -399,6 +399,47 @@ def create_file(file_name: str, file_content: str):
         f.write(file_content)
 
 
+def insert_content_at_beginning(target_file_path: str, new_content: str):
+    """
+    Inserts new content at the beginning of the target file.
+    
+    This function reads the existing content of the file, prepends the new content
+    to it, and writes the combined content back to the file. If the file does not
+    exist, it will be created with only the new content.
+    
+    Args:
+        target_file_path (str): The path to the target file where content will be inserted.
+            This can be a relative or absolute path.
+        new_content (str): The content to insert at the beginning of the file.
+    
+    Example:
+        >>> insert_content_at_beginning("example.txt", "New header\\n")
+        >>> # If example.txt contains "Old content", it will become:
+        >>> # "New header\\nOld content"
+    
+    Note:
+        - The file encoding is UTF-8
+        - If the file does not exist, it will be created
+        - Existing file content is preserved after the new content
+    """
+    try:
+        # Read existing content if file exists
+        if os.path.exists(target_file_path):
+            with open(target_file_path, 'r', encoding='utf-8') as f:
+                existing_content = f.read()
+            # Combine new content with existing content
+            combined_content = new_content + existing_content
+        else:
+            # File doesn't exist, use only new content
+            combined_content = new_content
+        
+        # Write the combined content back to the file
+        with open(target_file_path, 'w', encoding='utf-8') as f:
+            f.write(combined_content)
+    except Exception as e:
+        print(f"❌ Error inserting content at beginning of file: {e}")
+        raise
+
 
 def create_folder(folder_name: str):
     """
@@ -455,6 +496,17 @@ When given a Notion page ID to publish, follow this systematic approach:
                 ![AI应用开发图书的封面](../_images/2025-11-02-how-i-solve-the-writing-problems-of-ai-application-development-book/ai-application-development-book-cover.jpg)
                 ```
     - Delete the last image tag from the markdown content.
+- Analyse the markdown content, and pick max 2 tags from the tag options I shared with you. Here are the tag options: 'ai', 'angular', 'architecture', 'backend', 'book', 'code', 'design', 'css', 'flux', 'frontend', 'interview', 'javascript', 'jquery', 'leadership', 'mobx', 'mvc', 'nodejs', 'other', 'performance', 'principle', 'react', 'redux', 'serverless', 'sql', 'vue', 'xss'
+- Generate meta info for the Jekyll blog post. The meta info should looks like this:
+    ```yaml
+    ---
+    layout: post
+    title: xxx
+    tags: [xxx, yyy]
+    featured_image: /images/blog_id_xxx/cover.jpg
+    ---
+    ```
+- Insert the meta info at the beginning of the markdown content.
 - Create a new file in the blog folder `blog/_posts` with the blog ID. The file name is the blog ID. Write the markdown content updated in the last step to the file.
 """,
     tools=[

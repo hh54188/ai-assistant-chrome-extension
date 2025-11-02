@@ -1,6 +1,7 @@
 import os
 import dotenv
 dotenv.load_dotenv()
+from .fileDownloader import download_image
 
 from notion_client import AsyncClient
 import asyncio
@@ -172,7 +173,7 @@ async def convert_to_markdown(block_id: str) -> str:
         
     Note:
         - Empty blocks (blocks with no text content) are skipped
-        - Images are converted to markdown image tags without URLs: ![alt]()
+        - Images are converted to markdown image tags with caption and URL: ![caption](url)
         - The function processes up to 100 blocks per level (Notion API limit)
         - Nested blocks are automatically included in the result
     """
@@ -274,11 +275,19 @@ async def convert_to_markdown(block_id: str) -> str:
             if image_block.get("caption"):
                 caption = "".join([rt.get("plain_text", "") for rt in image_block.get("caption", [])])
             alt_text = caption if caption else "Image"
+            
+            # Extract image URL (can be from file or external)
+            image_url = ""
+            if image_block.get("file"):
+                image_url = image_block.get("file", {}).get("url", "")
+            elif image_block.get("external"):
+                image_url = image_block.get("external", {}).get("url", "")
+            
             # Add newline before current block if needed
             if previous_block_type and previous_block_type != block_type:
                 markdown_lines.append("")
-            # Keep image tag but skip URL as per requirement
-            markdown_lines.append(f"![{alt_text}]()")
+            # Create markdown image tag with caption and URL
+            markdown_lines.append(f"![{alt_text}]({image_url})")
             previous_block_type = "image"
         
         elif block_type == "divider":
@@ -372,10 +381,94 @@ async def print_article_as_markdown(block_id: str):
     markdown = await convert_to_markdown(block_id)
     print(markdown)
 
-if __name__ == "__main__":
-    title = asyncio.run(extract_title_from_page("2270cda410a68005b731fec98ea8500a"))
-    print(title)
-    # asyncio.run(print_article_as_markdown("2910cda410a6802ba735ddab8b768898"))
+
+def create_file(file_name: str, file_content: str):
+    """
+    Creates a file in the folder where the Python file is running.
+    
+    Args:
+        file_name (str): The name of the file to create.
+        file_content (str): The content to write to the file.
+    
+    Example:
+        >>> create_file("example.txt", "Hello, World!")
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, file_name)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(file_content)
+
+
+
+def create_folder(folder_name: str):
+    """
+    Creates a folder in the folder where the Python file is running.
+    
+    Args:
+        folder_name (str): The name of the folder to create.
+    
+    Example:
+        >>> create_folder("my_folder")
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(script_dir, folder_name)
+    os.makedirs(folder_path, exist_ok=True)
+
+from google.adk.agents.llm_agent import Agent
+
+root_agent = Agent(
+    model='gemini-2.5-pro',
+    name='notion_article_publisher_agent',
+    description="A professional content publisher specialized in publishing Notion articles to Jekyll blog.",
+    instruction="""ROLE AND PURPOSE:
+You are a professional content publisher specialized in publishing Notion articles to Jekyll blog. Your primary responsibility is to publish Notion articles to Jekyll blog by converting the Notion article to markdown and then commit it to Github codebase.
+
+WORKFLOW:
+When given a Notion page ID to publish, follow this systematic approach:
+- Convert the Notion article to markdown
+- Extract the title from Notion page
+- Generate the blog ID based on the title by the following rules:
+    - You format the title to a slug string, remove all non-alphanumeric characters and replace spaces with hyphens.
+    - You add a prefix "2025-11-02" to the slug string. The prefix is the current date in the format of "YYYY-MM-DD".
+    - If the title was chinese, you need to translate it to english sentence first, then format the english sentence to a slug string.
+    - You return the slug string as the blog ID.
+    - Example:
+        - Title: "我是如何解决AI应用开发图书的写作难题的"
+        - Blog ID: "2025-11-02-how-i-solve-the-writing-problems-of-ai-application-development-book"
+- Download all images from the markdown content with the following steps:
+    - Capture the image caption and url first. The images are in the markdown content, and the url is like this: ![caption](url).
+    - Decide the file name: The file name should be the caption of the image in english in slug string. If the caption is empty, use incrementing number to name the file.
+    - Download the You need to download the images to the `blog/_images/[blog_id]` folder.
+    - Example:
+        - Caption: "AI应用开发图书的封面"
+        - File name: "ai-application-development-book-cover.jpg"
+        - Caption: ""
+        - File name: "1.jpg"
+    - After downloading the images, you need to update the markdown content to replace the image url with the new url. The new url is like this: `![caption](../_images/[blog_id]/[file_name])`
+        - Example:
+            - Markdown content:
+                ```markdown
+                ![AI应用开发图书的封面](https://example.com/image.jpg)
+                ```
+            - New markdown content:
+                ```markdown
+                ![AI应用开发图书的封面](../_images/2025-11-02-how-i-solve-the-writing-problems-of-ai-application-development-book/ai-application-development-book-cover.jpg)
+                ```
+    - Delete the last image tag from the markdown content.
+- Create a new file in the blog folder `blog/_posts` with the blog ID. The file name is the blog ID. Write the markdown content updated in the last step to the file.
+""",
+    tools=[
+        create_folder,
+        create_file,
+        download_image,
+        extract_title_from_page,
+        convert_to_markdown,
+    ]
+)
+
+# Help me publish the Notion article which ID was 2910cda410a6802ba735ddab8b768898
+# if __name__ == "__main__":
+#     asyncio.run(print_article_as_markdown("2910cda410a6802ba735ddab8b768898"))
 
 # Write a function to analyse the markdown content, and pick max 2 tags from the tag options I shared with you. Here are the reuqirements:
 # - The function only accept the string markdown as parameters

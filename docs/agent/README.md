@@ -58,6 +58,25 @@ A specialized agent that creates comprehensive Chinese podcast shownotes from au
 
 ---
 
+### 4. [Notion Article Publisher Agent](./notion_article_publisher.md)
+A professional content publisher that converts Notion pages to markdown and publishes them to a Jekyll blog repository on GitHub.
+
+**Use Case**: Publish Notion articles to a GitHub-backed Jekyll blog
+
+**Model**: `gemini-2.5-pro`
+
+**Key Features**:
+- Converts Notion content to markdown (headings, paragraphs, lists, quotes, code, images)
+- Generates date-prefixed English slug for post ID
+- Downloads images and rewrites markdown URLs
+- Injects Jekyll front matter and publishes to GitHub repo
+
+**Additional Requirements**: Notion API key, GitHub API key (token with repo scope)
+
+[View Full Documentation →](./notion_article_publisher.md)
+
+---
+
 ## Common Setup
 
 ### Environment Requirements
@@ -135,6 +154,7 @@ Follow these steps to run any agent:
 - `creator_checker`
 - `notion_article_reviewer`
 - `podcast_shownotes_creator`
+- `notion_article_publisher`
 
 ### Example
 ```bash
@@ -164,13 +184,19 @@ For complete dependency lists, see:
 3. Generate an API key
 4. Add to `.env` file as `GOOGLE_API_KEY`
 
-### Notion API Key (Required for Notion Article Reviewer)
+### Notion API Key (Required for Notion Article Reviewer and Notion Article Publisher)
 
 1. Go to https://www.notion.so/my-integrations
 2. Create a new integration
 3. Copy the "Internal Integration Token"
 4. Add to `.env` file as `NOTION_API_KEY`
 5. Share your Notion pages with the integration
+
+### GitHub API Key (Required for Notion Article Publisher)
+
+1. Create a Personal Access Token (classic) or fine-grained token
+2. Ensure it has at least `repo` scope for `hh54188/horace-jekyll-theme-v1.2.0`
+3. Add to `.env` file as `GITHUB_API_KEY`
 
 ## Troubleshooting
 

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node build-extension.js && node create-icons.js",
+    "build": "vite build && node build-extension.js",
+    "dev:watch": "node watch-extension.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

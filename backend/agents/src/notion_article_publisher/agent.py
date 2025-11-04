@@ -38,7 +38,7 @@ When given a Notion page ID to publish, follow this systematic approach:
 - Extract the title from Notion page
 - Generate the blog ID based on the title by the following rules:
     - You format the title to a slug string, remove all non-alphanumeric characters and replace spaces with hyphens.
-    - You add a prefix "2025-11-02" to the slug string. The prefix is the current date in the format of "YYYY-MM-DD".
+    - You add a date-like format prefix "YYYY-MM-DD" like "2025-11-02" to the slug string. The prefix is the current date in the format of "YYYY-MM-DD".
     - If the title was chinese, you need to translate it to english sentence first, then format the english sentence to a slug string.
     - You return the slug string as the blog ID.
     - Example:
@@ -47,7 +47,7 @@ When given a Notion page ID to publish, follow this systematic approach:
 - Download all images from the markdown content with the following steps:
     - Capture the image caption and url first. The images are in the markdown content, and the url is like this: ![caption](url).
     - Decide the file name: The file name should be the caption of the image in english in slug string. If the caption is empty, use incrementing number to name the file.
-    - Download the You need to download the images to the `blog/images/[blog_id]` folder.
+    - Download the images to the `blog/images/[blog_id]` folder.
     - Example:
         - Caption: "AI应用开发图书的封面"
         - File name: "ai-application-development-book-cover.jpg"

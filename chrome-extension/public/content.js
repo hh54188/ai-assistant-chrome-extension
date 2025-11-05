@@ -406,6 +406,20 @@ window.addEventListener('message', (event) => {
         event.source.postMessage({
           type: 'SCREENSHOT_DATA_CLEARED'
         }, '*');
+      } else if (event.data.type === 'OPEN_NEW_TAB') {
+        // Forward to background script to open new tab
+        chrome.runtime.sendMessage(
+          { action: 'openNewTab', url: event.data.url },
+          (response) => {
+            if (event.source) {
+              event.source.postMessage({
+                type: 'OPEN_NEW_TAB_RESPONSE',
+                success: response && response.success,
+                error: response?.error
+              }, '*');
+            }
+          }
+        );
       }
     }
   } catch {
@@ -460,6 +474,20 @@ window.addEventListener('message', (event) => {
       event.source.postMessage({
         type: 'SCREENSHOT_DATA_CLEARED'
       }, '*');
+    } else if (event.data && event.data.type === 'OPEN_NEW_TAB') {
+      // Forward to background script to open new tab
+      chrome.runtime.sendMessage(
+        { action: 'openNewTab', url: event.data.url },
+        (response) => {
+          if (event.source) {
+            event.source.postMessage({
+              type: 'OPEN_NEW_TAB_RESPONSE',
+              success: response && response.success,
+              error: response?.error
+            }, '*');
+          }
+        }
+      );
     }
   }
 });

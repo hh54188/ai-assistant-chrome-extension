@@ -27,6 +27,7 @@ import { Conversations } from '@ant-design/x';
 import { Button, Tooltip, Popover } from 'antd';
 import React from 'react';
 import { useMenuBarStyle } from './MenuBar.styles';
+import { generalAgent } from '../services/mastra-client';
 
 const MenuBar = ({ 
     onOpenSettings,
@@ -193,6 +194,7 @@ const MenuBar = ({
                         icon={<FireOutlined />}
                         onClick={() => {
                             console.log('Fire 123');
+                            generalAgent();
                         }}
                         className={styles.menuButton}
                     />

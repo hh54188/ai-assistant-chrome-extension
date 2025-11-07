@@ -1,0 +1,10 @@
+{
+    "name": "ai-assistent-agents",
+    "type": "module",
+    "dependencies": {
+        "@genkit-ai/google-genai": "^1.22.0",
+        "dotenv": "^17.2.3",
+        "genkit": "^1.22.0",
+        "puppeteer": "^24.29.1"
+    }
+}

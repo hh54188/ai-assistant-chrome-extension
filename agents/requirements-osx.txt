@@ -61,6 +61,7 @@ idna==3.11
 importlib_metadata==8.7.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
+mailchimp-marketing==3.0.80
 Mako==1.3.10
 MarkupSafe==3.0.3
 mcp==1.21.0

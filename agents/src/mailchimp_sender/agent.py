@@ -1,6 +1,10 @@
+import errno
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
+import time
 import os
+import base64
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,21 +24,48 @@ def get_latest_compagin() -> str:
 
     return last_compagin_id
 
+def upload_image(file_name: str, file_path: str) -> tuple[str, str]:
+    with open(file_path, 'rb') as image_file:
+        image = base64.b64encode(image_file.read())
+        encoded_string = image.decode()
+        response = client.fileManager.upload({ "name": file_name, "file_data": encoded_string })
+        file_id = response["id"]
+        full_size_url = response["full_size_url"]
+        return (file_id, full_size_url)
 
-try:
-    last_compagin_id = get_latest_compagin()
-    new_compagin = client.campaigns.replicate(last_compagin_id)
-    new_compagin_id = new_compagin["id"]
+# Usage:
+# try:
+#     current_dir = Path(__file__).resolve().parent
+#     file_path = current_dir / "cover.png"
+#     upload_image(file_path)
+# except ApiClientError as error:
+#     print(error.text)
 
-    client.campaigns.update(new_compagin_id, {
-        "settings": {
-            "subject_line": "测试测试",
-            "title": "test, test",
-        }})
-    
-    print(new_compagin)
+def create_compagin(subject, title_slug_str):
+    try:
+        last_compagin_id = get_latest_compagin()
+        new_compagin = client.campaigns.replicate(last_compagin_id)
+        new_compagin_id = new_compagin["id"]
 
-    # last_compagin_content = client.campaigns.get_content(last_compagin_id)
-    # print(last_compagin_content)
-except ApiClientError as error:
-    print("Error: {}".format(error.text))
+        client.campaigns.update(new_compagin_id, {
+            "settings": {
+                "subject_line": subject,
+                "title": title_slug_str
+            }})
+
+        client.campaigns.set_content(new_compagin_id, {
+            "template": {
+                "id": 10054406,
+                "sections": {
+                    "title": "=======>Black Phone<======"
+                }
+            }
+        })
+
+        last_compagin_content = client.campaigns.get_content(new_compagin_id)
+        print(last_compagin_content)
+    except ApiClientError as error:
+        print("Error: {}".format(error.text))
+
+# Usage:
+create_compagin("测试", "test-test")

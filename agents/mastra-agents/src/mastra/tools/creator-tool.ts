@@ -1,13 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { email, z } from "zod";
 
-type CreatorInfo = {
-    name: string,
-    website: string,
-    github: string,
-    email: string
-}
-
 export const creatorCheckerTool = createTool({
     id: "check-creator",
     description: "Check the creator of the project. Returns the name of the project creator.",

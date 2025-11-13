@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@mastra/core": "^0.24.0",
+        "@notionhq/client": "^2.3.0",
         "puppeteer": "^24.29.1",
         "zod": "^4.1.12"
     }

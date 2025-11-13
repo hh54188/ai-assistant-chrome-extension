@@ -4,9 +4,6 @@ import { dirname, join } from 'path';
 import puppeteer, { Browser } from 'puppeteer';
 import { z } from "zod"
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = dirname(__filename);
-
 const isWindows = process.platform === 'win32'
 const SCREENSHOTS_DIR = process.env.SCREENSHOTS_DIR
 

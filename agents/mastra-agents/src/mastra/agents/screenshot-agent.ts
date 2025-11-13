@@ -2,7 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import { screenShotTool } from "../tools/screenshot-tool";
 
 export const screenshotAgent = new Agent({
-    name: "Agent for screenshoting a specified webpage",
+    name: "Agent for Screenshoting Webpage",
     instructions: `
         You are a helpful assistant to help the user do a screenthot for specified url and in the mobile device
         - The user must tell you 2 required things, absence one will make the task failed:

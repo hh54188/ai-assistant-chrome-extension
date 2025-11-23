@@ -1,8 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { extractUuidTool } from "../tools/notion/extract-uuid-tool";
-import { validatePageTool } from "../tools/notion/validate-page-tool";
-import { addCommentTool } from "../tools/notion/add-comment-tool";
-import { extractTextTool } from "../tools/notion/extract-text-tool";
+import { extractUuidTool, validatePageTool, addCommentTool, extractTextTool } from "../tools/notion-operations-tool";
 
 export const notionArticleReviewerAgent = new Agent({
     name: "Notion Article Review Agent",

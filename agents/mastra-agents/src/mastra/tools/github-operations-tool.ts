@@ -3,6 +3,7 @@ import { Octokit } from "@octokit/rest";
 import { readFile, readdir, stat } from "fs/promises";
 import { join, relative } from "path";
 import { z } from "zod";
+import 'dotenv/config'
 
 const octokit = new Octokit({
     auth: process.env.GITHUB_API_KEY,
@@ -220,4 +221,3 @@ export const uploadFolderToGithubTool = createTool({
         }
     }
 });
-

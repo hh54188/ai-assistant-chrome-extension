@@ -71,7 +71,6 @@ When given a Notion page ID to publish, follow this systematic approach:
         downloadImageTool,
         createGithubFileTool,
         createGithubImageTool,
-        uploadFolderToGithubTool
     },
 });
 

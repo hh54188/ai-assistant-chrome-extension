@@ -172,9 +172,12 @@ export const cleanupBlogFoldersTool = createTool({
     }),
     execute: async () => {
         try {
-            const scriptDir = process.cwd();
-            const postsDir = join(scriptDir, "blog", "_posts");
-            const imagesDir = join(scriptDir, "blog", "images");
+            const postsDir = process.env.BLOG_POSTS_DIR
+            const imagesDir = process.env.BLOG_IMAGES_DIR
+
+            if (!postsDir || !imagesDir) {
+                throw new Error("'postsDir' or 'imageDir' not exist yet")
+            }
             
             let filesDeleted = 0;
             let foldersDeleted = 0;

@@ -12,7 +12,6 @@ When you run the workflow, print out the debug information including each tool f
 
 WORKFLOW:
 When given a Notion page ID to publish, follow this systematic approach:
-- Before do everything, you need to cleanup the blog folders first, the folders are \`_posts\` and \`images\`.
 - Convert the Notion article to markdown
 - Extract the title from Notion page
 - Generate the blog ID based on the title by the following rules:
@@ -26,7 +25,7 @@ When given a Notion page ID to publish, follow this systematic approach:
 - Download all images from the markdown content with the following steps:
     - Capture the image caption and url first. The images are in the markdown content, and the url is like this: ![caption](url).
     - Decide the file name: The file name should be the caption of the image in english in slug string. If the caption is empty, use incrementing number to name the file.
-    - Download the images to the \`images/[blog_id]\` folder.
+    - Create a folder with the blog ID in the temp folder which belongs to the system, and download the images to the folder.
     - Example:
         - Caption: "AI应用开发图书的封面"
         - File name: "ai-application-development-book-cover.jpg"
@@ -54,9 +53,9 @@ When given a Notion page ID to publish, follow this systematic approach:
     ---
     \`\`\`
 - Insert the meta info at the beginning of the markdown content.
-- Create a new file in the blog folder \`_posts\` with the blog ID. The file name is the blog ID. Write the markdown content updated in the last step to the file.
+- Create a new file with the blog ID in the temp folder which belongs to the system. Write the markdown content updated in the last step to the file.
 - Upload the file which created into the GitHub Jekyll blog repo, the repo is https://github.com/hh54188/horace-jekyll-theme-v1.2.0, and the target path is \`_posts/[blog_id].md\`
-- Upload the images which downloaded in the prevous step which exists in the \`images/[blog_id]\` folder into the GitHub Jekyll blog repo, the repo is https://github.com/hh54188/horace-jekyll-theme-v1.2.0, and the target path is \`images/[blog_id]\`
+- Upload the images which downloaded in the prevous step which exists in the [blog_id] folder into the GitHub Jekyll blog repo, the repo is https://github.com/hh54188/horace-jekyll-theme-v1.2.0, and the target path is \`images/[blog_id]\`
 - If the agent has successfully published all the blog content to GitHub, it should inform the user that the content has been successfully published to the GitHub repository.`,
     model: "google/gemini-2.5-pro",
     tools: {

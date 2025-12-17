@@ -17,3 +17,6 @@ settings.json
 **/images/**/*.png
 **/images/**/*.jpg
 **/_posts/*.md
+**/**/cookies/*.json
+**/**/screenshots/*.png
+.mastra

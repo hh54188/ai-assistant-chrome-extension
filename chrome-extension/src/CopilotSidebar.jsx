@@ -429,6 +429,9 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                 } else {
                     console.log("❌ REACT: No valid text in dropped data");
                 }
+            } else if (event.data && event.data.type === 'OPEN_NEW_TAB_RESPONSE') {
+
+                console.log("==========> OPEN_NEW_TAB_RESPONSE", event.data);
             }
         };
 

@@ -11,6 +11,7 @@ import {
     UserOutlined,
     BookOutlined,
     ToolOutlined,
+    FileOutlined,
     CheckOutlined,
     CommentOutlined,
     ArrowRightOutlined,
@@ -19,12 +20,14 @@ import {
     CompressOutlined,
     LoadingOutlined,
     CameraOutlined,
-    QuestionCircleOutlined
+    QuestionCircleOutlined,
+    FireOutlined
 } from '@ant-design/icons';
 import { Conversations } from '@ant-design/x';
 import { Button, Tooltip, Popover } from 'antd';
 import React from 'react';
 import { useMenuBarStyle } from './MenuBar.styles';
+import { callGeneralAgent, handleClientTool } from '../services/mastra-client';
 
 const MenuBar = ({ 
     onOpenSettings,
@@ -186,6 +189,15 @@ const MenuBar = ({
                         className={styles.menuButton}
                     />
                 </Tooltip>
+                <Button
+                        type="text"
+                        icon={<FireOutlined />}
+                        onClick={async () => {
+                            await callGeneralAgent();
+                            // await handleClientTool();
+                        }}
+                        className={styles.menuButton}
+                    />
                 <Tooltip 
                     getPopupContainer={(triggerNode) => triggerNode.parentNode} 
                     title="Help & About"

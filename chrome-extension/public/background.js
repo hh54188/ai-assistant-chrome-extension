@@ -45,5 +45,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: false, error: error.message });
     }
     return true; // Keep the message channel open for async response
+  } else if (request.action === 'OPEN_NEW_TAB') {
+    // Handle opening a new tab in the background script
+    // This works because background scripts have full access to Chrome APIs
+    console.log("==========> OPEN_NEW_TAB IN BACKGROUND SCRIPT", request);
+    try {
+      chrome.tabs.create({ url: request.url }, (tab) => {
+        if (chrome.runtime.lastError) {
+          sendResponse({ 
+            success: false, 
+            error: chrome.runtime.lastError.message 
+          });
+        } else {
+          sendResponse({ success: true });
+        }
+      });
+    } catch (error) {
+      console.error('Open new tab failed:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+    return true; // Keep the message channel open for async response
   }
 }); 

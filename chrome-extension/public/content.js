@@ -406,6 +406,35 @@ window.addEventListener('message', (event) => {
         event.source.postMessage({
           type: 'SCREENSHOT_DATA_CLEARED'
         }, '*');
+      } else if (event.data.type === 'OPEN_NEW_TAB') {
+        console.log("==========> OPEN_NEW_TAB IN CONTENT SCRIPT", event.data);
+        // Forward to background script to open new tab
+
+
+        // chrome.runtime.sendMessage({
+        //   type: 'CAPTURE_VISIBLE_TAB'
+        // }, (response) => {
+        //   if (response && response.success) {
+        //     resolve(response);
+        //   } else {
+        //     reject(new Error(response?.error || 'Failed to capture screenshot'));
+        //   }
+        // });
+
+        
+        chrome.runtime.sendMessage(
+          { action: 'OPEN_NEW_TAB', url: event.data.url },
+          (response) => {
+            console.log("==========> OPEN_NEW_TAB_RESPONSE IN CONTENT SCRIPT", response);
+            // if (event.source) {
+            //   event.source.postMessage({
+            //     type: 'OPEN_NEW_TAB_RESPONSE',
+            //     success: response && response.success,
+            //     error: response?.error
+            //   }, '*');
+            // }
+          }
+        );
       }
     }
   } catch {
@@ -460,6 +489,20 @@ window.addEventListener('message', (event) => {
       event.source.postMessage({
         type: 'SCREENSHOT_DATA_CLEARED'
       }, '*');
+    } else if (event.data && event.data.type === 'OPEN_NEW_TAB') {
+      // Forward to background script to open new tab
+      chrome.runtime.sendMessage(
+        { action: 'openNewTab', url: event.data.url },
+        (response) => {
+          if (event.source) {
+            event.source.postMessage({
+              type: 'OPEN_NEW_TAB_RESPONSE',
+              success: response && response.success,
+              error: response?.error
+            }, '*');
+          }
+        }
+      );
     }
   }
 });

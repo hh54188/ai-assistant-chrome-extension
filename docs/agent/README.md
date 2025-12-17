@@ -166,14 +166,23 @@ adk run notion_article_reviewer
 
 ## Common Dependencies
 
-All agents share these core dependencies:
-- `google-adk>=1.16.0` - Google Agent Development Kit
-- `python-dotenv==1.1.1` - Environment variable management
-- Various Google Cloud libraries for AI platform integration
+The following third-party libraries need to be installed manually (extracted from import statements):
 
-For complete dependency lists, see:
-- `backend/agents/requirements-osx.txt` (macOS)
-- `backend/agents/requirements-win.txt` (Windows)
+### Core Dependencies (All Agents)
+- `google-adk` - Google Agent Development Kit (imported as `google.adk.agents.llm_agent`)
+
+### Agent-Specific Dependencies
+
+**Notion Article Reviewer & Notion Article Publisher:**
+- `python-dotenv` - Environment variable management
+- `notion-client` - Notion API client library
+
+**Notion Article Publisher:**
+- `PyGithub` - GitHub API client library
+- `requests` - HTTP library for downloading images
+
+**Podcast Shownotes Creator:**
+- `faster-whisper` - Fast Whisper speech recognition model 
 
 ## API Keys
 

@@ -63,7 +63,7 @@ jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 Mako==1.3.10
 MarkupSafe==3.0.3
-mcp==1.17.0
+mcp==1.23.0
 mpmath==1.3.0
 notion-client==2.5.0
 numpy==2.3.3

@@ -1,6 +1,9 @@
-from faster_whisper import WhisperModel
 import os
+from faster_whisper import WhisperModel
 from google.adk.agents.llm_agent import Agent
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
+from mcp import StdioServerParameters
 
 def format_timestamp(seconds):
     """Convert seconds to HH:MM:SS format"""
@@ -70,10 +73,7 @@ def transcribe_audio(audio_file_path: str) -> list[str]:
         transcript.append(formatted_text)
     return transcript
 
-# print(check_audio_file("E22_v2.mp3"))
-# transcribe_audio("E22_v2.mp3")
-
-
+ACCESS_FOLDER_PATH = r"C:\Users\ligunagyi\Desktop"
 root_agent = Agent(
     model='gemini-2.5-flash',
     name='podcast_shownotes_creator_agent',
@@ -81,12 +81,11 @@ root_agent = Agent(
     instruction="""You are a professional podcast shownotes creator that generates comprehensive Chinese shownotes from audio files.
 
 WORKFLOW:
-1. Receive the absolute file path of the audio file from the user
-2. Use the 'check_audio_file' tool to validate that the file exists
-3. Use the 'transcribe_audio' tool to get the transcript (returns a list of timestamped strings)
-4. Split the transcript list into 5 equal sub-lists to prevent exceeding token limits
-5. Create a detailed summary for each of the 5 sub-lists, capturing main topics and key points
-6. Use the 5 summaries to generate the final comprehensive shownotes
+- Receive the absolute file path of the audio file from the user
+- Check whether the file exists, if the file exist then check if it's a validate a audio file.
+- Use the 'transcribe_audio' tool to get the transcript (returns a list of timestamped strings)
+- Save the transcript content into a text file, the file should located in the folder where the audio file belongs
+- Generate the final comprehensive shownotes according to the transcript generated above.
 
 SHOWNOTES TEMPLATE (in Chinese):
 Generate the shownotes in the following structure:
@@ -144,5 +143,20 @@ IMPORTANT NOTES:
 - Ensure the shownotes are well-structured, professional, and valuable to listeners
 - Focus on content quality and accuracy based on what was actually discussed in the audio
 """,
-    tools=[check_audio_file, transcribe_audio],
+    tools=[
+        transcribe_audio,
+        McpToolset(
+            connection_params=StdioConnectionParams(
+                server_params = StdioServerParameters(
+                    command='npx',
+                    args=[
+                        "-y",
+                        "@modelcontextprotocol/server-filesystem",
+                        os.path.abspath(ACCESS_FOLDER_PATH),
+                    ],
+                ),
+                timeout=20
+            ),
+        )
+    ],
 )

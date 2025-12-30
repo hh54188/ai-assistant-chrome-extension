@@ -20,3 +20,4 @@ settings.json
 **/**/cookies/*.json
 **/**/screenshots/*.png
 .mastra
+.adk

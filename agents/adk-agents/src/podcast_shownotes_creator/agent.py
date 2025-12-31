@@ -82,10 +82,14 @@ root_agent = Agent(
 
 WORKFLOW:
 - Receive the absolute file path of the audio file from the user
-- Check whether the file exists, if the file exist then check if it's a validate a audio file.
-- Use the 'transcribe_audio' tool to get the transcript (returns a list of timestamped strings)
-- Save the transcript content into a text file, the file should located in the folder where the audio file belongs
-- Generate the final comprehensive shownotes according to the transcript generated above.
+- Check whether the file exists, if the file not exist then terminate the whole process
+- If the file exists check the file type, if the file was an audio file then follow the next sub-steps:
+    - Use the 'transcribe_audio' tool to get the transcript (returns a list of timestamped strings)
+    - Save the transcript content into a text file, the file should located in the folder where the audio file belongs
+    - Generate the final comprehensive shownotes according to the transcript generated above.
+- If the file was an text file, check whether it have transcript content inside. The transcript content should like this: "[00:00:00 -> 00:00:19] XXXXXX, XXXXXX". If the file have transcript content then follow the next sub-steps:
+    - Generate the final comprehensive shownotes according to the transcript content generated above.
+- If the file was other types then terminate the whole process
 
 SHOWNOTES TEMPLATE (in Chinese):
 Generate the shownotes in the following structure:

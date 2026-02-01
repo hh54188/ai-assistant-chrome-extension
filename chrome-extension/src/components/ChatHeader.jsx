@@ -3,6 +3,7 @@ import {
     ThunderboltOutlined,
     ThunderboltFilled,
     PlusOutlined,
+    UserOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Select } from 'antd';
 import React from 'react';
@@ -46,27 +47,6 @@ const ChatHeader = ({
                     size="small"
                     getPopupContainer={(triggerNode) => triggerNode.parentNode}
                     options={[
-                        // {
-                        //     label: <span>GPT</span>,
-                        //     title: 'GPT',
-                        //     // https://platform.openai.com/docs/models
-                        //     options: [
-                        //         // GPT-4.1 nano is the fastest, most cost-effective GPT-4.1 model.
-                        //         // $0.1 • $0.4
-                        //         { label: <span>gpt-4.1-nano</span>, value: 'gpt-4.1-nano' },
-                        //         // GPT-4o mini ("o" for "omni") is a fast, affordable small model for focused tasks. 
-                        //         // It accepts both text and image inputs, and produces text outputs (including Structured Outputs). 
-                        //         // It is ideal for fine-tuning, and model outputs from a larger model like GPT-4o can be distilled to GPT-4o-mini to produce similar results at lower cost and latency. 
-                        //         // $0.15 • $0.6
-                        //         { label: <span>gpt-4o-mini</span>, value: 'gpt-4o-mini' },
-                        //         // GPT-4.1 mini provides a balance between intelligence, speed, and cost that makes it an attractive model for focused tasks.
-                        //         // $0.4 • $1.6
-                        //         { label: <span>gpt-4.1-mini</span>, value: 'gpt-4.1-mini' },
-                        //         // o4-mini is our latest small o-series model. It's optimized for fast, effective reasoning with exceptionally efficient performance in coding and visual tasks.
-                        //         // $1.1 • $4.4
-                        //         { label: <span>o4-mini</span>, value: 'o4-mini' },
-                        //     ],
-                        // },
                         {
                             label: <span>Gemini</span>,
                             title: 'Gemini',
@@ -97,6 +77,12 @@ const ChatHeader = ({
                     type="text"
                     icon={<PlusOutlined />}
                     onClick={handleNewSession}
+                    className={styles.headerButton}
+                />
+                <Button
+                    type="text"
+                    icon={<UserOutlined />}
+                    onClick={null}
                     className={styles.headerButton}
                 />
             </Space>

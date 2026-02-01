@@ -54,10 +54,7 @@ app.get('/', (req, res) => {
         endpoints: {
             health: '/health',
             chat: {
-                stream: 'POST /api/chat/stream',
-                models: 'GET /api/chat/models',
-                test: 'GET /api/chat/test',
-                nonStream: 'POST /api/chat/non-stream'
+                stream: 'POST /api/chat/stream'
             }
         }
     });

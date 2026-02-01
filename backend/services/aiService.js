@@ -553,39 +553,6 @@ This helps you debug streaming issues without making actual API calls to Gemini.
     }
 
     /**
-     * Test connection to AI providers
-     */
-    async testConnections() {
-        const results = {
-            openai: false,
-            gemini: false
-        };
-
-        try {
-            // Test OpenAI
-            const openaiTest = await this.openai.chat.completions.create({
-                model: 'gpt-3.5-turbo',
-                messages: [{ role: 'user', content: 'Hello' }],
-                max_tokens: 5
-            });
-            results.openai = true;
-        } catch (error) {
-            console.error('OpenAI connection test failed:', error.message);
-        }
-
-        try {
-            // Test Gemini
-            const chat = this.genAI.chats.create({ model: 'gemini-1.5-pro' });
-            const result = await chat.sendMessage({ message: 'Hello' });
-            results.gemini = true;
-        } catch (error) {
-            console.error('Gemini connection test failed:', error.message);
-        }
-
-        return results;
-    }
-
-    /**
      * Upload a file to Gemini API
      * @param {string} filePath - File path
      * @param {string} mimeType - MIME type of the file

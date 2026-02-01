@@ -71,19 +71,6 @@ router.post('/stream', async (req, res) => {
     }
 });
 
-/**
- * GET /api/chat/models
- * Get available AI models
- */
-router.get('/models', (req, res) => {
-    try {
-        const models = aiService.getAvailableModels();
-        res.json({ models });
-    } catch (error) {
-        console.error('Error getting models:', error);
-        res.status(500).json({ error: 'Failed to get models' });
-    }
-});
 
 /**
  * GET /api/chat/test
@@ -126,59 +113,6 @@ router.get('/conversation/:sessionId/history', (req, res) => {
     } catch (error) {
         console.error('Error getting conversation history:', error);
         res.status(500).json({ error: 'Failed to get conversation history' });
-    }
-});
-
-/**
- * POST /api/chat/non-stream
- * Non-streaming chat response (for fallback)
- */
-router.post('/non-stream', async (req, res) => {
-    const { message, model = 'gpt-4.1-nano', conversationHistory = [], files = [] } = req.body;
-
-    if (!message || !message.trim()) {
-        return res.status(400).json({ error: 'Message is required' });
-    }
-
-    try {
-        let response;
-        let provider;
-
-        // Determine provider based on model name
-        if (model.startsWith('gpt-') || model.startsWith('o4-')) {
-            provider = 'openai';
-            const result = await aiService.openai.chat.completions.create({
-                model: model,
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses.'
-                    },
-                    ...conversationHistory,
-                    { role: 'user', content: message }
-                ],
-                max_tokens: 1000,
-                temperature: 0.7
-            });
-            response = result.choices[0].message.content;
-        } else if (model.startsWith('gemini-')) {
-            provider = 'gemini';
-            const chat = aiService.genAI.chats.create({ model: model });
-            const result = await chat.sendMessage({ message: message });
-            response = result.text;
-        } else {
-            throw new Error(`Unsupported model: ${model}`);
-        }
-
-        res.json({ 
-            content: response, 
-            provider,
-            model,
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        console.error('Chat error:', error);
-        res.status(500).json({ error: error.message });
     }
 });
 

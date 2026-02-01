@@ -87,9 +87,6 @@ vi.mock('../../services/chatService', () => ({
     testConnections: vi.fn(),
     healthCheck: vi.fn()
   },
-  isFrontendOnlyMode: vi.fn(() => false),
-  getGeminiApiKey: vi.fn(() => ''),
-  hasValidApiKey: vi.fn(() => false)
 }));
 
 // Mock all components to avoid complex dependencies
@@ -111,7 +108,6 @@ vi.mock('../../components/MenuBar', () => ({
     isExpanded,
     onToggleExpand,
     onScreenshotCapture,
-    isDirectApiMode = false,
     connectionStatus = false
   }) => (
     <div data-testid="menu-bar">
@@ -137,7 +133,7 @@ vi.mock('../../components/MenuBar', () => ({
         <button
           data-testid="screenshot-button"
           onClick={onScreenshotCapture}
-          disabled={isDirectApiMode || !connectionStatus}
+          disabled={!connectionStatus}
         >
           Screenshot
         </button>
@@ -151,7 +147,6 @@ vi.mock('../../components/MenuBar', () => ({
         </button>
         <button
           data-testid="settings-button"
-          data-direct-api-mode={isDirectApiMode}
         >
           Settings
         </button>
@@ -475,17 +470,6 @@ describe('CopilotSidebar Integration Tests - Core Functionality', () => {
       expect(screen.getByTestId('attachments-available')).toBeInTheDocument();
     });
 
-    it('should disable attachments when in frontend-only mode', async () => {
-      // Mock chrome storage to return frontendOnlyMode: true
-      global.chrome.storage.local.get.mockResolvedValue({ frontendOnlyMode: true });
-
-      renderWithMocks(<CopilotSidebar {...mockProps} />);
-
-      // Wait for the chrome storage to load
-      await waitFor(() => {
-        expect(screen.queryByTestId('attachments-available')).not.toBeInTheDocument();
-      });
-    });
   });
 
   describe('Error Handling', () => {

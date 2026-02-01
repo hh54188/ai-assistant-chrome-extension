@@ -1,4 +1,4 @@
-import { Button, Input, Switch } from 'antd';
+import { Button, Input } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { notification } from '../utils/notifications';
 import useChromeStorage from '../hooks/useChromeStorage';
@@ -10,30 +10,18 @@ const SettingsModal = ({
     onConfirm,
 }) => {
     // Read current values from storage and get setter functions
-    const [storedFrontendOnlyMode, setStoredFrontendOnlyMode, frontendModeLoading] = useChromeStorage('frontendOnlyMode', false);
-    const [storedApiKey, setStoredApiKey, apiKeyLoading] = useChromeStorage('geminiApiKey', '');
     const [storedBackendUrl, setStoredBackendUrl, backendUrlLoading] = useChromeStorage('backendUrl', 'http://localhost:3001');
 
     // Local state for editing (separate from storage)
-    const [frontendOnlyMode, setFrontendOnlyMode] = useState(false);
-    const [apiKey, setApiKey] = useState('');
     const [backendUrl, setBackendUrl] = useState('http://localhost:3001');
     const [isValidating, setIsValidating] = useState(false);
 
     // Initialize local state with stored values when modal opens or values change
     useEffect(() => {
-        if (visible && !frontendModeLoading && !apiKeyLoading && !backendUrlLoading) {
-            console.log('SettingsModal initializing with stored values:', {
-                frontendOnlyMode: storedFrontendOnlyMode,
-                apiKey: storedApiKey ? storedApiKey.substring(0, 10) + '...' : 'empty',
-                backendUrl: storedBackendUrl,
-                loadingStates: { frontendModeLoading, apiKeyLoading, backendUrlLoading }
-            });
-            setFrontendOnlyMode(storedFrontendOnlyMode);
-            setApiKey(storedApiKey);
+        if (visible && !backendUrlLoading) {
             setBackendUrl(storedBackendUrl);
         }
-    }, [visible, storedFrontendOnlyMode, storedApiKey, storedBackendUrl, frontendModeLoading, apiKeyLoading, backendUrlLoading]);
+    }, [visible, storedBackendUrl, backendUrlLoading]);
 
     // Backend validation function
     const validateBackendUrl = async (url) => {
@@ -59,92 +47,30 @@ const SettingsModal = ({
     };
 
     // Validation helper functions
-    const isValidApiKey = (key) => {
-        const trimmedKey = key?.trim();
-        return trimmedKey && (trimmedKey.startsWith('AIza') || trimmedKey.startsWith('AI'));
-    };
-
     const isValidBackendUrl = (url) => {
         const trimmedUrl = url?.trim();
         return trimmedUrl && trimmedUrl.length > 0;
     };
 
     // Check if current configuration is valid for saving
-    const isConfigValid = () => {
-        if (frontendOnlyMode) {
-            // Direct mode: API key must be valid
-            return isValidApiKey(apiKey);
-        } else {
-            // Backend mode: backend URL must be filled
-            return isValidBackendUrl(backendUrl);
-        }
-    };
+    const isConfigValid = () => isValidBackendUrl(backendUrl);
 
     const handleSave = async () => {
         setIsValidating(true);
         
-        console.log('SettingsModal handleSave - Starting save process:', {
-            frontendOnlyMode,
-            backendUrl,
-            apiKeyPresent: !!apiKey
-        });
-        
         try {
-            // Validate configuration based on mode
-            if (frontendOnlyMode) {
-                // Direct mode: validate API key
-                console.log('Validating direct mode - checking API key');
-                if (!isValidApiKey(apiKey)) {
-                    console.log('API key validation failed');
-                    notification.error('Invalid API key format. Gemini API keys should start with "AIza" or "AI".');
-                    return;
-                }
-                console.log('API key validation passed');
-            } else {
-                // Backend mode: validate backend URL
-                console.log('Validating backend mode - checking backend URL');
-                if (!isValidBackendUrl(backendUrl)) {
-                    console.log('Backend URL validation failed - empty URL');
-                    notification.error('Backend URL is required when Direct API Mode is disabled.');
-                    return;
-                }
-
-                // Test backend connectivity
-                console.log('Testing backend connectivity for URL:', backendUrl);
-                const isValid = await validateBackendUrl(backendUrl);
-                console.log('Backend connectivity test result:', isValid);
-                
-                if (!isValid) {
-                    console.log('Backend connectivity test failed');
-                    notification.error('Backend is not reachable. Please check the URL or switch to Direct API Mode.');
-                    return;
-                }
-                console.log('Backend connectivity test passed');
+            if (!isValidBackendUrl(backendUrl)) {
+                notification.error('Backend URL is required.');
+                return;
             }
-            
-            // Save configuration
-            console.log('Saving configuration to storage:', {
-                frontendOnlyMode,
-                backendUrl,
-                apiKeyLength: apiKey?.length || 0
-            });
-            
-            await setStoredFrontendOnlyMode(frontendOnlyMode);
-            console.log('Saved frontendOnlyMode:', frontendOnlyMode);
+
+            const isValid = await validateBackendUrl(backendUrl);
+            if (!isValid) {
+                notification.error('Backend is not reachable. Please check the URL.');
+                return;
+            }
             
             await setStoredBackendUrl(backendUrl);
-            console.log('Saved backendUrl:', backendUrl);
-            
-            if (frontendOnlyMode) {
-                await setStoredApiKey(apiKey.trim());
-                console.log('Saved API key (direct mode)');
-            } else {
-                // In backend mode, we can still save the API key if provided
-                await setStoredApiKey(apiKey);
-                console.log('Saved API key (backend mode)');
-            }
-            
-            console.log('All settings saved successfully');
             notification.success('Settings saved successfully');
             onConfirm();
         } catch (error) {
@@ -156,17 +82,11 @@ const SettingsModal = ({
     };
 
     const handleCancel = () => {
-        // Reset local state to stored values (discard unsaved changes)
-        setFrontendOnlyMode(storedFrontendOnlyMode);
-        setApiKey(storedApiKey);
         setBackendUrl(storedBackendUrl);
         onCancel();
     };
 
     const handleRestoreDefaults = () => {
-        // Reset to default values
-        setFrontendOnlyMode(false);
-        setApiKey('');
         setBackendUrl('http://localhost:3001');
         notification.info('Settings restored to defaults');
     };
@@ -174,7 +94,7 @@ const SettingsModal = ({
     if (!visible) return null;
 
     // Show loading state while settings are being loaded
-    if (frontendModeLoading || apiKeyLoading || backendUrlLoading) {
+    if (backendUrlLoading) {
         return (
             <div style={styles.overlay}>
                 <div style={styles.loadingContainer}>
@@ -204,85 +124,33 @@ const SettingsModal = ({
 
                     {/* Content */}
                     <div style={styles.content}>
-                        {/* Frontend Only Mode Setting */}
                         <div style={styles.settingContainer}>
-                            <div style={styles.settingHeader}>
-                                <label htmlFor="direct-api-mode-switch" style={styles.settingLabel}>
-                                    Direct API Mode
-                                </label>
-                                <Switch
-                                    id="direct-api-mode-switch"
-                                    checked={frontendOnlyMode}
-                                    onChange={setFrontendOnlyMode}
-                                />
+                            <label htmlFor="backend-url-input" style={styles.apiKeyLabel}>
+                                Backend URL *
+                            </label>
+                            <Input
+                                id="backend-url-input"
+                                value={backendUrl}
+                                onChange={(e) => setBackendUrl(e.target.value)}
+                                placeholder="http://localhost:3001"
+                                style={{
+                                    ...styles.apiKeyInput,
+                                    borderColor: !isValidBackendUrl(backendUrl) ? '#ff4d4f' : undefined
+                                }}
+                            />
+                            <div style={styles.apiKeyDescription}>
+                                URL of the backend server.
                             </div>
-                            <div style={styles.settingDescription}>
-                                When enabled, messages are sent directly to Gemini API using your API key. 
-                                When disabled, messages go through the backend server first.
-                            </div>
+                            {!isValidBackendUrl(backendUrl) && (
+                                <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
+                                    Please enter a valid backend URL
+                                </div>
+                            )}
                         </div>
 
-                        {/* API Key Input - Only show when Direct Mode is enabled */}
-                        {frontendOnlyMode && (
-                            <div style={styles.settingContainer}>
-                                <label htmlFor="gemini-api-key-input" style={styles.apiKeyLabel}>
-                                    Gemini API Key *
-                                </label>
-                                <Input.Password
-                                    id="gemini-api-key-input"
-                                    value={apiKey}
-                                    onChange={(e) => setApiKey(e.target.value)}
-                                    placeholder="Enter your Gemini API key"
-                                    style={{
-                                        ...styles.apiKeyInput,
-                                        borderColor: frontendOnlyMode && !isValidApiKey(apiKey) ? '#ff4d4f' : undefined
-                                    }}
-                                />
-                                <div style={styles.apiKeyDescription}>
-                                    Required for Direct API Mode. Your API key is stored locally and never sent to our servers.
-                                </div>
-                                {frontendOnlyMode && !isValidApiKey(apiKey) && (
-                                    <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
-                                        Please enter a valid Gemini API key (starts with "AIza" or "AI")
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Backend URL Input - Only show when Direct Mode is disabled */}
-                        {!frontendOnlyMode && (
-                            <div style={styles.settingContainer}>
-                                <label htmlFor="backend-url-input" style={styles.apiKeyLabel}>
-                                    Backend URL *
-                                </label>
-                                <Input
-                                    id="backend-url-input"
-                                    value={backendUrl}
-                                    onChange={(e) => setBackendUrl(e.target.value)}
-                                    placeholder="http://localhost:3001"
-                                    style={{
-                                        ...styles.apiKeyInput,
-                                        borderColor: !frontendOnlyMode && !isValidBackendUrl(backendUrl) ? '#ff4d4f' : undefined
-                                    }}
-                                />
-                                <div style={styles.apiKeyDescription}>
-                                    URL of the backend server. Required when Direct API Mode is disabled.
-                                </div>
-                                {!frontendOnlyMode && !isValidBackendUrl(backendUrl) && (
-                                    <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
-                                        Please enter a valid backend URL
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Mode-specific information */}
                         <div style={styles.warningContainer}>
                             <div style={styles.warningText}>
-                                {frontendOnlyMode 
-                                    ? "🔑 Direct API Mode: Messages will be sent directly to Gemini using your API key."
-                                    : "🖥️ Backend Mode: Messages will be processed through your backend server."
-                                }
+                                🖥️ Messages will be processed through your backend server.
                             </div>
                         </div>
                     </div>

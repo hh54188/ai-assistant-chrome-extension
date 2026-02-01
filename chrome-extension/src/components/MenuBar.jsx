@@ -39,7 +39,6 @@ const MenuBar = ({
     isExpanded,
     onToggleExpand,
     onScreenshotCapture,
-    isDirectApiMode = false,
     connectionStatus = false
 }) => {
     const { styles } = useMenuBarStyle();
@@ -98,7 +97,7 @@ const MenuBar = ({
                         icon={<CameraOutlined />}
                         className={styles.menuButton}
                         onClick={onScreenshotCapture}
-                        disabled={isDirectApiMode || !connectionStatus}
+                        disabled={!connectionStatus}
                     />
                 </Tooltip>
                 {/* <Tooltip title="User Profile">
@@ -163,28 +162,12 @@ const MenuBar = ({
                 </Tooltip>
                 <Tooltip 
                     getPopupContainer={(triggerNode) => triggerNode.parentNode} 
-                    title={`Settings${isDirectApiMode ? ' (Direct API Mode Enabled)' : ''}`}
+                    title="Settings"
                     placement="right"
                 >
                     <Button
                         type="text"
-                        icon={
-                            <div style={{ position: 'relative' }}>
-                                <SettingOutlined />
-                                {isDirectApiMode && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: -2,
-                                        right: -2,
-                                        width: 8,
-                                        height: 8,
-                                        backgroundColor: '#52c41a',
-                                        borderRadius: '50%',
-                                        border: '1px solid white'
-                                    }} />
-                                )}
-                            </div>
-                        }
+                        icon={<SettingOutlined />}
                         onClick={onOpenSettings}
                         className={styles.menuButton}
                     />

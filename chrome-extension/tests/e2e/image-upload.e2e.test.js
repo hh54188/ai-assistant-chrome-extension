@@ -219,7 +219,7 @@ describe('Chrome Extension Image Upload E2E Tests', () => {
     // Try to trigger the extension using keyboard shortcut (Ctrl+Shift+A)
     await page.keyboard.down('Control');
     await page.keyboard.down('Shift');
-    await page.keyboard.press('KeyA');
+    await page.keyboard.press('KeyE');
     await page.keyboard.up('Shift');
     await page.keyboard.up('Control');
     
@@ -245,7 +245,7 @@ describe('Chrome Extension Image Upload E2E Tests', () => {
         // Try keyboard shortcut again
         await page.keyboard.down('Control');
         await page.keyboard.down('Shift');
-        await page.keyboard.press('KeyA');
+        await page.keyboard.press('KeyE');
         await page.keyboard.up('Shift');
         await page.keyboard.up('Control');
         
@@ -342,15 +342,7 @@ describe('Chrome Extension Image Upload E2E Tests', () => {
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
       } else {
-        console.log('⚠️ Backend URL input not found, trying direct API mode...');
-        
-        // Try to find and click "Use Direct API" button
-        const directApiButton = await frame.$('button:has-text("Use Direct API")');
-        if (directApiButton) {
-          await frame.click('button:has-text("Use Direct API")');
-          console.log('✅ Clicked Use Direct API button');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
+        console.log('⚠️ Backend URL input not found; backend URL is required to continue.');
       }
     } else {
       console.log('✅ No setup modal detected, extension is ready');

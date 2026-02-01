@@ -11,53 +11,18 @@ const ForceConfigModal = ({
     onConfigured,
 }) => {
     // Read current values from storage and get setter functions
-    const [storedApiKey, setStoredApiKey, apiKeyLoading] = useChromeStorage('geminiApiKey', '');
-    const [, setStoredFrontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
     const [storedBackendUrl, setStoredBackendUrl, backendUrlLoading] = useChromeStorage('backendUrl', 'http://localhost:3001');
 
     // Local state for editing
-    const [apiKey, setApiKey] = useState('');
     const [backendUrl, setBackendUrl] = useState('http://localhost:3001');
     const [isRetrying, setIsRetrying] = useState(false);
 
     // Initialize local state with stored values when modal opens
     useEffect(() => {
-        if (visible && !apiKeyLoading && !backendUrlLoading) {
-            setApiKey(storedApiKey);
+        if (visible && !backendUrlLoading) {
             setBackendUrl(storedBackendUrl);
         }
-    }, [visible, storedApiKey, storedBackendUrl, apiKeyLoading, backendUrlLoading]);
-
-    const handleUseDirectApi = async () => {
-        if (!apiKey.trim()) {
-            notification.error('Please enter a valid Gemini API key');
-            return;
-        }
-
-        // Basic API key format validation
-        const trimmedKey = apiKey.trim();
-        if (!trimmedKey.startsWith('AIza') && !trimmedKey.startsWith('AI')) {
-            notification.error('Invalid API key format. Gemini API keys should start with "AIza" or "AI".');
-            return;
-        }
-
-        try {
-            // Save API key and enable frontend-only mode
-            await setStoredApiKey(trimmedKey);
-            await setStoredFrontendOnlyMode(true);
-            
-            console.log('Settings saved successfully:', { 
-                apiKey: trimmedKey.substring(0, 10) + '...', 
-                frontendOnlyMode: true 
-            });
-            
-            notification.success('Direct API mode enabled successfully!');
-            onConfigured();
-        } catch (error) {
-            notification.error('Failed to save configuration');
-            console.error('Error saving configuration:', error);
-        }
-    };
+    }, [visible, storedBackendUrl, backendUrlLoading]);
 
     const handleSaveAndTestConnection = async () => {
         setIsRetrying(true);
@@ -107,7 +72,7 @@ const ForceConfigModal = ({
     if (!visible) return null;
 
     // Show loading state while settings are being loaded
-    if (apiKeyLoading || backendUrlLoading) {
+    if (backendUrlLoading) {
         return (
             <div style={styles.overlay}>
                 <div style={styles.loadingContainer}>
@@ -130,7 +95,7 @@ const ForceConfigModal = ({
                             Setup Required
                         </h3>
                         <div style={styles.headerSubtitle}>
-                            Choose how you'd like to use the AI Assistant
+                            Configure the backend server to get started
                         </div>
                     </div>
 
@@ -139,63 +104,14 @@ const ForceConfigModal = ({
                         {/* Backend Not Available Notice */}
                         <div style={styles.noticeContainer}>
                             <div style={styles.noticeText}>
-                                The backend server is not available. You have two options to get started:
+                                The backend server is not available. Enter the backend URL below to connect.
                             </div>
                         </div>
 
-                        {/* Option 1: Use Direct API */}
+                        {/* Setup Backend */}
                         <div style={styles.optionContainer}>
                             <div style={styles.optionHeader}>
                                 <div style={styles.optionNumber}>1</div>
-                                <div style={styles.optionTitle}>Use Gemini API Directly</div>
-                            </div>
-                            <div style={styles.optionDescription}>
-                                Enter your Gemini API key to use the extension without a backend server.
-                                Your API key is stored locally and never sent to our servers.
-                            </div>
-                            
-                            <div style={styles.apiKeyContainer}>
-                                <Input.Password
-                                    value={apiKey}
-                                    onChange={(e) => setApiKey(e.target.value)}
-                                    placeholder="Enter your Gemini API key (AIza...)"
-                                    style={styles.apiKeyInput}
-                                    onPressEnter={handleUseDirectApi}
-                                />
-                                <Button 
-                                    type="primary" 
-                                    onClick={handleUseDirectApi}
-                                    disabled={!apiKey.trim()}
-                                    style={styles.useApiButton}
-                                >
-                                    Use Direct API
-                                </Button>
-                            </div>
-
-                            <div style={styles.helpText}>
-                                Don't have an API key? 
-                                <a 
-                                    href="https://makersuite.google.com/app/apikey" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    style={styles.helpLink}
-                                >
-                                    Get one from Google AI Studio
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Divider */}
-                        <div style={styles.divider}>
-                            <div style={styles.dividerLine}></div>
-                            <div style={styles.dividerText}>OR</div>
-                            <div style={styles.dividerLine}></div>
-                        </div>
-
-                        {/* Option 2: Setup Backend */}
-                        <div style={styles.optionContainer}>
-                            <div style={styles.optionHeader}>
-                                <div style={styles.optionNumber}>2</div>
                                 <div style={styles.optionTitle}>Setup Backend Server</div>
                             </div>
                             <div style={styles.optionDescription}>

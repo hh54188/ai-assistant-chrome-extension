@@ -2,9 +2,6 @@ import { isChromeExtension } from '../utils/environment';
 
 const BACKEND_URL = 'http://localhost:3001';
 
-// Dynamically import the Google GenAI SDK
-const { GoogleGenAI } = await import('@google/genai');
-
 // Utility functions to check settings
 
 // Generic storage getter that handles both Chrome extension and localStorage
@@ -33,17 +30,8 @@ const getStorageValue = async (key, defaultValue) => {
     }
 };
 
-export const getGeminiApiKey = async () => {
-    return await getStorageValue('geminiApiKey', '');
-};
-
 export const getBackendUrl = async () => {
     return await getStorageValue('backendUrl', 'http://localhost:3001');
-};
-
-export const hasValidApiKey = async () => {
-    const apiKey = await getGeminiApiKey();
-    return apiKey && apiKey.trim().length > 0;
 };
 
 class ChatService {
@@ -269,92 +257,6 @@ class ChatService {
         }
     }
 
-    /**
-     * Direct Gemini API call when in frontend-only mode using @google/genai SDK
-     */
-    async streamChatDirectGemini(message, conversationHistory = [], callbacks = {}, isFrontendMode = false) {
-        const {
-            onChunk,
-            onComplete,
-            onError,
-            onLoadingChange,
-            onFirstChunk,
-            abortController
-        } = callbacks;
-
-        // Check if frontend-only mode is enabled and API key is valid
-        const hasValidKey = await hasValidApiKey();
-        
-        if (!isFrontendMode || !hasValidKey) {
-            throw new Error('Direct API mode not enabled or invalid API key');
-        }
-
-        try {
-            
-            // Initialize Gemini client with user's API key
-            const apiKey = await getGeminiApiKey();
-            const genAI = new GoogleGenAI({
-                vertexai: false,
-                apiKey: apiKey
-            });
-
-            // Convert conversation history to Gemini's Content format
-            const history = conversationHistory.map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
-            }));
-
-            // Create a new chat session with history
-            const chat = genAI.chats.create({
-                model: 'gemini-2.0-flash',
-                history: history
-            });
-
-            // Send the current message and get streaming response
-            const response = await chat.sendMessageStream({ 
-                message: message,
-            });
-
-            // Process the streaming response
-            let isFirstChunk = true;
-            for await (const chunk of response) {
-                // Check if the request was aborted
-                if (abortController?.signal?.aborted) {
-                    console.log('Gemini request was aborted');
-                    if (onError) onError('Request was cancelled');
-                    if (onLoadingChange) onLoadingChange(false);
-                    return;
-                }
-
-                // Handle text chunks
-                if (chunk.text) {
-                    // Call onFirstChunk callback if this is the first chunk
-                    if (isFirstChunk && onFirstChunk) {
-                        onFirstChunk();
-                        isFirstChunk = false;
-                    }
-                    
-                    if (onChunk) onChunk(chunk.text);
-                }
-            }
-
-            // Stream completed successfully
-            console.log('Gemini stream finished');
-            if (onComplete) onComplete();
-            if (onLoadingChange) onLoadingChange(false);
-
-        } catch (error) {
-            console.error('Gemini API error:', error);
-            
-            if (error.name === 'AbortError') {
-                if (onError) onError('Request was cancelled');
-            } else {
-                if (onError) onError(`Gemini API error: ${error.message}`);
-            }
-            
-            if (onLoadingChange) onLoadingChange(false);
-        }
-    }
 }
 
 export default new ChatService(); 

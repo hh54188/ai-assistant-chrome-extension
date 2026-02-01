@@ -88,9 +88,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         addSession
     } = useChatStore();
     
-    // Chrome storage hooks
-    const [frontendOnlyMode, setFrontendOnlyMode] = useChromeStorage('frontendOnlyMode', false);
-    const [geminiApiKey] = useChromeStorage('geminiApiKey', '');
+    // Chrome storage hooks (for force config modal logic)
     
     // Connection status hook
     const { connectionStatus, isLoading: connectionLoading, retryConnection } = useConnectionStatus();
@@ -249,55 +247,9 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
 
         // Capture the session ID when the request starts
         const requestSessionId = currentSessionId;
-        
-        // Check if we should use direct Gemini API or backend
-        const useDirectApi = frontendOnlyMode && selectedProvider.includes('gemini');
-        
-        if (useDirectApi) {
-            // Use direct Gemini API
-            await chatService.streamChatDirectGemini(val, conversationHistory, {
-                onFirstChunk: () => {
-                    // Update message status to streaming when first chunk is received
-                    updateLastMessageStatus(requestSessionId, 'streaming');
-                },
-                onChunk: (content) => {
-                    // Append content to the last message in the session
-                    appendToLastMessage(requestSessionId, content);
-                },
-                onComplete: () => {
-                    // Mark last message as complete
-                    updateLastMessageStatus(requestSessionId, 'done');
-                    setSessionLoading(requestSessionId, false);
-                    setLoading(false);
-                    clearSessionFiles(requestSessionId); // Clear files for this session
-                    // Clear screenshot data after AI response completes to prevent loops
-                    if (requestSessionId === currentSessionId) {
-                        clearScreenshotData();
-                    }
-                },
-                onError: (errorMessage) => {
-                    // Update last message with error content
-                    updateLastMessage(requestSessionId, errorMessage);
-                    updateLastMessageStatus(requestSessionId, 'done');
-                    setSessionLoading(requestSessionId, false);
-                    setLoading(false);
-                    // Clear screenshot data on error to prevent loops
-                    if (requestSessionId === currentSessionId) {
-                        clearScreenshotData();
-                    }
-                    if (errorMessage !== 'Request was cancelled') {
-                        notification.error(errorMessage);
-                    }
-                },
-                onLoadingChange: (isLoading) => {
-                    setSessionLoading(requestSessionId, isLoading);
-                    setLoading(isLoading);
-                },
-                abortController: abortController
-            }, frontendOnlyMode);
-        } else {
-            // Use chatService for streaming with files
-            await chatService.streamChat(val, selectedProvider, conversationHistory, requestSessionId, {
+
+        // Use chatService for streaming with files
+        await chatService.streamChat(val, selectedProvider, conversationHistory, requestSessionId, {
                 onFirstChunk: () => {
                     // Update message status to streaming when first chunk is received
                     updateLastMessageStatus(requestSessionId, 'streaming');
@@ -338,7 +290,6 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
             abortController: abortController,
             files: currentSessionFiles
         });
-        }
     };
 
     // ==================== Screenshot Handlers ====================
@@ -638,31 +589,15 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
         }
     }, [turboMode, turboModeExpanded, setTurboModeExpanded]);
 
-    // Force config modal logic - show when backend is not available and no API key
+    // Force config modal logic - show when backend is not available
     useEffect(() => {
-        // Don't show if connection is still loading
         if (connectionLoading) return;
-        
-        const hasApiKey = geminiApiKey && geminiApiKey.trim().length > 0;
-        
-        // If backend is connected, hide modal and ensure frontend-only mode is disabled
         if (connectionStatus) {
             setForceConfigModalVisible(false);
-            return;
-        }
-        
-        // If backend is offline but user has API key, hide force config modal
-        // but DON'T automatically switch modes - respect user's settings choice
-        if (!connectionStatus && hasApiKey) {
-            setForceConfigModalVisible(false);
-            return;
-        }
-        
-        // Show force config modal only if backend is not available and no API key
-        if (!connectionStatus && !hasApiKey) {
+        } else {
             setForceConfigModalVisible(true);
         }
-    }, [connectionStatus, connectionLoading, geminiApiKey, frontendOnlyMode, setForceConfigModalVisible, setFrontendOnlyMode]);
+    }, [connectionStatus, connectionLoading, setForceConfigModalVisible]);
 
 
     return (
@@ -688,7 +623,6 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                     isExpanded={isExpanded}
                     onToggleExpand={handleToggleExpand}
                     onScreenshotCapture={handleScreenshotCapture}
-                    isDirectApiMode={frontendOnlyMode}
                     connectionStatus={connectionStatus}
                 />
                 <div className={styles.mainContent}>
@@ -726,7 +660,7 @@ const CopilotSidebar = ({ isOpen, onClose }) => {
                         />
                     )}
                     {turboMode && turboModeExpanded ? null : <ChatSender
-                        allowAttachments={!frontendOnlyMode && connectionStatus}
+                        allowAttachments={connectionStatus}
                         styles={styles}
                         handleUserSubmit={handleUserSubmit}
                         disabled={turboMode && turboModeExpanded}

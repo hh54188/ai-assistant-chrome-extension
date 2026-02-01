@@ -121,7 +121,7 @@ function createSidebar() {
 
 // Add keyboard shortcut (Ctrl+Shift+A or Cmd+Shift+A)
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
     e.preventDefault();
     toggleSidebar();
   }

@@ -229,7 +229,7 @@ describe('Chrome Extension Drag and Drop E2E Tests', () => {
     // Try to trigger the extension using keyboard shortcut (Ctrl+Shift+A)
     await page.keyboard.down('Control');
     await page.keyboard.down('Shift');
-    await page.keyboard.press('KeyA');
+    await page.keyboard.press('KeyE');
     await page.keyboard.up('Shift');
     await page.keyboard.up('Control');
     
@@ -255,7 +255,7 @@ describe('Chrome Extension Drag and Drop E2E Tests', () => {
         // Try keyboard shortcut again
         await page.keyboard.down('Control');
         await page.keyboard.down('Shift');
-        await page.keyboard.press('KeyA');
+        await page.keyboard.press('KeyE');
         await page.keyboard.up('Shift');
         await page.keyboard.up('Control');
         

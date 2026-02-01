@@ -139,7 +139,7 @@ vi.mock('../../components/MenuBar', () => ({
         <button
           data-testid="screenshot-button"
           onClick={onScreenshotCapture}
-          disabled={isDirectApiMode || !connectionStatus}
+          disabled={!connectionStatus}
         >
           Screenshot
         </button>

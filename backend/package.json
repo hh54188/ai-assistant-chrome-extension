@@ -14,7 +14,7 @@
   "dependencies": {
     "@google/genai": "^1.9.0",
     "@mendable/firecrawl-js": "^1.29.3",
-    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@notionhq/client": "^4.0.2",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
